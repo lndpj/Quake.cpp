@@ -1052,7 +1052,7 @@ void PR_LoadProgs(void)
         pr_statements[i].op = LittleShort(pr_statements[i].op);
         pr_statements[i].a = LittleShort(pr_statements[i].a);
         pr_statements[i].b = LittleShort(pr_statements[i].b);
-        pr_statements[i].cpp = LittleShort(pr_statements[i].cpp);
+        pr_statements[i].c = LittleShort(pr_statements[i].c);
     }
 
     for (i = 0; i < progs->numfunctions; i++) {
