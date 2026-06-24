@@ -61,7 +61,6 @@ set(CORE_SRCS
     src/net_main.cpp
     src/net_udp.cpp
     src/net_vcr.cpp
-    src/nonintel.cpp
     src/pr_cmds.cpp
     src/pr_edict.cpp
     src/pr_exec.cpp
