@@ -11,7 +11,7 @@ unsigned short d_8to16table[256];
 modestate_t modestate = MS_WINDOWED;
 cvar_t _windowed_mouse = {"_windowed_mouse", "1"};
 
-void VID_HandlePause(qboolean pause)
+void VID_HandlePause()
 {
 }
 

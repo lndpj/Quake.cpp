@@ -121,7 +121,7 @@ extern int com_argc;
 extern char** com_argv;
 
 int COM_CheckParm(char* parm);
-void COM_Init(char* path);
+void COM_Init();
 void COM_InitArgv(int argc, char** argv);
 
 void COM_FileBase(char* in, char* out);

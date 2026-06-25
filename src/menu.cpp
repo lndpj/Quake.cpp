@@ -84,7 +84,7 @@ void M_SerialConfig_Key(int key);
 void M_ModemConfig_Key(int key);
 void M_LanConfig_Key(int key);
 void M_GameOptions_Key(int key);
-void M_Search_Key(int key);
+void M_Search_Key();
 void M_ServerList_Key(int key);
 
 qboolean m_entersound; // play after drawing a frame, so caching
@@ -2936,7 +2936,7 @@ void M_Search_Draw(void)
     M_Menu_LanConfig_f();
 }
 
-void M_Search_Key(int key)
+void M_Search_Key()
 {
 }
 
@@ -3255,7 +3255,7 @@ void M_Keydown(int key)
         return;
 
     case m_search:
-        M_Search_Key(key);
+        M_Search_Key();
         break;
 
     case m_slist:

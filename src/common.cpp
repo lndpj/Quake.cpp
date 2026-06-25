@@ -1067,7 +1067,7 @@ void COM_InitArgv(int argc, char** argv)
 COM_Init
 ================
 */
-void COM_Init(char* basedir)
+void COM_Init()
 {
 // set the byte swapping variables in a portable manner
 #ifdef SDL

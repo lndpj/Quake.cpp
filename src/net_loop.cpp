@@ -217,7 +217,7 @@ qboolean Loop_CanSendMessage(qsocket_t* sock)
     return sock->canSend;
 }
 
-qboolean Loop_CanSendUnreliableMessage(qsocket_t* sock)
+qboolean Loop_CanSendUnreliableMessage(void)
 {
     return true;
 }

@@ -881,12 +881,12 @@ void CL_ParseServerMessage(void)
             if (cl.paused) {
                 CDAudio_Pause();
 #ifdef _WIN32
-                VID_HandlePause(true);
+                VID_HandlePause();
 #endif
             } else {
                 CDAudio_Resume();
 #ifdef _WIN32
-                VID_HandlePause(false);
+                VID_HandlePause();
 #endif
             }
         } break;

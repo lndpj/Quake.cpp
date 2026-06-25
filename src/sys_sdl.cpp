@@ -266,7 +266,7 @@ void Sys_LineRefresh(void)
 {
 }
 
-void moncontrol(int x)
+void moncontrol()
 {
 }
 
@@ -278,7 +278,7 @@ int main(int c, char** v)
     extern qboolean recording;
     static int frame;
 
-    moncontrol(0);
+    moncontrol();
 
     //	signal(SIGFPE, floating_point_exception_handler);
     signal(SIGFPE, SIG_IGN);
@@ -320,11 +320,11 @@ int main(int c, char** v)
         }
 
         if (++frame > 10) {
-            moncontrol(1); // profile only while we do each Quake frame
+            moncontrol(); // profile only while we do each Quake frame
         }
 
         Host_Frame(time);
-        moncontrol(0);
+        moncontrol();
 
         // graphic debugging aids
         if (sys_linerefresh.value) {
