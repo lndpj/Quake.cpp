@@ -1,6 +1,7 @@
 // snd_mix.cpp -- portable code to mix sounds for snd_dma.cpp
 
 #include "quakedef.h"
+#include <stdint.h>
 
 
 #define PAINTBUFFER_SIZE 512
@@ -20,8 +21,8 @@ void Snd_WriteLinearBlastStereo16(void)
         val = (snd_p[i] * snd_vol) >> 8;
         if (val > 0x7fff) {
             snd_out[i] = 0x7fff;
-        } else if (val < (short)0x8000) {
-            snd_out[i] = (short)0x8000;
+        } else if (val < -32768) {
+            snd_out[i] = -32768;
         } else {
             snd_out[i] = val;
         }
@@ -29,8 +30,8 @@ void Snd_WriteLinearBlastStereo16(void)
         val = (snd_p[i + 1] * snd_vol) >> 8;
         if (val > 0x7fff) {
             snd_out[i + 1] = 0x7fff;
-        } else if (val < (short)0x8000) {
-            snd_out[i + 1] = (short)0x8000;
+        } else if (val < -32768) {
+            snd_out[i + 1] = -32768;
         } else {
             snd_out[i + 1] = val;
         }
@@ -82,7 +83,7 @@ void S_TransferPaintBuffer(int endtime)
     int* p;
     int step;
     int val;
-    int snd_vol;
+    int mix_vol;
     unsigned char* pbuf;
 
     if (shm->samplebits == 16 && shm->channels == 2) {
@@ -96,7 +97,7 @@ void S_TransferPaintBuffer(int endtime)
     out_mask = shm->samples - 1;
     out_idx = paintedtime * shm->channels & out_mask;
     step = 3 - shm->channels;
-    snd_vol = volume.value * 256;
+    mix_vol = volume.value * 256;
 
     {
         pbuf = (unsigned char*)shm->buffer;
@@ -105,12 +106,12 @@ void S_TransferPaintBuffer(int endtime)
     if (shm->samplebits == 16) {
         short* out = (short*)pbuf;
         while (count--) {
-            val = (*p * snd_vol) >> 8;
+            val = (*p * mix_vol) >> 8;
             p += step;
             if (val > 0x7fff) {
                 val = 0x7fff;
-            } else if (val < (short)0x8000) {
-                val = (short)0x8000;
+            } else if (val < -32768) {
+                val = -32768;
             }
 
             out[out_idx] = val;
@@ -119,12 +120,12 @@ void S_TransferPaintBuffer(int endtime)
     } else if (shm->samplebits == 8) {
         unsigned char* out = (unsigned char*)pbuf;
         while (count--) {
-            val = (*p * snd_vol) >> 8;
+            val = (*p * mix_vol) >> 8;
             p += step;
             if (val > 0x7fff) {
                 val = 0x7fff;
-            } else if (val < (short)0x8000) {
-                val = (short)0x8000;
+            } else if (val < -32768) {
+                val = -32768;
             }
 
             out[out_idx] = (val >> 8) + 128;

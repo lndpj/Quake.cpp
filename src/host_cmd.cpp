@@ -587,7 +587,7 @@ void Host_Loadgame_f(void)
 
     for (i = 0; i < MAX_LIGHTSTYLES; i++) {
         fscanf(f, "%s\n", str);
-        sv.lightstyles[i] = (char *) Hunk_Alloc(strlen(str) + 1);
+        sv.lightstyles[i] = (char *) Hunk_Alloc((int)strlen(str) + 1);
         strcpy(sv.lightstyles[i], str);
     }
 
@@ -857,7 +857,7 @@ Host_Color_f
 void Host_Color_f(void)
 {
     int top, bottom;
-    int playercolor;
+    int pcolor;
 
     if (Cmd_Argc() == 1) {
         Con_Printf("\"color\" is \"%i %i\"\n", ((int)cl_color.value) >> 4,
@@ -884,10 +884,10 @@ void Host_Color_f(void)
         bottom = 13;
     }
 
-    playercolor = top * 16 + bottom;
+    pcolor = top * 16 + bottom;
 
     if (cmd_source == src_command) {
-        Cvar_SetValue("_cl_color", playercolor);
+        Cvar_SetValue("_cl_color", pcolor);
         if (cls.state == ca_connected) {
             Cmd_ForwardToServer();
         }
@@ -895,7 +895,7 @@ void Host_Color_f(void)
         return;
     }
 
-    host_client->colors = playercolor;
+    host_client->colors = pcolor;
     host_client->edict->v.team = bottom + 1;
 
     // send notification to all clients

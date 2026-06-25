@@ -228,7 +228,7 @@ void SV_WaterMove(void)
 {
     int i;
     vec3_t wishvel;
-    float speed, newspeed, wishspeed, addspeed, accelspeed;
+    float speed, newspeed, w_speed, addspeed, accelspeed;
 
     //
     // user intentions
@@ -245,13 +245,13 @@ void SV_WaterMove(void)
         wishvel[2] += cmd.upmove;
     }
 
-    wishspeed = Length(wishvel);
-    if (wishspeed > sv_maxspeed.value) {
-        VectorScale(wishvel, sv_maxspeed.value / wishspeed, wishvel);
-        wishspeed = sv_maxspeed.value;
+    w_speed = Length(wishvel);
+    if (w_speed > sv_maxspeed.value) {
+        VectorScale(wishvel, sv_maxspeed.value / w_speed, wishvel);
+        w_speed = sv_maxspeed.value;
     }
 
-    wishspeed *= 0.7;
+    w_speed *= 0.7f;
 
     //
     // water friction
@@ -271,17 +271,17 @@ void SV_WaterMove(void)
     //
     // water acceleration
     //
-    if (!wishspeed) {
+    if (!w_speed) {
         return;
     }
 
-    addspeed = wishspeed - newspeed;
+    addspeed = w_speed - newspeed;
     if (addspeed <= 0) {
         return;
     }
 
     VectorNormalize(wishvel);
-    accelspeed = sv_accelerate.value * wishspeed * host_frametime;
+    accelspeed = sv_accelerate.value * w_speed * host_frametime;
     if (accelspeed > addspeed) {
         accelspeed = addspeed;
     }
@@ -461,7 +461,7 @@ Returns false if the client should be killed
 qboolean SV_ReadClientMessage(void)
 {
     int ret;
-    int cmd;
+    int msg_cmd;
     char* s;
 
     do {
@@ -490,9 +490,9 @@ qboolean SV_ReadClientMessage(void)
                 return false;
             }
 
-            cmd = MSG_ReadChar();
+            msg_cmd = MSG_ReadChar();
 
-            switch (cmd) {
+            switch (msg_cmd) {
             case -1:
                 goto nextmsg; // end of message
 

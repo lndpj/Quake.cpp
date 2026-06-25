@@ -47,7 +47,10 @@ static aedge_t aedges[12] = { { 0, 1 }, { 1, 2 }, { 2, 3 }, { 3, 0 }, { 4, 5 }, 
 #define NUMVERTEXNORMALS 162
 
 float r_avertexnormals[NUMVERTEXNORMALS][3] = {
+#pragma warning(push)
+#pragma warning(disable : 4305)
 #include "anorms.h"
+#pragma warning(pop)
 };
 
 void R_AliasTransformAndProjectFinalVerts(finalvert_t* fv, stvert_t* pstverts);

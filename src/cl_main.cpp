@@ -341,7 +341,7 @@ float CL_LerpPoint(void)
 
     if (f > 0.1) { // dropped packet, or start of demo
         cl.mtime[1] = cl.mtime[0] - 0.1;
-        f = 0.1;
+        f = 0.1f;
     }
 
     frac = (cl.time - cl.mtime[1]) / f;

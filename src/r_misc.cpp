@@ -334,7 +334,7 @@ void R_SetupFrame(void)
 
     if ((r_dowarp != r_dowarpold) || r_viewchanged || lcd_x.value) {
         if (r_dowarp) {
-            if ((vid.width <= vid.maxwarpwidth) && (vid.height <= vid.maxwarpheight)) {
+            if (((int)vid.width <= vid.maxwarpwidth) && ((int)vid.height <= vid.maxwarpheight)) {
                 vrect.x = 0;
                 vrect.y = 0;
                 vrect.width = vid.width;

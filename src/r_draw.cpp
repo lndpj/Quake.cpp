@@ -75,7 +75,7 @@ void R_EmitEdge(mvertex_t* pv0, mvertex_t* pv1)
         TransformVector(local, transformed);
 
         if (transformed[2] < NEAR_CLIP) {
-            transformed[2] = NEAR_CLIP;
+            transformed[2] = (vec_t)NEAR_CLIP;
         }
 
         lzi0 = 1.0 / transformed[2];
@@ -111,7 +111,7 @@ void R_EmitEdge(mvertex_t* pv0, mvertex_t* pv1)
     TransformVector(local, transformed);
 
     if (transformed[2] < NEAR_CLIP) {
-        transformed[2] = NEAR_CLIP;
+        transformed[2] = (vec_t)NEAR_CLIP;
     }
 
     r_lzi1 = 1.0 / transformed[2];
@@ -400,7 +400,7 @@ void R_RenderFace(msurface_t* fa, int clipflags)
             // if the edge is cached, we can just reuse the edge
             if (!insubmodel) {
                 if (r_pedge->cachededgeoffset & FULLY_CLIPPED_CACHED) {
-                    if ((r_pedge->cachededgeoffset & FRAMECOUNT_MASK) == r_framecount) {
+                    if ((r_pedge->cachededgeoffset & FRAMECOUNT_MASK) == (unsigned int)r_framecount) {
                         r_lastvertvalid = false;
                         continue;
                     }
@@ -435,7 +435,7 @@ void R_RenderFace(msurface_t* fa, int clipflags)
             // if the edge is cached, we can just reuse the edge
             if (!insubmodel) {
                 if (r_pedge->cachededgeoffset & FULLY_CLIPPED_CACHED) {
-                    if ((r_pedge->cachededgeoffset & FRAMECOUNT_MASK) == r_framecount) {
+                    if ((r_pedge->cachededgeoffset & FRAMECOUNT_MASK) == (unsigned int)r_framecount) {
                         r_lastvertvalid = false;
                         continue;
                     }
@@ -747,7 +747,7 @@ void R_RenderPoly(msurface_t* fa, int clipflags)
         TransformVector(local, transformed);
 
         if (transformed[2] < NEAR_CLIP) {
-            transformed[2] = NEAR_CLIP;
+            transformed[2] = (vec_t)NEAR_CLIP;
         }
 
         lzi = 1.0 / transformed[2];

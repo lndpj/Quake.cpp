@@ -380,7 +380,7 @@ char* PR_GlobalString(int ofs)
         sprintf(line, "%i(%s)%s", ofs, PR_GetString(def->s_name), s);
     }
 
-    i = strlen(line);
+    i = (int)strlen(line);
     for (; i < 20; i++) {
         strcat(line, " ");
     }
@@ -402,7 +402,7 @@ char* PR_GlobalStringNoContents(int ofs)
         sprintf(line, "%i(%s)", ofs, PR_GetString(def->s_name));
     }
 
-    i = strlen(line);
+    i = (int)strlen(line);
     for (; i < 20; i++) {
         strcat(line, " ");
     }
@@ -456,7 +456,7 @@ void ED_Print(edict_t* ed)
         }
 
         Con_Printf("%s", name);
-        l = strlen(name);
+        l = (int)strlen(name);
         while (l++ < 15) {
             Con_Printf(" ");
         }
@@ -850,7 +850,7 @@ char* ED_ParseEdict(char* data, edict_t* ent)
         strcpy(keyname, com_token);
 
         // another hack to fix heynames with trailing spaces
-        n = strlen(keyname);
+        n = (int)strlen(keyname);
         while (n && keyname[n - 1] == ' ') {
             keyname[n - 1] = 0;
             n--;

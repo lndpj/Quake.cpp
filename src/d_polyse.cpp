@@ -122,12 +122,12 @@ void D_PolysetDraw(void)
 D_PolysetDrawFinalVerts
 ================
 */
-void D_PolysetDrawFinalVerts(finalvert_t* fv, int numverts)
+void D_PolysetDrawFinalVerts(finalvert_t* fv, int num_verts)
 {
     int i, z;
     short* zbuf;
 
-    for (i = 0; i < numverts; i++, fv++) {
+    for (i = 0; i < num_verts; i++, fv++) {
         // valid triangle coordinates for filling can include the bottom and
         // right clip edges, due to the fill rule; these shouldn't be drawn
         if ((fv->v[0] < r_refdef.vrectright) && (fv->v[1] < r_refdef.vrectbottom)) {
@@ -481,7 +481,7 @@ void D_PolysetSetUpForLineScan(fixed8_t startvertu,
 D_PolysetCalcGradients
 ================
 */
-void D_PolysetCalcGradients(int skinwidth)
+void D_PolysetCalcGradients(int s_width)
 {
     float xstepdenominv, ystepdenominv, t0, t1;
     float p01_minus_p21, p11_minus_p21, p00_minus_p20, p10_minus_p20;
@@ -520,7 +520,7 @@ void D_PolysetCalcGradients(int skinwidth)
 
     a_sstepxfrac = r_sstepx & 0xFFFF;
     a_tstepxfrac = r_tstepx & 0xFFFF;
-    a_ststepxwhole = skinwidth * (r_tstepx >> 16) + (r_sstepx >> 16);
+    a_ststepxwhole = s_width * (r_tstepx >> 16) + (r_sstepx >> 16);
 }
 
 /*

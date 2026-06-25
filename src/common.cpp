@@ -110,8 +110,9 @@ void InsertLinkBefore(link_t* l, link_t* before)
 void Q_memset(void* dest, int fill, int count)
 {
     int i;
-
-    if ((((long)dest | count) & 3) == 0) {
+    
+    // Cast to size_t instead of long to preserve 64-bit pointers
+    if ((((size_t)dest | count) & 3) == 0) {
         count >>= 2;
         fill = fill | (fill << 8) | (fill << 16) | (fill << 24);
         for (i = 0; i < count; i++) {
@@ -128,7 +129,8 @@ void Q_memcpy(void* dest, void* src, int count)
 {
     int i;
 
-    if ((((long)dest | (long)src | count) & 3) == 0) {
+    // Cast to size_t instead of long to preserve 64-bit pointers
+    if ((((size_t)dest | (size_t)src | count) & 3) == 0) {
         count >>= 2;
         for (i = 0; i < count; i++) {
             ((int*)dest)[i] = ((int*)src)[i];
@@ -1667,7 +1669,7 @@ void COM_InitFilesystem(void)
         strcpy(basedir, host_parms.basedir);
     }
 
-    j = strlen(basedir);
+    j = (int)strlen(basedir);
 
     if (j > 0) {
         if ((basedir[j - 1] == '\\') || (basedir[j - 1] == '/')) {

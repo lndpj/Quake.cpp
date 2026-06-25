@@ -434,7 +434,7 @@ void Sbar_SoloScoreboard(void)
     Sbar_DrawString(184, 4, str);
 
     // draw level name
-    l = strlen(cl.levelname);
+    l = (int)strlen(cl.levelname);
     Sbar_DrawString(232 - l * 4, 12, cl.levelname);
 }
 
@@ -1090,7 +1090,7 @@ void Sbar_MiniDeathmatchOverlay(void)
     }
 
     x = 324;
-    for (/* */; i < scoreboardlines && y < vid.height - 8; i++) {
+    for (/* */; i < scoreboardlines && y < (int)vid.height - 8; i++) {
         k = fragsort[i];
         s = &cl.scores[k];
         if (!s->name[0]) {

@@ -99,7 +99,7 @@ int CL_GetMessage(void)
         fread(&net_message.cursize, 4, 1, cls.demofile);
         VectorCopy(cl.mviewangles[0], cl.mviewangles[1]);
         for (i = 0; i < 3; i++) {
-            r = fread(&f, 4, 1, cls.demofile);
+            r = (int)fread(&f, 4, 1, cls.demofile);
             cl.mviewangles[0][i] = LittleFloat(f);
         }
 
@@ -108,7 +108,7 @@ int CL_GetMessage(void)
             Sys_Error("Demo message > MAX_MSGLEN");
         }
 
-        r = fread(net_message.data, net_message.cursize, 1, cls.demofile);
+        r = (int)fread(net_message.data, net_message.cursize, 1, cls.demofile);
         if (r != 1) {
             CL_StopPlayback();
 

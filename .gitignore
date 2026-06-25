@@ -1,6 +1,9 @@
 # CMake generated files
 /build/
 
+# Ignore .log files
+*.log
+
 # Game data
 id1/
 rogue/

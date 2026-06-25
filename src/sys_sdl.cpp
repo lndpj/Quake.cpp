@@ -183,7 +183,7 @@ int Sys_FileRead(int handle, void* dst, int count)
     if (handle >= 0) {
         data = (char*)dst;
         while (count > 0) {
-            done = fread(data, 1, count, sys_handles[handle]);
+            done = (int)fread(data, 1, count, sys_handles[handle]);
             if (done == 0) {
                 break;
             }
@@ -206,7 +206,7 @@ int Sys_FileWrite(int handle, void* src, int count)
     if (handle >= 0) {
         data = (char*)src;
         while (count > 0) {
-            done = fread(data, 1, count, sys_handles[handle]);
+            done = (int)fread(data, 1, count, sys_handles[handle]);
             if (done == 0) {
                 break;
             }

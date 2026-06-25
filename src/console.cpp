@@ -325,7 +325,7 @@ void Con_DebugLog(char* file, char* fmt, ...)
     vsprintf(data, fmt, argptr);
     va_end(argptr);
     fd = _open(file, O_WRONLY | O_CREAT | O_APPEND, 0666);
-    _write(fd, data, strlen(data));
+    _write(fd, data, (unsigned int)strlen(data));
     _close(fd);
 }
 

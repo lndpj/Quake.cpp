@@ -313,7 +313,7 @@ char* CopyString(char* in)
 {
     char* out;
 
-    out = (char *) Z_Malloc(strlen(in) + 1);
+    out = (char *) Z_Malloc((int)strlen(in) + 1);
     strcpy(out, in);
 
     return out;
@@ -432,7 +432,7 @@ Cmd_Argv
 */
 char* Cmd_Argv(int arg)
 {
-    if ((unsigned)arg >= cmd_argc) {
+    if (arg < 0 || arg >= cmd_argc) {
         return cmd_null_string;
     }
 

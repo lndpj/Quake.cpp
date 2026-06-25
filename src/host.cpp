@@ -623,9 +623,12 @@ void _Host_Frame(float time)
     static double time3 = 0;
     int pass1, pass2, pass3;
 
+#pragma warning(push)
+#pragma warning(disable : 4611)
     if (setjmp(host_abortserver)) {
         return; // something bad happened, or the server disconnected
     }
+#pragma warning(pop)
 
     // keep the random time dependent
     rand();

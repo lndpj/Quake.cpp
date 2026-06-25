@@ -178,7 +178,7 @@ void R_SetupAndDrawSprite()
         TransformVector(local, transformed);
 
         if (transformed[2] < NEAR_CLIP) {
-            transformed[2] = NEAR_CLIP;
+            transformed[2] = (vec_t)NEAR_CLIP;
         }
 
         pout = &outverts[i];

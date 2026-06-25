@@ -479,10 +479,10 @@ void Sys_SendKeyEvents(void)
             break;
 
         case SDL_MOUSEMOTION:
-            if ((event.motion.x != (vid.width / 2)) || (event.motion.y != (vid.height / 2))) {
+            if (((unsigned)event.motion.x != (vid.width / 2)) || ((unsigned)event.motion.y != (vid.height / 2))) {
                 mouse_x = event.motion.xrel * 10;
                 mouse_y = event.motion.yrel * 10;
-                if ((event.motion.x < ((vid.width / 2) - (vid.width / 4))) || (event.motion.x > ((vid.width / 2) + (vid.width / 4))) || (event.motion.y < ((vid.height / 2) - (vid.height / 4))) || (event.motion.y > ((vid.height / 2) + (vid.height / 4)))) {
+                if (((unsigned)event.motion.x < ((vid.width / 2) - (vid.width / 4))) || ((unsigned)event.motion.x > ((vid.width / 2) + (vid.width / 4))) || ((unsigned)event.motion.y < ((vid.height / 2) - (vid.height / 4))) || ((unsigned)event.motion.y > ((vid.height / 2) + (vid.height / 4)))) {
                     SDL_WarpMouseInWindow(window, vid.width / 2, vid.height / 2);
                 }
             }

@@ -56,7 +56,7 @@ void D_ViewChanged(void)
     d_vrectbottom_particle = r_refdef.vrectbottom - (d_pix_max << d_y_aspect_shift);
 
     {
-        int i;
+        unsigned i;
 
         for (i = 0; i < vid.height; i++) {
             d_scantable[i] = i * rowbytes;
