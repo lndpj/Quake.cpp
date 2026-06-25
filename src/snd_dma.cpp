@@ -530,11 +530,8 @@ void S_StopAllSoundsC(void)
 
 void S_ClearBuffer(void)
 {
+#if 0
     int clear;
-
-    {
-        return;
-    }
 
     if (shm->samplebits == 8) {
         clear = 0x80;
@@ -545,6 +542,7 @@ void S_ClearBuffer(void)
     {
         Q_memset(shm->buffer, clear, shm->samples * shm->samplebits / 8);
     }
+#endif
 }
 
 /*

@@ -105,41 +105,15 @@ target_link_libraries(clean-quake PRIVATE SDL2main SDL2-static ws2_32 winmm)
 
 # Suppress some old C warnings for cleaner output
 if(MSVC)
-    # Compiler flags
     target_compile_options(clean-quake PRIVATE 
-        /W4          # Crank up warning level to catch unused variables/parameters
-        /Gy          # Function-level linking (allows linker to discard individual functions)
-        /Gw          # Optimize global data (allows linker to discard unused globals)
-        # Keep your existing suppressions for now so you aren't overwhelmed
+        /W4 
+        /w14702      # Force C4702 (Unreachable code) to be a Level 1 Warning
         /wd4996 /wd4244 /wd4113 /wd4047 /wd4024
     )
-    
-    # Linker flags
-    target_link_options(clean-quake PRIVATE 
-        /OPT:REF     # Tell the linker to eliminate unreferenced functions and data
-        /VERBOSE:REF # Tell the linker to print out exactly what it deleted
-    )
 else()
-    # Compiler flags
     target_compile_options(clean-quake PRIVATE 
-        -Wall -Wextra -Wunused      # Maximum warnings for unused variables/functions
-        -ffunction-sections         # Place each function in its own section
-        -fdata-sections             # Place each data item in its own section
-        -Wno-write-strings          # Keep your existing suppression
+        -Wall -Wextra 
+        -Wunreachable-code # Warn about unreachable code paths
+        -Wno-write-strings
     )
-    
-    # Linker flags
-    if(APPLE)
-        # macOS uses a different linker that doesn't support --gc-sections
-        target_link_options(clean-quake PRIVATE 
-            -Wl,-dead_strip         # Strip dead code on macOS
-            -Wl,-why_live,main      # (Optional) Map analysis if needed later
-        )
-    else()
-        # GCC/Clang on Linux/MinGW
-        target_link_options(clean-quake PRIVATE 
-            -Wl,--gc-sections       # Garbage collect empty sections (dead code)
-            -Wl,-print-gc-sections  # Print everything the linker throws away
-        )
-    endif()
 endif()

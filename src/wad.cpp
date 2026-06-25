@@ -99,8 +99,6 @@ lumpinfo_t* W_GetLumpinfo(char* name)
     }
 
     Sys_Error("W_GetLumpinfo: %s not found", name);
-
-    return NULL;
 }
 
 void* W_GetLumpName(char* name)

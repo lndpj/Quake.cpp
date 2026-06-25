@@ -3,7 +3,7 @@
 #include <math.h>
 #include "quakedef.h"
 
-void Sys_Error(char* error, ...);
+[[noreturn]] void Sys_Error(char* error, ...);
 
 vec3_t vec3_origin = { 0, 0, 0 };
 int nanmask = 255 << 23;

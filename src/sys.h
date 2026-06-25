@@ -25,7 +25,7 @@ void Sys_mkdir(char* path);
 // system IO
 //
 
-void Sys_Error(char* error, ...);
+[[noreturn]] void Sys_Error(char* error, ...);
 // an error will cause the entire program to exit
 
 void Sys_Printf(char* fmt, ...);

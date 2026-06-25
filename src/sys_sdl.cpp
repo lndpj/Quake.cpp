@@ -73,7 +73,7 @@ void Sys_HighFPPrecision(void)
     // causes weird problems on Nextstep
 }
 
-void Sys_Error(char* error, ...)
+[[noreturn]] void Sys_Error(char* error, ...)
 {
     va_list argptr;
     char string[1024];
@@ -108,8 +108,6 @@ int findhandle(void)
         }
     }
     Sys_Error("out of handles");
-
-    return -1;
 }
 
 /*

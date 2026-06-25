@@ -1235,10 +1235,8 @@ char* PR_GetString(string_t handle)
     }
 
     // Handle out of range values
-    if (handle >= 0 || handle < -pr_numknownstrings) {
+    if (handle < -pr_numknownstrings || handle >= pr_stringssize) {
         Host_Error("PR_GetString: invalid string handle %d\n", handle);
-
-        return "";
     }
 
     // Handle known string table (encoded as -(index+1))
@@ -1248,8 +1246,6 @@ char* PR_GetString(string_t handle)
     }
 
     Host_Error("PR_GetString: attempt to access missing string %d\n", handle);
-
-    return "";
 }
 
 /*

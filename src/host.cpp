@@ -101,7 +101,7 @@ Host_Error
 This shuts down both the client and server
 ================
 */
-void Host_Error(char* error, ...)
+[[noreturn]] void Host_Error(char* error, ...)
 {
     va_list argptr;
     char string[1024];
