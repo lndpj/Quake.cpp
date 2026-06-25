@@ -73,7 +73,7 @@ int VCR_GetMessage(qsocket_t* sock)
     return 1;
 }
 
-int VCR_SendMessage(qsocket_t* sock, sizebuf_t* data)
+int VCR_SendMessage(qsocket_t* sock, sizebuf_t* /*data*/)
 {
     int ret;
 
@@ -103,15 +103,15 @@ qboolean VCR_CanSendMessage(qsocket_t* sock)
     return ret;
 }
 
-void VCR_Close(qsocket_t* sock)
+void VCR_Close(qsocket_t* /*sock*/)
 {
 }
 
-void VCR_SearchForHosts(qboolean xmit)
+void VCR_SearchForHosts(qboolean /*xmit*/)
 {
 }
 
-qsocket_t* VCR_Connect(char* host)
+qsocket_t* VCR_Connect(char* /*host*/)
 {
     return NULL;
 }

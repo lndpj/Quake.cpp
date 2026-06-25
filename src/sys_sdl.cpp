@@ -234,7 +234,7 @@ int Sys_FileTime(char* path)
     return -1;
 }
 
-void Sys_mkdir(char* path)
+void Sys_mkdir(char* /*path*/)
 {
 }
 

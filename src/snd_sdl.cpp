@@ -11,7 +11,7 @@ static int snd_inited;
 extern int desired_speed;
 extern int desired_bits;
 
-static void paint_audio(void* unused, Uint8* stream, int len)
+static void paint_audio(void* /*unused*/, Uint8* stream, int len)
 {
     if (shm) {
         shm->buffer = stream;

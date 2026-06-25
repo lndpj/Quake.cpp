@@ -228,7 +228,7 @@ static int PartialIPAddress(char* in, struct qsockaddr* hostaddr)
 
 //=============================================================================
 
-int UDP_Connect(int socket, struct qsockaddr* addr)
+int UDP_Connect(int /*socket*/, struct qsockaddr* /*addr*/)
 {
     return 0;
 }
