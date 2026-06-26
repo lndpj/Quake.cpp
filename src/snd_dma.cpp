@@ -8,7 +8,6 @@ void S_PlayVol(void);
 void S_SoundList(void);
 void S_Update_();
 void S_StopAllSounds(qboolean clear);
-void S_StopAllSoundsC(void);
 
 // =======================================================================
 // Internal sound data & structures
@@ -135,7 +134,7 @@ void S_Init(void)
 
     Cmd_AddCommand("play", S_Play);
     Cmd_AddCommand("playvol", S_PlayVol);
-    Cmd_AddCommand("stopsound", S_StopAllSoundsC);
+    Cmd_AddCommand("stopsound", []() { S_StopAllSounds(true); });
     Cmd_AddCommand("soundlist", S_SoundList);
     Cmd_AddCommand("soundinfo", S_SoundInfo_f);
 
@@ -162,13 +161,13 @@ void S_Init(void)
 
     SND_InitScaletable();
 
-    known_sfx = (sfx_t *) Hunk_AllocName(MAX_SFX * sizeof(sfx_t), "sfx_t");
+    known_sfx = (sfx_t *) Hunk_Alloc(MAX_SFX * sizeof(sfx_t), "sfx_t");
     num_sfx = 0;
 
     // create a piece of DMA memory
 
     if (fakedma) {
-        shm = (volatile dma_t*)(void*)Hunk_AllocName(sizeof(*shm), "shm");
+        shm = (volatile dma_t*)(void*)Hunk_Alloc(sizeof(*shm), "shm");
         shm->splitbuffer = 0;
         shm->samplebits = 16;
         shm->speed = 22050;
@@ -178,7 +177,7 @@ void S_Init(void)
         shm->soundalive = true;
         shm->gamealive = true;
         shm->submission_chunk = 1;
-        shm->buffer = (unsigned char *volatile ) Hunk_AllocName(1 << 16, "shmbuf");
+        shm->buffer = (unsigned char *volatile ) Hunk_Alloc(1 << 16, "shmbuf");
     }
 
     if (shm) {
@@ -521,10 +520,7 @@ void S_StopAllSounds(qboolean clear)
     }
 }
 
-void S_StopAllSoundsC(void)
-{
-    S_StopAllSounds(true);
-}
+
 
 void S_ClearBuffer(void)
 {

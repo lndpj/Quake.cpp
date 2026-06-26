@@ -39,7 +39,7 @@ void R_InitParticles(void)
         r_numparticles = MAX_PARTICLES;
     }
 
-    particles = (particle_t*)Hunk_AllocName(r_numparticles * sizeof(particle_t),
+    particles = (particle_t*)Hunk_Alloc(r_numparticles * sizeof(particle_t),
         "particles");
 }
 

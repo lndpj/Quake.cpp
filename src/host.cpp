@@ -179,7 +179,7 @@ void Host_FindMaxClients(void)
         svs.maxclientslimit = 4;
     }
 
-    svs.clients = (client_s *) Hunk_AllocName(svs.maxclientslimit * sizeof(client_t), "clients");
+    svs.clients = (client_s *) Hunk_Alloc(svs.maxclientslimit * sizeof(client_t), "clients");
 
     if (svs.maxclients > 1) {
         Cvar_SetValue("deathmatch", 1.0);
@@ -559,7 +559,7 @@ void Host_ServerFrame(void)
     pr_global_struct->frametime = host_frametime;
 
     // set the time and clear the general datagram
-    SV_ClearDatagram();
+    SZ_Clear(&sv.datagram);
 
     // check for new clients
     SV_CheckForNewClients();
@@ -589,7 +589,7 @@ void Host_ServerFrame(void)
     pr_global_struct->frametime = host_frametime;
 
     // set the time and clear the general datagram
-    SV_ClearDatagram();
+    SZ_Clear(&sv.datagram);
 
     // check for new clients
     SV_CheckForNewClients();
@@ -896,7 +896,7 @@ void Host_Init(quakeparms_t* parms)
 
     Cbuf_InsertText("exec quake.rc\n");
 
-    Hunk_AllocName(0, "-HOST_HUNKLEVEL-");
+    Hunk_Alloc(0, "-HOST_HUNKLEVEL-");
     host_hunklevel = Hunk_LowMark();
 
     host_initialized = true;

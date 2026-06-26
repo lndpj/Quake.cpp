@@ -103,7 +103,7 @@ qsocket_t* Loop_CheckNewConnections(void)
     return loop_server;
 }
 
-static int IntAlign(int value)
+static inline constexpr int IntAlign(int value)
 {
     return (value + (sizeof(int) - 1)) & (~(sizeof(int) - 1));
 }

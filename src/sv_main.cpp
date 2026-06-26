@@ -345,18 +345,8 @@ FRAME UPDATES
 */
 
 /*
-==================
-SV_ClearDatagram
-
-==================
-*/
-void SV_ClearDatagram(void)
-{
-    SZ_Clear(&sv.datagram);
-}
-
-/*
-=============================================================================
+=================
+============================================================
 
 The PVS must include a small area around the client to allow head bobbing
 or other small motion on the client side.  Otherwise, a bob might cause an
@@ -1138,7 +1128,7 @@ void SV_SpawnServer(char* server)
     // allocate server memory
     sv.max_edicts = MAX_EDICTS;
 
-    sv.edicts = (edict_t *) Hunk_AllocName(sv.max_edicts * pr_edict_size, "edicts");
+    sv.edicts = (edict_t *) Hunk_Alloc(sv.max_edicts * pr_edict_size, "edicts");
 
     sv.datagram.maxsize = sizeof(sv.datagram_buf);
     sv.datagram.cursize = 0;

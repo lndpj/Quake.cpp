@@ -784,16 +784,6 @@ void Host_Say(qboolean teamonly)
     Sys_Printf("%s", &text[1]);
 }
 
-void Host_Say_f(void)
-{
-    Host_Say(false);
-}
-
-void Host_Say_Team_f(void)
-{
-    Host_Say(true);
-}
-
 void Host_Tell_f(void)
 {
     client_t* client;
@@ -1622,8 +1612,8 @@ void Host_InitCommands(void)
     Cmd_AddCommand("name", Host_Name_f);
     Cmd_AddCommand("noclip", Host_Noclip_f);
     Cmd_AddCommand("version", Host_Version_f);
-    Cmd_AddCommand("say", Host_Say_f);
-    Cmd_AddCommand("say_team", Host_Say_Team_f);
+    Cmd_AddCommand("say", []() { Host_Say(false); });
+    Cmd_AddCommand("say_team", []() { Host_Say(true); });
     Cmd_AddCommand("tell", Host_Tell_f);
     Cmd_AddCommand("color", Host_Color_f);
     Cmd_AddCommand("kill", Host_Kill_f);

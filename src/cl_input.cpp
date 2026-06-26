@@ -99,184 +99,6 @@ void KeyUp(kbutton_t* b)
     b->state |= 4;  // impulse up
 }
 
-void IN_KLookDown(void)
-{
-    KeyDown(&in_klook);
-}
-
-void IN_KLookUp(void)
-{
-    KeyUp(&in_klook);
-}
-
-void IN_MLookDown(void)
-{
-    KeyDown(&in_mlook);
-}
-
-void IN_MLookUp(void)
-{
-    KeyUp(&in_mlook);
-    if (!(in_mlook.state & 1) && lookspring.value) {
-        V_StartPitchDrift();
-    }
-}
-
-void IN_UpDown(void)
-{
-    KeyDown(&in_up);
-}
-
-void IN_UpUp(void)
-{
-    KeyUp(&in_up);
-}
-
-void IN_DownDown(void)
-{
-    KeyDown(&in_down);
-}
-
-void IN_DownUp(void)
-{
-    KeyUp(&in_down);
-}
-
-void IN_LeftDown(void)
-{
-    KeyDown(&in_left);
-}
-
-void IN_LeftUp(void)
-{
-    KeyUp(&in_left);
-}
-
-void IN_RightDown(void)
-{
-    KeyDown(&in_right);
-}
-
-void IN_RightUp(void)
-{
-    KeyUp(&in_right);
-}
-
-void IN_ForwardDown(void)
-{
-    KeyDown(&in_forward);
-}
-
-void IN_ForwardUp(void)
-{
-    KeyUp(&in_forward);
-}
-
-void IN_BackDown(void)
-{
-    KeyDown(&in_back);
-}
-
-void IN_BackUp(void)
-{
-    KeyUp(&in_back);
-}
-
-void IN_LookupDown(void)
-{
-    KeyDown(&in_lookup);
-}
-
-void IN_LookupUp(void)
-{
-    KeyUp(&in_lookup);
-}
-
-void IN_LookdownDown(void)
-{
-    KeyDown(&in_lookdown);
-}
-
-void IN_LookdownUp(void)
-{
-    KeyUp(&in_lookdown);
-}
-
-void IN_MoveleftDown(void)
-{
-    KeyDown(&in_moveleft);
-}
-
-void IN_MoveleftUp(void)
-{
-    KeyUp(&in_moveleft);
-}
-
-void IN_MoverightDown(void)
-{
-    KeyDown(&in_moveright);
-}
-
-void IN_MoverightUp(void)
-{
-    KeyUp(&in_moveright);
-}
-
-void IN_SpeedDown(void)
-{
-    KeyDown(&in_speed);
-}
-
-void IN_SpeedUp(void)
-{
-    KeyUp(&in_speed);
-}
-
-void IN_StrafeDown(void)
-{
-    KeyDown(&in_strafe);
-}
-
-void IN_StrafeUp(void)
-{
-    KeyUp(&in_strafe);
-}
-
-void IN_AttackDown(void)
-{
-    KeyDown(&in_attack);
-}
-
-void IN_AttackUp(void)
-{
-    KeyUp(&in_attack);
-}
-
-void IN_UseDown(void)
-{
-    KeyDown(&in_use);
-}
-
-void IN_UseUp(void)
-{
-    KeyUp(&in_use);
-}
-
-void IN_JumpDown(void)
-{
-    KeyDown(&in_jump);
-}
-
-void IN_JumpUp(void)
-{
-    KeyUp(&in_jump);
-}
-
-void IN_Impulse(void)
-{
-    in_impulse = Q_atoi(Cmd_Argv(1));
-}
-
 /*
 ===============
 CL_KeyState
@@ -533,39 +355,39 @@ CL_InitInput
 */
 void CL_InitInput(void)
 {
-    Cmd_AddCommand("+moveup", IN_UpDown);
-    Cmd_AddCommand("-moveup", IN_UpUp);
-    Cmd_AddCommand("+movedown", IN_DownDown);
-    Cmd_AddCommand("-movedown", IN_DownUp);
-    Cmd_AddCommand("+left", IN_LeftDown);
-    Cmd_AddCommand("-left", IN_LeftUp);
-    Cmd_AddCommand("+right", IN_RightDown);
-    Cmd_AddCommand("-right", IN_RightUp);
-    Cmd_AddCommand("+forward", IN_ForwardDown);
-    Cmd_AddCommand("-forward", IN_ForwardUp);
-    Cmd_AddCommand("+back", IN_BackDown);
-    Cmd_AddCommand("-back", IN_BackUp);
-    Cmd_AddCommand("+lookup", IN_LookupDown);
-    Cmd_AddCommand("-lookup", IN_LookupUp);
-    Cmd_AddCommand("+lookdown", IN_LookdownDown);
-    Cmd_AddCommand("-lookdown", IN_LookdownUp);
-    Cmd_AddCommand("+strafe", IN_StrafeDown);
-    Cmd_AddCommand("-strafe", IN_StrafeUp);
-    Cmd_AddCommand("+moveleft", IN_MoveleftDown);
-    Cmd_AddCommand("-moveleft", IN_MoveleftUp);
-    Cmd_AddCommand("+moveright", IN_MoverightDown);
-    Cmd_AddCommand("-moveright", IN_MoverightUp);
-    Cmd_AddCommand("+speed", IN_SpeedDown);
-    Cmd_AddCommand("-speed", IN_SpeedUp);
-    Cmd_AddCommand("+attack", IN_AttackDown);
-    Cmd_AddCommand("-attack", IN_AttackUp);
-    Cmd_AddCommand("+use", IN_UseDown);
-    Cmd_AddCommand("-use", IN_UseUp);
-    Cmd_AddCommand("+jump", IN_JumpDown);
-    Cmd_AddCommand("-jump", IN_JumpUp);
-    Cmd_AddCommand("impulse", IN_Impulse);
-    Cmd_AddCommand("+klook", IN_KLookDown);
-    Cmd_AddCommand("-klook", IN_KLookUp);
-    Cmd_AddCommand("+mlook", IN_MLookDown);
-    Cmd_AddCommand("-mlook", IN_MLookUp);
+    Cmd_AddCommand("+moveup", []() { KeyDown(&in_up); });
+    Cmd_AddCommand("-moveup", []() { KeyUp(&in_up); });
+    Cmd_AddCommand("+movedown", []() { KeyDown(&in_down); });
+    Cmd_AddCommand("-movedown", []() { KeyUp(&in_down); });
+    Cmd_AddCommand("+left", []() { KeyDown(&in_left); });
+    Cmd_AddCommand("-left", []() { KeyUp(&in_left); });
+    Cmd_AddCommand("+right", []() { KeyDown(&in_right); });
+    Cmd_AddCommand("-right", []() { KeyUp(&in_right); });
+    Cmd_AddCommand("+forward", []() { KeyDown(&in_forward); });
+    Cmd_AddCommand("-forward", []() { KeyUp(&in_forward); });
+    Cmd_AddCommand("+back", []() { KeyDown(&in_back); });
+    Cmd_AddCommand("-back", []() { KeyUp(&in_back); });
+    Cmd_AddCommand("+lookup", []() { KeyDown(&in_lookup); });
+    Cmd_AddCommand("-lookup", []() { KeyUp(&in_lookup); });
+    Cmd_AddCommand("+lookdown", []() { KeyDown(&in_lookdown); });
+    Cmd_AddCommand("-lookdown", []() { KeyUp(&in_lookdown); });
+    Cmd_AddCommand("+strafe", []() { KeyDown(&in_strafe); });
+    Cmd_AddCommand("-strafe", []() { KeyUp(&in_strafe); });
+    Cmd_AddCommand("+moveleft", []() { KeyDown(&in_moveleft); });
+    Cmd_AddCommand("-moveleft", []() { KeyUp(&in_moveleft); });
+    Cmd_AddCommand("+moveright", []() { KeyDown(&in_moveright); });
+    Cmd_AddCommand("-moveright", []() { KeyUp(&in_moveright); });
+    Cmd_AddCommand("+speed", []() { KeyDown(&in_speed); });
+    Cmd_AddCommand("-speed", []() { KeyUp(&in_speed); });
+    Cmd_AddCommand("+attack", []() { KeyDown(&in_attack); });
+    Cmd_AddCommand("-attack", []() { KeyUp(&in_attack); });
+    Cmd_AddCommand("+use", []() { KeyDown(&in_use); });
+    Cmd_AddCommand("-use", []() { KeyUp(&in_use); });
+    Cmd_AddCommand("+jump", []() { KeyDown(&in_jump); });
+    Cmd_AddCommand("-jump", []() { KeyUp(&in_jump); });
+    Cmd_AddCommand("impulse", []() { in_impulse = Q_atoi(Cmd_Argv(1)); });
+    Cmd_AddCommand("+klook", []() { KeyDown(&in_klook); });
+    Cmd_AddCommand("-klook", []() { KeyUp(&in_klook); });
+    Cmd_AddCommand("+mlook", []() { KeyDown(&in_mlook); });
+    Cmd_AddCommand("-mlook", []() { KeyUp(&in_mlook); if (!(in_mlook.state & 1) && lookspring.value) V_StartPitchDrift(); });
 }

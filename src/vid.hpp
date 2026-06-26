@@ -41,7 +41,10 @@ extern void (*vid_menukeyfn)(int key);
 void VID_SetPalette(unsigned char* palette);
 // called at startup and after any gamma correction
 
-void VID_ShiftPalette(unsigned char* palette);
+inline void VID_ShiftPalette(unsigned char* palette)
+{
+    VID_SetPalette(palette);
+}
 // called for bonus and pain flashes, and for underwater color changes
 
 void VID_Init(unsigned char* palette);

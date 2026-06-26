@@ -328,6 +328,7 @@ typedef struct model_s {
 
 //============================================================================
 
+void Mod_Print(void);
 void Mod_Init(void);
 void Mod_ClearAll(void);
 model_t* Mod_ForName(char* name, qboolean crash);

@@ -1403,42 +1403,42 @@ sizebuf_t* WriteDest(void)
     return NULL;
 }
 
-void PF_WriteByte(void)
+inline void PF_WriteByte(void)
 {
     MSG_WriteByte(WriteDest(), G_FLOAT(OFS_PARM1));
 }
 
-void PF_WriteChar(void)
+inline void PF_WriteChar(void)
 {
     MSG_WriteChar(WriteDest(), G_FLOAT(OFS_PARM1));
 }
 
-void PF_WriteShort(void)
+inline void PF_WriteShort(void)
 {
     MSG_WriteShort(WriteDest(), G_FLOAT(OFS_PARM1));
 }
 
-void PF_WriteLong(void)
+inline void PF_WriteLong(void)
 {
     MSG_WriteLong(WriteDest(), G_FLOAT(OFS_PARM1));
 }
 
-void PF_WriteAngle(void)
+inline void PF_WriteAngle(void)
 {
     MSG_WriteAngle(WriteDest(), G_FLOAT(OFS_PARM1));
 }
 
-void PF_WriteCoord(void)
+inline void PF_WriteCoord(void)
 {
     MSG_WriteCoord(WriteDest(), G_FLOAT(OFS_PARM1));
 }
 
-void PF_WriteString(void)
+inline void PF_WriteString(void)
 {
     MSG_WriteString(WriteDest(), G_STRING(OFS_PARM1));
 }
 
-void PF_WriteEntity(void)
+inline void PF_WriteEntity(void)
 {
     MSG_WriteShort(WriteDest(), G_EDICTNUM(OFS_PARM1));
 }
@@ -1518,7 +1518,7 @@ void PF_changelevel(void)
 }
 
 
-void PF_Fixme(void)
+inline void PF_Fixme(void)
 {
     PR_RunError("unimplemented bulitin");
 }

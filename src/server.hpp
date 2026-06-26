@@ -177,7 +177,6 @@ void SV_StartSound(edict_t* entity,
 void SV_DropClient(qboolean crash);
 
 void SV_SendClientMessages(void);
-void SV_ClearDatagram(void);
 
 int SV_ModelIndex(char* name);
 

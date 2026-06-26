@@ -515,7 +515,7 @@ void ED_Write(FILE* f, edict_t* ed)
     fprintf(f, "}\n");
 }
 
-void ED_PrintNum(int ent)
+inline void ED_PrintNum(int ent)
 {
     ED_Print(EDICT_NUM(ent));
 }
@@ -1267,7 +1267,7 @@ string_t PR_CreateString(int size, char** out_ptr)
     string_t slot_index = PR_FindString(NULL);
 
     // Allocate memory for the string contents
-    char* str_buffer = (char*)Hunk_AllocName(size, "string");
+    char* str_buffer = (char*)Hunk_Alloc(size, "string");
 
     // Register the string at the chosen slot
     PR_SetStringAt(slot_index, str_buffer);

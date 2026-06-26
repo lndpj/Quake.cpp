@@ -263,7 +263,10 @@ extern qboolean r_fov_greater_than_90;
 void R_StoreEfrags(efrag_t** ppefrag);
 void R_TimeRefresh_f(void);
 void R_TimeGraph(void);
-void R_PrintAliasStats(void);
+inline void R_PrintAliasStats(void)
+{
+    Con_Printf("%3i polygon model drawn\n", r_amodels_drawn);
+}
 void R_PrintTimes(void);
 void R_PrintDSpeeds(void);
 void R_AnimateLight(void);

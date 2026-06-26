@@ -77,8 +77,7 @@ void Z_DumpHeap(void);
 void Z_CheckHeap(void);
 int Z_FreeMemory(void);
 
-void* Hunk_Alloc(int size); // returns 0 filled memory
-void* Hunk_AllocName(int size, char* name);
+void* Hunk_Alloc(int size, char* name = "unknown"); // returns 0 filled memory
 
 void* Hunk_HighAllocName(int size, char* name);
 

@@ -189,7 +189,7 @@ void Con_Init(void)
         }
     }
 
-    con_text = (char *) Hunk_AllocName(CON_TEXTSIZE, "context");
+    con_text = (char *) Hunk_Alloc(CON_TEXTSIZE, "context");
     Q_memset(con_text, ' ', CON_TEXTSIZE);
     con_linewidth = -1;
     Con_CheckResize();

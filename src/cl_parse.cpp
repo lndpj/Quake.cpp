@@ -208,7 +208,7 @@ void CL_ParseServerInfo(void)
         return;
     }
 
-    cl.scores = (scoreboard_t *) Hunk_AllocName(cl.maxclients * sizeof(*cl.scores), "scores");
+    cl.scores = (scoreboard_t *) Hunk_Alloc(cl.maxclients * sizeof(*cl.scores), "scores");
 
     // parse gametype
     cl.gametype = MSG_ReadByte();

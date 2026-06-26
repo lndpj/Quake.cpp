@@ -29,11 +29,6 @@ typedef struct cachepic_s {
 cachepic_t menu_cachepics[MAX_CACHED_PICS];
 int menu_numcachepics;
 
-qpic_t* Draw_PicFromWad(char* name)
-{
-    return (qpic_t*)W_GetLumpName(name);
-}
-
 /*
 ================
 Draw_CachePic

@@ -22,7 +22,6 @@ typedef struct sizebuf_s {
 void SZ_Alloc(sizebuf_t* buf, int startsize);
 void SZ_Clear(sizebuf_t* buf);
 void* SZ_GetSpace(sizebuf_t* buf, int length);
-void SZ_Write(sizebuf_t* buf, void* data, int length);
 void SZ_Print(sizebuf_t* buf, char* data); // strcats onto the sizebuf
 
 //============================================================================
@@ -77,8 +76,15 @@ void MSG_WriteShort(sizebuf_t* sb, int c);
 void MSG_WriteLong(sizebuf_t* sb, int c);
 void MSG_WriteFloat(sizebuf_t* sb, float f);
 void MSG_WriteString(sizebuf_t* sb, char* s);
-void MSG_WriteCoord(sizebuf_t* sb, float f);
-void MSG_WriteAngle(sizebuf_t* sb, float f);
+inline void MSG_WriteCoord(sizebuf_t* sb, float f)
+{
+    MSG_WriteShort(sb, static_cast<int>(f * 8));
+}
+
+inline void MSG_WriteAngle(sizebuf_t* sb, float f)
+{
+    MSG_WriteByte(sb, (static_cast<int>(f) * 256 / 360) & 255);
+}
 
 extern int msg_readcount;
 extern qboolean msg_badread; // set if a read goes beyond end of message
@@ -91,8 +97,15 @@ int MSG_ReadLong(void);
 float MSG_ReadFloat(void);
 char* MSG_ReadString(void);
 
-float MSG_ReadCoord(void);
-float MSG_ReadAngle(void);
+inline float MSG_ReadCoord(void)
+{
+    return MSG_ReadShort() * (1.0f / 8);
+}
+
+inline float MSG_ReadAngle(void)
+{
+    return MSG_ReadChar() * (360.0f / 256);
+}
 
 //============================================================================
 
@@ -105,8 +118,27 @@ char* Q_strrchr(char* s, char c);
 void Q_strcat(char* dest, char* src);
 int Q_strcmp(char* s1, char* s2);
 int Q_strncmp(char* s1, char* s2, int count);
-int Q_strcasecmp(char* s1, char* s2);
 int Q_strncasecmp(char* s1, char* s2, int n);
+
+inline void SZ_Write(sizebuf_t* buf, void* data, int length)
+{
+    Q_memcpy(SZ_GetSpace(buf, length), data, length);
+}
+
+inline int Q_strcasecmp(char* s1, char* s2)
+{
+    int c1, c2;
+    do {
+        c1 = *s1++;
+        c2 = *s2++;
+        if (c1 != c2) {
+            if (c1 >= 'a' && c1 <= 'z') c1 -= ('a' - 'A');
+            if (c2 >= 'a' && c2 <= 'z') c2 -= ('a' - 'A');
+            if (c1 != c2) return -1;
+        }
+    } while (c1);
+    return 0;
+}
 int Q_atoi(char* str);
 float Q_atof(char* str);
 
@@ -138,12 +170,26 @@ struct cache_user_s;
 extern char com_gamedir[MAX_OSPATH];
 
 void COM_WriteFile(char* filename, void* data, int len);
-int COM_OpenFile(char* filename, int* hndl);
-int COM_FOpenFile(char* filename, FILE** file);
+
+int COM_FindFile(char* filename, int* handle, FILE** file);
+byte* COM_LoadFile(char* path, int usehunk);
+
+inline int COM_OpenFile(char* filename, int* hndl)
+{
+    return COM_FindFile(filename, hndl, NULL);
+}
+
+inline int COM_FOpenFile(char* filename, FILE** file)
+{
+    return COM_FindFile(filename, NULL, file);
+}
 void COM_CloseFile(int h);
 
 byte* COM_LoadStackFile(char* path, void* buffer, int bufsize);
-byte* COM_LoadHunkFile(char* path);
+inline byte* COM_LoadHunkFile(char* path)
+{
+    return COM_LoadFile(path, 1);
+}
 void COM_LoadCacheFile(char* path, struct cache_user_s* cu);
 
 extern struct cvar_s registered;

@@ -109,7 +109,7 @@ M_DrawCharacter
 Draws one solid graphics character
 ================
 */
-void M_DrawCharacter(int cx, int line, int num)
+inline void M_DrawCharacter(int cx, int line, int num)
 {
     Draw_Character(cx + ((vid.width - 320) >> 1), line, num);
 }
@@ -132,7 +132,7 @@ void M_PrintWhite(int cx, int cy, char* str)
     }
 }
 
-void M_DrawTransPic(int x, int y, qpic_t* pic)
+inline void M_DrawTransPic(int x, int y, qpic_t* pic)
 {
     Draw_TransPic(x + ((vid.width - 320) >> 1), y, pic);
 }
@@ -174,13 +174,13 @@ void M_BuildTranslationTable(int top, int bottom)
     }
 }
 
-void M_DrawTransPicTranslate(int x, int y, qpic_t* pic)
+inline void M_DrawTransPicTranslate(int x, int y, qpic_t* pic)
 {
     Draw_TransPicTranslate(x + ((vid.width - 320) >> 1), y, pic,
         translationTable);
 }
 
-void M_DrawTextBox(int x, int y, int width, int lines)
+inline void M_DrawTextBox(int x, int y, int width, int lines)
 {
     qpic_t* p;
     int cx, cy;
@@ -1200,7 +1200,7 @@ void M_AdjustSliders(int dir)
     }
 }
 
-void M_DrawSlider(int x, int y, float range)
+inline void M_DrawSlider(int x, int y, float range)
 {
     int i;
 
@@ -1220,7 +1220,7 @@ void M_DrawSlider(int x, int y, float range)
     M_DrawCharacter(x + (SLIDER_RANGE - 1) * 8 * range, y, 131);
 }
 
-void M_DrawCheckbox(int x, int y, int on)
+inline void M_DrawCheckbox(int x, int y, int on)
 {
     if (on) {
         M_Print(x, y, "on");

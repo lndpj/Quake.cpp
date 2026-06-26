@@ -451,10 +451,10 @@ void Hunk_Print(qboolean all)
 
 /*
 ===================
-Hunk_AllocName
+Hunk_Alloc
 ===================
 */
-void* Hunk_AllocName(int size, char* name)
+void* Hunk_Alloc(int size, char* name)
 {
     hunk_t* h;
 
@@ -484,16 +484,6 @@ void* Hunk_AllocName(int size, char* name)
     Q_strncpy(h->name, name, 8);
 
     return (void*)(h + 1);
-}
-
-/*
-===================
-Hunk_Alloc
-===================
-*/
-void* Hunk_Alloc(int size)
-{
-    return Hunk_AllocName(size, "unknown");
 }
 
 int Hunk_LowMark(void)
@@ -999,6 +989,6 @@ void Memory_Init(void* buf, int size)
     }
 
     // C++ Fix: Explicitly cast void* returned from Hunk_AllocName
-    mainzone = (memzone_t*)Hunk_AllocName(zonesize, "zone");
+    mainzone = (memzone_t*)Hunk_Alloc(zonesize, "zone");
     Z_ClearZone(mainzone, zonesize);
 }

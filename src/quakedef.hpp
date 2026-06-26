@@ -19,8 +19,8 @@
 #include <stdlib.h>
 #include <setjmp.h>
 
-#define VID_LockBuffer()
-#define VID_UnlockBuffer()
+inline void VID_LockBuffer(void) {}
+inline void VID_UnlockBuffer(void) {}
 #define UNALIGNED_OK 0
 
 // !!! if this is changed, it must be changed in d_ifacea.h too !!!

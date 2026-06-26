@@ -44,7 +44,6 @@ qpic_t* hsb_items[2];
 
 void Sbar_MiniDeathmatchOverlay(void);
 void Sbar_DeathmatchOverlay(void);
-void M_DrawPic(int x, int y, qpic_t* pic);
 
 /*
 ===============

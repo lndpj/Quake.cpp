@@ -268,11 +268,6 @@ int Q_strncasecmp(char* s1, char* s2, int n)
     return -1;
 }
 
-int Q_strcasecmp(char* s1, char* s2)
-{
-    return Q_strncasecmp(s1, s2, 99999);
-}
-
 int Q_atoi(char* str)
 {
     int val;
@@ -569,16 +564,6 @@ void MSG_WriteString(sizebuf_t* sb, char* s)
     }
 }
 
-void MSG_WriteCoord(sizebuf_t* sb, float f)
-{
-    MSG_WriteShort(sb, (int)(f * 8));
-}
-
-void MSG_WriteAngle(sizebuf_t* sb, float f)
-{
-    MSG_WriteByte(sb, ((int)f * 256 / 360) & 255);
-}
-
 //
 // reading functions
 //
@@ -698,16 +683,6 @@ char* MSG_ReadString(void)
     return string;
 }
 
-float MSG_ReadCoord(void)
-{
-    return MSG_ReadShort() * (1.0 / 8);
-}
-
-float MSG_ReadAngle(void)
-{
-    return MSG_ReadChar() * (360.0 / 256);
-}
-
 //===========================================================================
 
 void SZ_Alloc(sizebuf_t* buf, int startsize)
@@ -716,7 +691,7 @@ void SZ_Alloc(sizebuf_t* buf, int startsize)
         startsize = 256;
     }
 
-    buf->data = (byte *) Hunk_AllocName(startsize, "sizebuf");
+    buf->data = (byte *) Hunk_Alloc(startsize, "sizebuf");
     buf->maxsize = startsize;
     buf->cursize = 0;
 }
@@ -748,11 +723,6 @@ void* SZ_GetSpace(sizebuf_t* buf, int length)
     buf->cursize += length;
 
     return data;
-}
-
-void SZ_Write(sizebuf_t* buf, void* data, int length)
-{
-    Q_memcpy(SZ_GetSpace(buf, length), data, length);
 }
 
 void SZ_Print(sizebuf_t* buf, char* data)
@@ -1394,33 +1364,6 @@ int COM_FindFile(char* filename, int* handle, FILE** file)
 }
 
 /*
-===========
-COM_OpenFile
-
-filename never has a leading slash, but may contain directory walks
-returns a handle and a length
-it may actually be inside a pak file
-===========
-*/
-int COM_OpenFile(char* filename, int* handle)
-{
-    return COM_FindFile(filename, handle, NULL);
-}
-
-/*
-===========
-COM_FOpenFile
-
-If the requested file is inside a packfile, a new FILE * will be opened
-into the file.
-===========
-*/
-int COM_FOpenFile(char* filename, FILE** file)
-{
-    return COM_FindFile(filename, NULL, file);
-}
-
-/*
 ============
 COM_CloseFile
 
@@ -1471,7 +1414,7 @@ byte* COM_LoadFile(char* path, int usehunk)
     COM_FileBase(path, base);
 
     if (usehunk == 1) {
-        buf = (byte *) Hunk_AllocName(len + 1, base);
+        buf = (byte *) Hunk_Alloc(len + 1, base);
     } else if (usehunk == 2) {
         buf = (byte *) Hunk_TempAlloc(len + 1);
     } else if (usehunk == 0) {
@@ -1500,11 +1443,6 @@ byte* COM_LoadFile(char* path, int usehunk)
     Draw_EndDisc();
 
     return buf;
-}
-
-byte* COM_LoadHunkFile(char* path)
-{
-    return COM_LoadFile(path, 1);
 }
 
 void COM_LoadCacheFile(char* path, struct cache_user_s* cu)
@@ -1569,7 +1507,7 @@ pack_t* COM_LoadPackFile(char* packfile)
         com_modified = true; // not the original file
     }
 
-    newfiles = (packfile_t *) Hunk_AllocName(numpackfiles * sizeof(packfile_t), "packfile");
+    newfiles = (packfile_t *) Hunk_Alloc(numpackfiles * sizeof(packfile_t), "packfile");
 
     Sys_FileSeek(packhandle, header.dirofs);
     Sys_FileRead(packhandle, (void*)info, header.dirlen);
