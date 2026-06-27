@@ -24,6 +24,8 @@ char* cachedir = "/tmp";
 cvar_t sys_linerefresh = { "sys_linerefresh", "0" }; // set for entity display
 cvar_t sys_nostdout = { "sys_nostdout", "0" };
 
+namespace Common {
+
 void Sys_Printf(char* fmt, ...)
 {
     va_list argptr;
@@ -260,6 +262,8 @@ void Sys_LineRefresh(void)
 void moncontrol()
 {
 }
+
+} // namespace Common
 
 int main(int c, char** v)
 {

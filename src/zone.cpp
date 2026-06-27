@@ -4,6 +4,8 @@
 #include "quakedef.hpp"
 #include <stdlib.h>
 
+namespace Common {
+
 #define DYNAMIC_SIZE 0x100000
 
 #define ZONEID 0x1d4a11
@@ -992,3 +994,5 @@ void Memory_Init(void* buf, int size)
     mainzone = (memzone_t*)Hunk_Alloc(zonesize, "zone");
     Z_ClearZone(mainzone, zonesize);
 }
+
+} // namespace Common

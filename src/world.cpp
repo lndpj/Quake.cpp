@@ -2,6 +2,8 @@
 
 #include "quakedef.hpp"
 
+namespace Server {
+
 /*
 
 entities never clip against themselves, or their owner
@@ -902,3 +904,5 @@ trace_t SV_Move(vec3_t start,
 
     return clip.trace;
 }
+
+} // namespace Server

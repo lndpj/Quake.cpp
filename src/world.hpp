@@ -19,6 +19,8 @@ typedef struct {
 #define MOVE_NOMONSTERS 1
 #define MOVE_MISSILE 2
 
+namespace Server {
+
 void SV_ClearWorld(void);
 // called after the world model has been loaded, before linking any entities
 
@@ -58,3 +60,7 @@ trace_t SV_Move(vec3_t start,
 
 // passedict is explicitly excluded from clipping checks (normally NULL)
 qboolean SV_RecursiveHullCheck(hull_t* hull, int num, float p1f, float p2f, vec3_t p1, vec3_t p2, trace_t* trace);
+
+} // namespace Server
+
+using namespace Server;

@@ -1,5 +1,7 @@
 // sys.h -- non-portable functions
 
+namespace Common {
+
 //
 // file IO
 //
@@ -46,3 +48,7 @@ void Sys_SendKeyEvents(void);
 void Sys_LowFPPrecision(void);
 void Sys_HighFPPrecision(void);
 void Sys_SetFPCW(void);
+
+} // namespace Common
+
+using namespace Common;

@@ -258,7 +258,7 @@ Sends text across to be displayed
 FIXME: make this just a stuffed echo?
 =================
 */
-void SV_ClientPrintf(char* fmt, ...)
+void Server::SV_ClientPrintf(char* fmt, ...)
 {
     va_list argptr;
     char string[1024];
@@ -278,7 +278,7 @@ SV_BroadcastPrintf
 Sends text to all active clients
 =================
 */
-void SV_BroadcastPrintf(char* fmt, ...)
+void Server::SV_BroadcastPrintf(char* fmt, ...)
 {
     va_list argptr;
     char string[1024];
@@ -324,7 +324,7 @@ Called when the player is getting totally kicked off the host
 if (crash = true), don't bother sending signofs
 =====================
 */
-void SV_DropClient(qboolean crash)
+void Server::SV_DropClient(qboolean crash)
 {
     int saveSelf;
     int i;

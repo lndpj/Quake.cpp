@@ -2,6 +2,15 @@
 
 #include "quakedef.hpp"
 
+namespace VM {
+extern cvar_t sv_aim;
+void PF_changeyaw(void);
+}
+
+extern float scr_centertime_off;
+
+namespace Server {
+
 //============================================================================
 // Global variable definitions
 //============================================================================
@@ -41,8 +50,6 @@ cvar_t sv_accelerate = { "sv_accelerate", "10" };
 // sv_main.cpp contents
 //============================================================================
 
-namespace VM { extern cvar_t sv_aim; }
-
 /*
 ===============
 SV_Init
@@ -60,7 +67,7 @@ void SV_Init(void)
     Cvar_RegisterVariable(&sv_maxspeed);
     Cvar_RegisterVariable(&sv_accelerate);
     Cvar_RegisterVariable(&sv_idealpitchscale);
-    Cvar_RegisterVariable(&sv_aim);
+    Cvar_RegisterVariable(&VM::sv_aim);
     Cvar_RegisterVariable(&sv_nostep);
 
     for (i = 0; i < MAX_MODELS; i++) {
@@ -1056,8 +1063,6 @@ SV_SpawnServer
 This is called at the start of each level
 ================
 */
-extern float scr_centertime_off;
-
 void SV_SpawnServer(char* server)
 {
     edict_t* ent;
@@ -1068,7 +1073,7 @@ void SV_SpawnServer(char* server)
         Cvar_Set("hostname", "UNNAMED");
     }
 
-    scr_centertime_off = 0;
+    ::scr_centertime_off = 0;
 
     Con_DPrintf("SpawnServer: %s\n", server);
     svs.changelevel_issued = false; // now safe to issue another
@@ -2599,15 +2604,13 @@ facing it.
 ======================
 */
 
-namespace VM { void PF_changeyaw(void); }
-
 qboolean SV_StepDirection(edict_t* ent, float yaw, float dist)
 {
     vec3_t move, oldorigin;
     float delta;
 
     ent->v.ideal_yaw = yaw;
-    PF_changeyaw();
+    VM::PF_changeyaw();
 
     yaw = yaw * M_PI * 2 / 360;
     move[0] = cos(yaw) * dist;
@@ -3388,3 +3391,5 @@ void SV_RunClients(void)
         }
     }
 }
+
+} // namespace Server

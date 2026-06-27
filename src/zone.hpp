@@ -66,6 +66,12 @@ Zone block
 
 */
 
+typedef struct cache_user_s {
+    void* data;
+} cache_user_t;
+
+namespace Common {
+
 void Memory_Init(void* buf, int size);
 
 void Z_Free(void* ptr);
@@ -91,10 +97,6 @@ void* Hunk_TempAlloc(int size);
 
 void Hunk_Check(void);
 
-typedef struct cache_user_s {
-    void* data;
-} cache_user_t;
-
 void Cache_Flush(void);
 
 void* Cache_Check(cache_user_t* c);
@@ -108,3 +110,7 @@ void* Cache_Alloc(cache_user_t* c, int size, char* name);
 // wasn't enough room.
 
 void Cache_Report(void);
+
+} // namespace Common
+
+using namespace Common;

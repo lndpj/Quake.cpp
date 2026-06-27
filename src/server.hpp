@@ -152,14 +152,12 @@ extern cvar_t coop;
 extern cvar_t fraglimit;
 extern cvar_t timelimit;
 
+namespace Server {
+
+extern cvar_t sv_gravity;
+
 extern server_static_t svs; // persistant server info
 extern server_t sv;         // local server
-
-extern client_t* host_client;
-
-extern jmp_buf host_abortserver;
-
-extern double host_time;
 
 extern edict_t* sv_player;
 
@@ -203,3 +201,13 @@ void SV_CheckForNewClients(void);
 void SV_RunClients(void);
 void SV_SaveSpawnparms();
 void SV_SpawnServer(char* server);
+
+} // namespace Server
+
+using namespace Server;
+
+extern client_t* host_client;
+
+extern jmp_buf host_abortserver;
+
+extern double host_time;

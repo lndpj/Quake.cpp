@@ -259,7 +259,7 @@ void D_EndDirectRect(int x, int y, int width, int height)
 Sys_SendKeyEvents
 ================
 */
-void Sys_SendKeyEvents(void)
+void Common::Sys_SendKeyEvents(void)
 {
     SDL_Event event;
     int sym, state;
@@ -542,7 +542,7 @@ void IN_Move(usercmd_t* cmd)
     mouse_x = mouse_y = 0.0;
 }
 
-char* Sys_ConsoleInput(void)
+char* Common::Sys_ConsoleInput(void)
 {
     return 0;
 }
