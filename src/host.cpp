@@ -1,6 +1,31 @@
 // host.cpp -- coordinates spawning and killing of local servers
 
 #include "quakedef.hpp"
+
+using namespace CDAudio;
+using namespace Client;
+using namespace Common;
+using namespace Console;
+using namespace Render;
+using namespace Draw;
+using namespace Host;
+using namespace Input;
+using namespace Keys;
+using namespace Math;
+using namespace Menu;
+using namespace Model;
+using namespace Net;
+using namespace VM;
+using namespace Sbar;
+using namespace Screen;
+using namespace Server;
+using namespace Audio;
+using namespace Vid;
+using namespace View;
+using namespace Wad;
+using namespace Cvar;
+using namespace Cmd;
+
 #include "r_local.hpp"
 
 extern int vcrFile;
@@ -48,7 +73,7 @@ cvar_t temp1 = { "temp1", "0" };
 Host_EndGame
 ================
 */
-void Host_EndGame(char* message, ...)
+void Host_EndGame(const char* message, ...)
 {
     va_list argptr;
     char string[1024];
@@ -82,7 +107,7 @@ Host_Error
 This shuts down both the client and server
 ================
 */
-[[noreturn]] void Host_Error(char* error, ...)
+[[noreturn]] void Host_Error(const char* error, ...)
 {
     va_list argptr;
     char string[1024];
@@ -167,9 +192,9 @@ void Host_FindMaxClients(void)
     svs.clients = (client_s *) Hunk_Alloc(svs.maxclientslimit * sizeof(client_t), "clients");
 
     if (svs.maxclients > 1) {
-        Cvar_SetValue("deathmatch", 1.0);
+        Cvar::SetValue("deathmatch", 1.0);
     } else {
-        Cvar_SetValue("deathmatch", 0.0);
+        Cvar::SetValue("deathmatch", 0.0);
     }
 }
 
@@ -182,25 +207,25 @@ void Host_InitLocal(void)
 {
     Host_InitCommands();
 
-    Cvar_RegisterVariable(&host_framerate);
-    Cvar_RegisterVariable(&host_speeds);
+    Cvar::Register(&host_framerate);
+    Cvar::Register(&host_speeds);
 
-    Cvar_RegisterVariable(&sys_ticrate);
-    Cvar_RegisterVariable(&serverprofile);
+    Cvar::Register(&sys_ticrate);
+    Cvar::Register(&serverprofile);
 
-    Cvar_RegisterVariable(&fraglimit);
-    Cvar_RegisterVariable(&timelimit);
-    Cvar_RegisterVariable(&teamplay);
-    Cvar_RegisterVariable(&samelevel);
-    Cvar_RegisterVariable(&noexit);
-    Cvar_RegisterVariable(&skill);
-    Cvar_RegisterVariable(&developer);
-    Cvar_RegisterVariable(&deathmatch);
-    Cvar_RegisterVariable(&coop);
+    Cvar::Register(&fraglimit);
+    Cvar::Register(&timelimit);
+    Cvar::Register(&teamplay);
+    Cvar::Register(&samelevel);
+    Cvar::Register(&noexit);
+    Cvar::Register(&skill);
+    Cvar::Register(&developer);
+    Cvar::Register(&deathmatch);
+    Cvar::Register(&coop);
 
-    Cvar_RegisterVariable(&pausable);
+    Cvar::Register(&pausable);
 
-    Cvar_RegisterVariable(&temp1);
+    Cvar::Register(&temp1);
 
     Host_FindMaxClients();
 
@@ -229,7 +254,7 @@ void Host_WriteConfiguration(void)
         }
 
         Key_WriteBindings(f);
-        Cvar_WriteVariables(f);
+        Cvar::WriteVariables(f);
 
         fclose(f);
     }
@@ -249,7 +274,7 @@ Sends text across to be displayed
 FIXME: make this just a stuffed echo?
 =================
 */
-void SV_ClientPrintf(char* fmt, ...)
+void SV_ClientPrintf(const char* fmt, ...)
 {
     va_list argptr;
     char string[1024];
@@ -269,7 +294,7 @@ SV_BroadcastPrintf
 Sends text to all active clients
 =================
 */
-void SV_BroadcastPrintf(char* fmt, ...)
+void SV_BroadcastPrintf(const char* fmt, ...)
 {
     va_list argptr;
     char string[1024];
@@ -361,7 +386,7 @@ Host_ClientCommands
 Send text over to the client to be executed
 =================
 */
-void Host_ClientCommands(char* fmt, ...)
+void Host_ClientCommands(const char* fmt, ...)
 {
     va_list argptr;
     char string[1024];
@@ -520,7 +545,7 @@ void Host_GetConsoleCommands(void)
             break;
         }
 
-        Cbuf_AddText(cmd);
+        Cmd::BufferAddText(cmd);
     }
 }
 
@@ -642,7 +667,7 @@ void _Host_Frame(float time)
     IN_Commands();
 
     // process console commands
-    Cbuf_Execute();
+    Cmd::BufferExecute();
 
     NET_Poll();
 
@@ -843,8 +868,8 @@ void Host_Init(quakeparms_t* parms)
     com_argv = parms->argv;
 
     Memory_Init(parms->membase, parms->memsize);
-    Cbuf_Init();
-    Cmd_Init();
+    Cmd::BufferInit();
+    Cmd::Init();
     V_Init();
     Chase_Init();
     Host_InitVCR(parms);
@@ -890,7 +915,7 @@ void Host_Init(quakeparms_t* parms)
         IN_Init();
     }
 
-    Cbuf_InsertText("exec quake.rc\n");
+    Cmd::BufferInsertText("exec quake.rc\n");
 
     Hunk_Alloc(0, "-HOST_HUNKLEVEL-");
     host_hunklevel = Hunk_LowMark();

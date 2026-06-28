@@ -4,6 +4,31 @@
 #include <fcntl.h>
 #include "quakedef.hpp"
 
+using namespace CDAudio;
+using namespace Client;
+using namespace Common;
+using namespace Console;
+using namespace Render;
+using namespace Draw;
+using namespace Host;
+using namespace Input;
+using namespace Keys;
+using namespace Math;
+using namespace Menu;
+using namespace Model;
+using namespace Net;
+using namespace VM;
+using namespace Sbar;
+using namespace Screen;
+using namespace Server;
+using namespace Audio;
+using namespace Vid;
+using namespace View;
+using namespace Wad;
+using namespace Cvar;
+using namespace Cmd;
+
+
 namespace Console {
 
 int con_linewidth;
@@ -172,7 +197,7 @@ void Con_Init(void)
 {
 #define MAXGAMEDIRLEN 1000
     char temp[MAXGAMEDIRLEN + 1];
-    char* t2 = "/qconsole.log";
+    const char* t2 = "/qconsole.log";
 
     con_debuglog = COM_CheckParm("-condebug");
 
@@ -193,12 +218,12 @@ void Con_Init(void)
     //
     // register our commands
     //
-    Cvar_RegisterVariable(&con_notifytime);
+    Cvar::Register(&con_notifytime);
 
-    Cmd_AddCommand("toggleconsole", Con_ToggleConsole_f);
-    Cmd_AddCommand("messagemode", Con_MessageMode_f);
-    Cmd_AddCommand("messagemode2", Con_MessageMode2_f);
-    Cmd_AddCommand("clear", Con_Clear_f);
+    Cmd::AddCommand("toggleconsole", Con_ToggleConsole_f);
+    Cmd::AddCommand("messagemode", Con_MessageMode_f);
+    Cmd::AddCommand("messagemode2", Con_MessageMode2_f);
+    Cmd::AddCommand("clear", Con_Clear_f);
     con_initialized = true;
 }
 
@@ -228,7 +253,7 @@ All console printing must go through this in order to be logged to disk
 If no console is visible, the notify window will pop up.
 ================
 */
-void Con_Print(char* txt)
+void Con_Print(const char* txt)
 {
     int y;
     int c, l;
@@ -309,7 +334,7 @@ void Con_Print(char* txt)
 Con_DebugLog
 ================
 */
-void Con_DebugLog(char* file, char* fmt, ...)
+void Con_DebugLog(const char* file, const char* fmt, ...)
 {
     va_list argptr;
     static char data[1024];
@@ -333,7 +358,7 @@ Handles cursor positioning, line wrapping, etc
 #define MAXPRINTMSG 4096
 
 // FIXME: make a buffer size safe vsprintf?
-void Con_Printf(char* fmt, ...)
+void Con_Printf(const char* fmt, ...)
 {
     va_list argptr;
     char msg[MAXPRINTMSG];
@@ -381,7 +406,7 @@ Con_DPrintf
 A Con_Printf that only shows up if the "developer" cvar is set
 ================
 */
-void Con_DPrintf(char* fmt, ...)
+void Con_DPrintf(const char* fmt, ...)
 {
     va_list argptr;
     char msg[MAXPRINTMSG];

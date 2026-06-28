@@ -1,59 +1,47 @@
 // cmd.h -- Command buffer and command execution
 #pragma once
-
-//===========================================================================
-
-/*
-
-Any number of commands can be added in a frame, from several different sources.
-Most commands come from either keybindings or console line input, but remote
-servers can also send across commands and entire text files can be execed.
-
-The + command line options are also added to the command buffer.
-
-The game starts with a Cbuf_AddText ("exec quake.rc\n"); Cbuf_Execute ();
-
-*/
+#include <string_view>
 
 typedef void (*xcommand_t)(void);
 
-typedef enum {
-    src_client,
-    src_command
-} cmd_source_t;
-
 namespace Cmd {
 
-void Cbuf_Init(void);
+enum class Source {
+    Client,
+    Command
+};
 
-void Cbuf_AddText(char* text);
+struct State {
+    Source source = Source::Command;
+};
+inline State state;
 
-void Cbuf_InsertText(char* text);
+void BufferInit(void);
 
-void Cbuf_Execute(void);
+void BufferAddText(std::string_view text);
 
-extern cmd_source_t cmd_source;
+void BufferInsertText(std::string_view text);
 
-void Cmd_Init(void);
+void BufferExecute(void);
 
-void Cmd_AddCommand(char* cmd_name, xcommand_t function);
+void Init(void);
 
-qboolean Cmd_Exists(char* cmd_name);
+void AddCommand(std::string_view cmd_name, xcommand_t function);
 
-char* Cmd_CompleteCommand(char* partial);
+bool Exists(std::string_view cmd_name);
 
-int Cmd_Argc(void);
-char* Cmd_Argv(int arg);
-char* Cmd_Args(void);
+std::string_view CompleteCommand(std::string_view partial);
 
-void Cmd_TokenizeString(char* text);
+int Argc(void);
+std::string_view Argv(int arg);
+std::string_view Args(void);
 
-void Cmd_ExecuteString(char* text, cmd_source_t src);
+void TokenizeString(std::string_view text);
 
-void Cmd_ForwardToServer(void);
+void ExecuteString(std::string_view text, Source src);
 
-void Cmd_Print(char* text);
+void ForwardToServer(void);
+
+void Print(std::string_view text);
 
 } // namespace Cmd
-
-using namespace Cmd;

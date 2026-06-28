@@ -115,7 +115,6 @@ extern void R_MakeSky(void);
 
 } // namespace Render
 
-using namespace Render;
 
 #endif // _R_SHARED_H_
 

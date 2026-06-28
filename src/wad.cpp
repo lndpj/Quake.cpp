@@ -2,6 +2,31 @@
 
 #include "quakedef.hpp"
 
+using namespace CDAudio;
+using namespace Client;
+using namespace Common;
+using namespace Console;
+using namespace Render;
+using namespace Draw;
+using namespace Host;
+using namespace Input;
+using namespace Keys;
+using namespace Math;
+using namespace Menu;
+using namespace Model;
+using namespace Net;
+using namespace VM;
+using namespace Sbar;
+using namespace Screen;
+using namespace Server;
+using namespace Audio;
+using namespace Vid;
+using namespace View;
+using namespace Wad;
+using namespace Cvar;
+using namespace Cmd;
+
+
 namespace Wad {
 
 int wad_numlumps;
@@ -21,7 +46,7 @@ Space padding is so names can be printed nicely in tables.
 Can safely be performed in place.
 ==================
 */
-void W_CleanupName(char* in, char* out)
+void W_CleanupName(const char* in, char* out)
 {
     int i;
     int c;
@@ -49,7 +74,7 @@ void W_CleanupName(char* in, char* out)
 W_LoadWadFile
 ====================
 */
-void W_LoadWadFile(char* filename)
+void W_LoadWadFile(const char* filename)
 {
     lumpinfo_t* lump_p;
     wadinfo_t* header;
@@ -86,7 +111,7 @@ void W_LoadWadFile(char* filename)
 W_GetLumpinfo
 =============
 */
-lumpinfo_t* W_GetLumpinfo(char* name)
+lumpinfo_t* W_GetLumpinfo(const char* name)
 {
     int i;
     lumpinfo_t* lump_p;
@@ -103,7 +128,7 @@ lumpinfo_t* W_GetLumpinfo(char* name)
     Sys_Error("W_GetLumpinfo: %s not found", name);
 }
 
-void* W_GetLumpName(char* name)
+void* W_GetLumpName(const char* name)
 {
     lumpinfo_t* lump;
 

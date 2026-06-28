@@ -3,6 +3,31 @@
 
 #include "quakedef.hpp"
 
+using namespace CDAudio;
+using namespace Client;
+using namespace Common;
+using namespace Console;
+using namespace Render;
+using namespace Draw;
+using namespace Host;
+using namespace Input;
+using namespace Keys;
+using namespace Math;
+using namespace Menu;
+using namespace Model;
+using namespace Net;
+using namespace VM;
+using namespace Sbar;
+using namespace Screen;
+using namespace Server;
+using namespace Audio;
+using namespace Vid;
+using namespace View;
+using namespace Wad;
+using namespace Cvar;
+using namespace Cmd;
+
+
 namespace VM {
 
 // ============================================================================
@@ -179,7 +204,7 @@ ddef_t* ED_FieldAtOfs(int ofs)
 ED_FindField
 ============
 */
-ddef_t* ED_FindField(char* name)
+ddef_t* ED_FindField(const char* name)
 {
     ddef_t* def;
     int i;
@@ -234,7 +259,7 @@ dfunction_t* ED_FindFunction(char* name)
     return NULL;
 }
 
-eval_t* GetEdictFieldValue(edict_t* ed, char* field)
+eval_t* GetEdictFieldValue(edict_t* ed, const char* field)
 {
     ddef_t* def = NULL;
     int i;
@@ -555,7 +580,7 @@ void ED_PrintEdict_f(void)
 {
     int i;
 
-    i = Q_atoi(Cmd_Argv(1));
+    i = Q_atoi(Cmd::Argv(1));
     if (i >= sv.num_edicts) {
         Con_Printf("Bad edict number\n");
 
@@ -1099,21 +1124,21 @@ PR_Init
 */
 void PR_Init(void)
 {
-    Cmd_AddCommand("edict", ED_PrintEdict_f);
-    Cmd_AddCommand("edicts", ED_PrintEdicts);
-    Cmd_AddCommand("edictcount", ED_Count);
-    Cmd_AddCommand("profile", PR_Profile_f);
-    Cvar_RegisterVariable(&nomonsters);
-    Cvar_RegisterVariable(&gamecfg);
-    Cvar_RegisterVariable(&scratch1);
-    Cvar_RegisterVariable(&scratch2);
-    Cvar_RegisterVariable(&scratch3);
-    Cvar_RegisterVariable(&scratch4);
-    Cvar_RegisterVariable(&savedgamecfg);
-    Cvar_RegisterVariable(&saved1);
-    Cvar_RegisterVariable(&saved2);
-    Cvar_RegisterVariable(&saved3);
-    Cvar_RegisterVariable(&saved4);
+    Cmd::AddCommand("edict", ED_PrintEdict_f);
+    Cmd::AddCommand("edicts", ED_PrintEdicts);
+    Cmd::AddCommand("edictcount", ED_Count);
+    Cmd::AddCommand("profile", PR_Profile_f);
+    Cvar::Register(&nomonsters);
+    Cvar::Register(&gamecfg);
+    Cvar::Register(&scratch1);
+    Cvar::Register(&scratch2);
+    Cvar::Register(&scratch3);
+    Cvar::Register(&scratch4);
+    Cvar::Register(&savedgamecfg);
+    Cvar::Register(&saved1);
+    Cvar::Register(&saved2);
+    Cvar::Register(&saved3);
+    Cvar::Register(&saved4);
 }
 
 edict_t* EDICT_NUM(int n)
@@ -1180,14 +1205,14 @@ PR_SetStringAt
 Assigns a string to a slot in the known string table.
 ========================
 */
-static void PR_SetStringAt(int slot_index, char* str)
+static void PR_SetStringAt(int slot_index, const char* str)
 {
     // Expand if needed
     if (slot_index >= pr_maxknownstrings) {
         PR_ExpandStringSlots();
     }
 
-    pr_knownstrings[slot_index] = str;
+    pr_knownstrings[slot_index] = const_cast<char*>(str);
 
     // Only count if the slot is new
     if (slot_index >= pr_numknownstrings) {
@@ -1202,7 +1227,7 @@ PR_SetString
 Registers a string and returns its handle (string_t).
 ========================
 */
-string_t PR_SetString(char* str)
+string_t PR_SetString(const char* str)
 {
     if (!str) {
         return 0;
@@ -1311,7 +1336,7 @@ int pr_xstatement;
 
 int pr_argc;
 
-char* pr_opnames[] = {
+const char* pr_opnames[] = {
     "DONE",
 
     "MUL_F", "MUL_V", "MUL_FV", "MUL_VF",
@@ -1474,7 +1499,7 @@ PR_RunError
 Aborts the currently executing function
 ============
 */
-void PR_RunError(char* error, ...)
+void PR_RunError(const char* error, ...)
 {
     va_list argptr;
     char string[1024];
@@ -2671,7 +2696,7 @@ void PF_localcmd(void)
     char* str;
 
     str = G_STRING(OFS_PARM0);
-    Cbuf_AddText(str);
+    Cmd::BufferAddText(str);
 }
 
 /*
@@ -2687,7 +2712,7 @@ void PF_cvar(void)
 
     str = G_STRING(OFS_PARM0);
 
-    G_FLOAT(OFS_RETURN) = Cvar_VariableValue(str);
+    G_FLOAT(OFS_RETURN) = Cvar::VariableValue(str);
 }
 
 /*
@@ -2704,7 +2729,7 @@ void PF_cvar_set(void)
     var = G_STRING(OFS_PARM0);
     val = G_STRING(OFS_PARM1);
 
-    Cvar_Set(var, val);
+    Cvar::Set(var, val);
 }
 
 /*
@@ -3337,7 +3362,7 @@ inline void PF_WriteEntity(void)
 
 //=============================================================================
 
-int ::SV_ModelIndex(char* name);
+int ::SV_ModelIndex(const char* name);
 
 void PF_makestatic(void)
 {
@@ -3406,7 +3431,7 @@ void PF_changelevel(void)
     svs.changelevel_issued = true;
 
     s = G_STRING(OFS_PARM0);
-    Cbuf_AddText(va("changelevel %s\n", s));
+    Cmd::BufferAddText(va("changelevel %s\n", s));
 }
 
 

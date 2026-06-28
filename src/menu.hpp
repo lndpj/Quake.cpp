@@ -22,5 +22,3 @@ extern qboolean m_return_onerror;
 extern char m_return_reason[32];
 
 } // namespace Menu
-
-using namespace Menu;

@@ -14,5 +14,3 @@ void IN_Move(usercmd_t* cmd);
 void IN_ClearStates(void);
 
 } // namespace Input
-
-using namespace Input;

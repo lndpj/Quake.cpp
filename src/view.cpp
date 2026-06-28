@@ -1,6 +1,31 @@
 // view.cpp -- player eye positioning
 
 #include "quakedef.hpp"
+
+using namespace CDAudio;
+using namespace Client;
+using namespace Common;
+using namespace Console;
+using namespace Render;
+using namespace Draw;
+using namespace Host;
+using namespace Input;
+using namespace Keys;
+using namespace Math;
+using namespace Menu;
+using namespace Model;
+using namespace Net;
+using namespace VM;
+using namespace Sbar;
+using namespace Screen;
+using namespace Server;
+using namespace Audio;
+using namespace Vid;
+using namespace View;
+using namespace Wad;
+using namespace Cvar;
+using namespace Cmd;
+
 #include "r_local.hpp"
 
 namespace View {
@@ -356,10 +381,10 @@ V_cshift_f
 */
 void V_cshift_f(void)
 {
-    cshift_empty.destcolor[0] = atoi(Cmd_Argv(1));
-    cshift_empty.destcolor[1] = atoi(Cmd_Argv(2));
-    cshift_empty.destcolor[2] = atoi(Cmd_Argv(3));
-    cshift_empty.percent = atoi(Cmd_Argv(4));
+    cshift_empty.destcolor[0] = Q_atoi(Cmd::Argv(1));
+    cshift_empty.destcolor[1] = Q_atoi(Cmd::Argv(2));
+    cshift_empty.destcolor[2] = Q_atoi(Cmd::Argv(3));
+    cshift_empty.percent = Q_atoi(Cmd::Argv(4));
 }
 
 /*
@@ -837,9 +862,9 @@ void V_RenderView(void)
 
     // don't allow cheats in multiplayer
     if (cl.maxclients > 1) {
-        Cvar_Set("scr_ofsx", "0");
-        Cvar_Set("scr_ofsy", "0");
-        Cvar_Set("scr_ofsz", "0");
+        Cvar::Set("scr_ofsx", "0");
+        Cvar::Set("scr_ofsy", "0");
+        Cvar::Set("scr_ofsz", "0");
     }
 
     if (cl.intermission) { // intermission / finale rendering
@@ -903,44 +928,44 @@ V_Init
 */
 void V_Init(void)
 {
-    Cmd_AddCommand("v_cshift", V_cshift_f);
-    Cmd_AddCommand("bf", V_BonusFlash_f);
-    Cmd_AddCommand("centerview", V_StartPitchDrift);
+    Cmd::AddCommand("v_cshift", V_cshift_f);
+    Cmd::AddCommand("bf", V_BonusFlash_f);
+    Cmd::AddCommand("centerview", V_StartPitchDrift);
 
-    Cvar_RegisterVariable(&lcd_x);
-    Cvar_RegisterVariable(&lcd_yaw);
+    Cvar::Register(&lcd_x);
+    Cvar::Register(&lcd_yaw);
 
-    Cvar_RegisterVariable(&v_centermove);
-    Cvar_RegisterVariable(&v_centerspeed);
+    Cvar::Register(&v_centermove);
+    Cvar::Register(&v_centerspeed);
 
-    Cvar_RegisterVariable(&v_iyaw_cycle);
-    Cvar_RegisterVariable(&v_iroll_cycle);
-    Cvar_RegisterVariable(&v_ipitch_cycle);
-    Cvar_RegisterVariable(&v_iyaw_level);
-    Cvar_RegisterVariable(&v_iroll_level);
-    Cvar_RegisterVariable(&v_ipitch_level);
+    Cvar::Register(&v_iyaw_cycle);
+    Cvar::Register(&v_iroll_cycle);
+    Cvar::Register(&v_ipitch_cycle);
+    Cvar::Register(&v_iyaw_level);
+    Cvar::Register(&v_iroll_level);
+    Cvar::Register(&v_ipitch_level);
 
-    Cvar_RegisterVariable(&v_idlescale);
-    Cvar_RegisterVariable(&crosshair);
-    Cvar_RegisterVariable(&cl_crossx);
-    Cvar_RegisterVariable(&cl_crossy);
-    Cvar_RegisterVariable(&gl_cshiftpercent);
+    Cvar::Register(&v_idlescale);
+    Cvar::Register(&crosshair);
+    Cvar::Register(&cl_crossx);
+    Cvar::Register(&cl_crossy);
+    Cvar::Register(&gl_cshiftpercent);
 
-    Cvar_RegisterVariable(&scr_ofsx);
-    Cvar_RegisterVariable(&scr_ofsy);
-    Cvar_RegisterVariable(&scr_ofsz);
-    Cvar_RegisterVariable(&cl_rollspeed);
-    Cvar_RegisterVariable(&cl_rollangle);
-    Cvar_RegisterVariable(&cl_bob);
-    Cvar_RegisterVariable(&cl_bobcycle);
-    Cvar_RegisterVariable(&cl_bobup);
+    Cvar::Register(&scr_ofsx);
+    Cvar::Register(&scr_ofsy);
+    Cvar::Register(&scr_ofsz);
+    Cvar::Register(&cl_rollspeed);
+    Cvar::Register(&cl_rollangle);
+    Cvar::Register(&cl_bob);
+    Cvar::Register(&cl_bobcycle);
+    Cvar::Register(&cl_bobup);
 
-    Cvar_RegisterVariable(&v_kicktime);
-    Cvar_RegisterVariable(&v_kickroll);
-    Cvar_RegisterVariable(&v_kickpitch);
+    Cvar::Register(&v_kicktime);
+    Cvar::Register(&v_kickroll);
+    Cvar::Register(&v_kickpitch);
 
     BuildGammaTable(1.0); // no gamma yet
-    Cvar_RegisterVariable(&v_gamma);
+    Cvar::Register(&v_gamma);
 }
 
 } // namespace View

@@ -4,6 +4,31 @@
 
 #include "quakedef.hpp"
 
+using namespace CDAudio;
+using namespace Client;
+using namespace Common;
+using namespace Console;
+using namespace Render;
+using namespace Draw;
+using namespace Host;
+using namespace Input;
+using namespace Keys;
+using namespace Math;
+using namespace Menu;
+using namespace Model;
+using namespace Net;
+using namespace VM;
+using namespace Sbar;
+using namespace Screen;
+using namespace Server;
+using namespace Audio;
+using namespace Vid;
+using namespace View;
+using namespace Wad;
+using namespace Cvar;
+using namespace Cmd;
+
+
 static qboolean cdValid = false;
 static qboolean initialized = false;
 static qboolean enabled = false;
@@ -79,10 +104,10 @@ void CDAudio_Update()
 
     if (bgmvolume.value != cdvolume) {
         if (cdvolume) {
-            Cvar_SetValue("bgmvolume", 0.0);
+            Cvar::SetValue("bgmvolume", 0.0);
             CDAudio_Pause();
         } else {
-            Cvar_SetValue("bgmvolume", 1.0);
+            Cvar::SetValue("bgmvolume", 1.0);
             CDAudio_Resume();
         }
 
@@ -94,13 +119,13 @@ void CDAudio_Update()
 
 static void CD_f()
 {
-    char* command;
+    std::string_view command;
 
-    if (Cmd_Argc() < 2) {
+    if (Cmd::Argc() < 2) {
         return;
     }
 
-    command = Cmd_Argv(1);
+    command = Cmd::Argv(1);
 
     if (!Q_strcasecmp(command, "on")) {
         enabled = true;
@@ -117,13 +142,13 @@ static void CD_f()
     }
 
     if (!Q_strcasecmp(command, "play")) {
-        CDAudio_Play(Q_atoi(Cmd_Argv(2)), false);
+        CDAudio_Play(Q_atoi(Cmd::Argv(2)), false);
 
         return;
     }
 
     if (!Q_strcasecmp(command, "loop")) {
-        CDAudio_Play(Q_atoi(Cmd_Argv(2)), true);
+        CDAudio_Play(Q_atoi(Cmd::Argv(2)), true);
 
         return;
     }
@@ -175,7 +200,7 @@ int CDAudio_Init()
     enabled = false;
     cdValid = false;
 
-    Cmd_AddCommand("cd", CD_f);
+    Cmd::AddCommand("cd", CD_f);
     Con_Printf("CD Audio Initialized (SDL 2 - no CD-ROM support).\n");
 
     return 0;

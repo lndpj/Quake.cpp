@@ -1,6 +1,31 @@
 // screen.cpp -- master for refresh, status bar, console, chat, notify, etc
 
 #include "quakedef.hpp"
+
+using namespace CDAudio;
+using namespace Client;
+using namespace Common;
+using namespace Console;
+using namespace Render;
+using namespace Draw;
+using namespace Host;
+using namespace Input;
+using namespace Keys;
+using namespace Math;
+using namespace Menu;
+using namespace Model;
+using namespace Net;
+using namespace VM;
+using namespace Sbar;
+using namespace Screen;
+using namespace Server;
+using namespace Audio;
+using namespace Vid;
+using namespace View;
+using namespace Wad;
+using namespace Cvar;
+using namespace Cmd;
+
 #include "r_local.hpp"
 
 namespace Screen {
@@ -68,7 +93,7 @@ Called for important messages that should stay in the center of the screen
 for a few moments
 ==============
 */
-void SCR_CenterPrint(char* str)
+void SCR_CenterPrint(const char* str)
 {
     strncpy(scr_centerstring, str, sizeof(scr_centerstring) - 1);
     scr_centertime_off = scr_centertime.value;
@@ -226,20 +251,20 @@ static void SCR_CalcRefdef(void)
 
     // bound viewsize
     if (scr_viewsize.value < 30) {
-        Cvar_Set("viewsize", "30");
+        Cvar::Set("viewsize", "30");
     }
 
     if (scr_viewsize.value > 120) {
-        Cvar_Set("viewsize", "120");
+        Cvar::Set("viewsize", "120");
     }
 
     // bound field of view
     if (scr_fov.value < 10) {
-        Cvar_Set("fov", "10");
+        Cvar::Set("fov", "10");
     }
 
     if (scr_fov.value > 170) {
-        Cvar_Set("fov", "170");
+        Cvar::Set("fov", "170");
     }
 
     r_refdef.fov_x = scr_fov.value;
@@ -288,7 +313,7 @@ Keybinding command
 */
 void SCR_SizeUp_f(void)
 {
-    Cvar_SetValue("viewsize", scr_viewsize.value + 10);
+    Cvar::SetValue("viewsize", scr_viewsize.value + 10);
     vid.recalc_refdef = 1;
 }
 
@@ -301,7 +326,7 @@ Keybinding command
 */
 void SCR_SizeDown_f(void)
 {
-    Cvar_SetValue("viewsize", scr_viewsize.value - 10);
+    Cvar::SetValue("viewsize", scr_viewsize.value - 10);
     vid.recalc_refdef = 1;
 }
 
@@ -314,21 +339,21 @@ SCR_Init
 */
 void SCR_Init(void)
 {
-    Cvar_RegisterVariable(&scr_fov);
-    Cvar_RegisterVariable(&scr_viewsize);
-    Cvar_RegisterVariable(&scr_conspeed);
-    Cvar_RegisterVariable(&scr_showram);
-    Cvar_RegisterVariable(&scr_showturtle);
-    Cvar_RegisterVariable(&scr_showpause);
-    Cvar_RegisterVariable(&scr_centertime);
-    Cvar_RegisterVariable(&scr_printspeed);
+    Cvar::Register(&scr_fov);
+    Cvar::Register(&scr_viewsize);
+    Cvar::Register(&scr_conspeed);
+    Cvar::Register(&scr_showram);
+    Cvar::Register(&scr_showturtle);
+    Cvar::Register(&scr_showpause);
+    Cvar::Register(&scr_centertime);
+    Cvar::Register(&scr_printspeed);
 
     //
     // register our commands
     //
-    Cmd_AddCommand("screenshot", SCR_ScreenShot_f);
-    Cmd_AddCommand("sizeup", SCR_SizeUp_f);
-    Cmd_AddCommand("sizedown", SCR_SizeDown_f);
+    Cmd::AddCommand("screenshot", SCR_ScreenShot_f);
+    Cmd::AddCommand("sizeup", SCR_SizeUp_f);
+    Cmd::AddCommand("sizedown", SCR_SizeDown_f);
 
     scr_ram = Draw_PicFromWad("ram");
     scr_net = Draw_PicFromWad("net");
@@ -697,12 +722,12 @@ void SCR_EndLoadingPlaque(void)
 
 //=============================================================================
 
-char* scr_notifystring;
+const char* scr_notifystring;
 qboolean scr_drawdialog;
 
 void SCR_DrawNotifyString(void)
 {
-    char* start;
+    const char* start;
     int l;
     int j;
     int x, y;
@@ -745,7 +770,7 @@ Displays a text string in the center of the screen and waits for a Y or N
 keypress.
 ==================
 */
-int SCR_ModalMessage(char* text)
+int SCR_ModalMessage(const char* text)
 {
     if (cls.state == ca_dedicated) {
         return true;

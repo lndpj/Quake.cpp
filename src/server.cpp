@@ -2,6 +2,31 @@
 
 #include "quakedef.hpp"
 
+using namespace CDAudio;
+using namespace Client;
+using namespace Common;
+using namespace Console;
+using namespace Render;
+using namespace Draw;
+using namespace Host;
+using namespace Input;
+using namespace Keys;
+using namespace Math;
+using namespace Menu;
+using namespace Model;
+using namespace Net;
+using namespace VM;
+using namespace Sbar;
+using namespace Screen;
+using namespace Server;
+using namespace Audio;
+using namespace Vid;
+using namespace View;
+using namespace Wad;
+using namespace Cvar;
+using namespace Cmd;
+
+
 namespace VM {
 extern cvar_t sv_aim;
 void PF_changeyaw(void);
@@ -64,16 +89,16 @@ void SV_Init(void)
 {
     int i;
 
-    Cvar_RegisterVariable(&sv_maxvelocity);
-    Cvar_RegisterVariable(&sv_gravity);
-    Cvar_RegisterVariable(&sv_friction);
-    Cvar_RegisterVariable(&sv_edgefriction);
-    Cvar_RegisterVariable(&sv_stopspeed);
-    Cvar_RegisterVariable(&sv_maxspeed);
-    Cvar_RegisterVariable(&sv_accelerate);
-    Cvar_RegisterVariable(&sv_idealpitchscale);
-    Cvar_RegisterVariable(&VM::sv_aim);
-    Cvar_RegisterVariable(&sv_nostep);
+    Cvar::Register(&sv_maxvelocity);
+    Cvar::Register(&sv_gravity);
+    Cvar::Register(&sv_friction);
+    Cvar::Register(&sv_edgefriction);
+    Cvar::Register(&sv_stopspeed);
+    Cvar::Register(&sv_maxspeed);
+    Cvar::Register(&sv_accelerate);
+    Cvar::Register(&sv_idealpitchscale);
+    Cvar::Register(&VM::sv_aim);
+    Cvar::Register(&sv_nostep);
 
     for (i = 0; i < MAX_MODELS; i++) {
         sprintf(localmodels[i], "*%i", i);
@@ -130,7 +155,7 @@ Larger attenuations will drop off.  (max 4 attenuation)
 */
 void SV_StartSound(edict_t* entity,
     int channel,
-    char* sample,
+    const char* sample,
     int vol,
     float attenuation)
 {
@@ -931,7 +956,7 @@ SV_ModelIndex
 
 ================
 */
-int SV_ModelIndex(char* name)
+int SV_ModelIndex(const char* name)
 {
     int i;
 
@@ -1028,7 +1053,7 @@ void SV_SendReconnect(void)
 
     if (cls.state != ca_dedicated)
     {
-        Cmd_ExecuteString("reconnect\n", src_command);
+        Cmd::ExecuteString("reconnect\n", Cmd::Source::Command);
     }
 }
 
@@ -1075,7 +1100,7 @@ void SV_SpawnServer(char* server)
 
     // let's not have any servers with no name
     if (hostname.string[0] == 0) {
-        Cvar_Set("hostname", "UNNAMED");
+        Cvar::Set("hostname", "UNNAMED");
     }
 
     Screen::scr_centertime_off = 0;
@@ -1094,7 +1119,7 @@ void SV_SpawnServer(char* server)
     // make cvars consistant
     //
     if (coop.value) {
-        Cvar_SetValue("deathmatch", 0);
+        Cvar::SetValue("deathmatch", 0);
     }
 
     current_skill = (int)(skill.value + 0.5);
@@ -1106,7 +1131,7 @@ void SV_SpawnServer(char* server)
         current_skill = 3;
     }
 
-    Cvar_SetValue("skill", (float)current_skill);
+    Cvar::SetValue("skill", (float)current_skill);
 
     //
     // set up the new server
@@ -3339,9 +3364,9 @@ qboolean SV_ReadClientMessage(void)
                 }
 
                 if (ret == 2) {
-                    Cbuf_InsertText(s);
+                    Cmd::BufferInsertText(s);
                 } else if (ret == 1) {
-                    Cmd_ExecuteString(s, src_client);
+                    Cmd::ExecuteString(s, Cmd::Source::Client);
                 } else {
                     Con_DPrintf("%s tried to %s\n", host_client->name, s);
                 }

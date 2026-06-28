@@ -3,6 +3,31 @@
 
 #include "quakedef.hpp"
 
+using namespace CDAudio;
+using namespace Client;
+using namespace Common;
+using namespace Console;
+using namespace Render;
+using namespace Draw;
+using namespace Host;
+using namespace Input;
+using namespace Keys;
+using namespace Math;
+using namespace Menu;
+using namespace Model;
+using namespace Net;
+using namespace VM;
+using namespace Sbar;
+using namespace Screen;
+using namespace Server;
+using namespace Audio;
+using namespace Vid;
+using namespace View;
+using namespace Wad;
+using namespace Cvar;
+using namespace Cmd;
+
+
 #include <stdint.h>
 
 #ifdef _WIN32
@@ -46,7 +71,7 @@ namespace Net {
 int Loop_Init(void);
 void Loop_Listen(qboolean state);
 void Loop_SearchForHosts(qboolean xmit);
-qsocket_t* Loop_Connect(char* host);
+qsocket_t* Loop_Connect(const char* host);
 qsocket_t* Loop_CheckNewConnections(void);
 int Loop_GetMessage(qsocket_t* sock);
 int Loop_SendMessage(qsocket_t* sock, sizebuf_t* data);
@@ -60,7 +85,7 @@ void Loop_Shutdown(void);
 int Datagram_Init(void);
 void Datagram_Listen(qboolean state);
 void Datagram_SearchForHosts(qboolean xmit);
-qsocket_t* Datagram_Connect(char* host);
+qsocket_t* Datagram_Connect(const char* host);
 qsocket_t* Datagram_CheckNewConnections(void);
 int Datagram_GetMessage(qsocket_t* sock);
 int Datagram_SendMessage(qsocket_t* sock, sizebuf_t* data);
@@ -82,10 +107,10 @@ int UDP_Read(int socket, byte* buf, int len, struct qsockaddr* addr);
 int UDP_Write(int socket, byte* buf, int len, struct qsockaddr* addr);
 int UDP_Broadcast(int socket, byte* buf, int len);
 char* UDP_AddrToString(struct qsockaddr* addr);
-int UDP_StringToAddr(char* string, struct qsockaddr* addr);
+int UDP_StringToAddr(const char* string, struct qsockaddr* addr);
 int UDP_GetSocketAddr(int socket, struct qsockaddr* addr);
 int UDP_GetNameFromAddr(struct qsockaddr* addr, char* name);
-int UDP_GetAddrFromName(char* name, struct qsockaddr* addr);
+int UDP_GetAddrFromName(const char* name, struct qsockaddr* addr);
 int UDP_AddrCompare(struct qsockaddr* addr1, struct qsockaddr* addr2);
 int UDP_GetSocketPort(struct qsockaddr* addr);
 int UDP_SetSocketPort(struct qsockaddr* addr, int port);
@@ -93,7 +118,7 @@ int UDP_SetSocketPort(struct qsockaddr* addr, int port);
 // net_vcr.hpp -- VCR driver
 int VCR_Init(void);
 void VCR_SearchForHosts(qboolean xmit);
-qsocket_t* VCR_Connect(char* host);
+qsocket_t* VCR_Connect(const char* host);
 qsocket_t* VCR_CheckNewConnections(void);
 int VCR_GetMessage(qsocket_t* sock);
 int VCR_SendMessage(qsocket_t* sock, sizebuf_t* data);
@@ -188,7 +213,7 @@ void Loop_SearchForHosts(qboolean /*xmit*/)
     Q_strcpy(hostcache[0].cname, "local");
 }
 
-qsocket_t* Loop_Connect(char* host)
+qsocket_t* Loop_Connect(const char* host)
 {
     if (Q_strcmp(host, "local") != 0) {
         return NULL;
@@ -427,7 +452,7 @@ int UDP_Init(void)
     // if the quake hostname isn't set, set it to the machine name
     if (Q_strcmp(hostname.string, "UNNAMED") == 0) {
         buff[15] = 0;
-        Cvar_Set("hostname", buff);
+        Cvar::Set("hostname", buff);
     }
 
     if ((net_controlsocket = UDP_OpenSocket(0)) == -1) {
@@ -527,7 +552,7 @@ int UDP_CloseSocket(int socket)
 
 //=============================================================================
 
-static int PartialIPAddress(char* in, struct qsockaddr* hostaddr)
+static int PartialIPAddress(const char* in, struct qsockaddr* hostaddr)
 {
     char buff[256];
     char* b;
@@ -694,7 +719,7 @@ char* UDP_AddrToString(struct qsockaddr* addr)
 
 //=============================================================================
 
-int UDP_StringToAddr(char* string, struct qsockaddr* addr)
+int UDP_StringToAddr(const char* string, struct qsockaddr* addr)
 {
     int ha1, ha2, ha3, ha4, hp;
     int ipaddr;
@@ -747,7 +772,7 @@ int UDP_GetNameFromAddr(struct qsockaddr* addr, char* name)
 
 //=============================================================================
 
-int UDP_GetAddrFromName(char* name, struct qsockaddr* addr)
+int UDP_GetAddrFromName(const char* name, struct qsockaddr* addr)
 {
     struct hostent* hostentry;
 
@@ -1177,7 +1202,7 @@ void NET_Stats_f(void)
 {
     qsocket_t* s;
 
-    if (Cmd_Argc() == 1) {
+    if (Cmd::Argc() == 1) {
         Con_Printf("unreliable messages sent   = %i\n", unreliableMessagesSent);
         Con_Printf("unreliable messages recv   = %i\n", unreliableMessagesReceived);
         Con_Printf("reliable messages sent     = %i\n", messagesSent);
@@ -1188,7 +1213,7 @@ void NET_Stats_f(void)
         Con_Printf("receivedDuplicateCount     = %i\n", receivedDuplicateCount);
         Con_Printf("shortPacketCount           = %i\n", shortPacketCount);
         Con_Printf("droppedDatagrams           = %i\n", droppedDatagrams);
-    } else if (Q_strcmp(Cmd_Argv(1), "*") == 0) {
+    } else if (Q_strcmp(Cmd::Argv(1), "*") == 0) {
         for (s = net_activeSockets; s; s = s->next) {
             PrintStats(s);
         }
@@ -1197,13 +1222,13 @@ void NET_Stats_f(void)
         }
     } else {
         for (s = net_activeSockets; s; s = s->next) {
-            if (Q_strcasecmp(Cmd_Argv(1), s->address) == 0) {
+            if (Q_strcasecmp(Cmd::Argv(1), s->address) == 0) {
                 break;
             }
         }
         if (s == NULL) {
             for (s = net_freeSockets; s; s = s->next) {
-                if (Q_strcasecmp(Cmd_Argv(1), s->address) == 0) {
+                if (Q_strcasecmp(Cmd::Argv(1), s->address) == 0) {
                     break;
                 }
             }
@@ -1281,7 +1306,7 @@ static void Test_Poll(void)
 
 static void Test_f(void)
 {
-    char* host;
+    std::string_view host;
     int n;
     int max = MAX_SCOREBOARD;
     struct qsockaddr sendaddr;
@@ -1290,9 +1315,9 @@ static void Test_f(void)
         return;
     }
 
-    host = Cmd_Argv(1);
+    host = Cmd::Argv(1);
 
-    if (host && hostCacheCount) {
+    if (!host.empty() && hostCacheCount) {
         for (n = 0; n < hostCacheCount; n++) {
             if (Q_strcasecmp(host, hostcache[n].name) == 0) {
                 if (hostcache[n].driver != myDriverLevel) {
@@ -1317,7 +1342,7 @@ static void Test_f(void)
         }
 
         // see if we can resolve the host name
-        if (dfunc.GetAddrFromName(host, &sendaddr) != -1) {
+        if (dfunc.GetAddrFromName(std::string(host).c_str(), &sendaddr) != -1) {
             break;
         }
     }
@@ -1420,7 +1445,7 @@ Done:
 
 static void Test2_f(void)
 {
-    char* host;
+    std::string_view host;
     int n;
     struct qsockaddr sendaddr;
 
@@ -1428,9 +1453,9 @@ static void Test2_f(void)
         return;
     }
 
-    host = Cmd_Argv(1);
+    host = Cmd::Argv(1);
 
-    if (host && hostCacheCount) {
+    if (!host.empty() && hostCacheCount) {
         for (n = 0; n < hostCacheCount; n++) {
             if (Q_strcasecmp(host, hostcache[n].name) == 0) {
                 if (hostcache[n].driver != myDriverLevel) {
@@ -1454,7 +1479,7 @@ static void Test2_f(void)
         }
 
         // see if we can resolve the host name
-        if (dfunc.GetAddrFromName(host, &sendaddr) != -1) {
+        if (dfunc.GetAddrFromName(std::string(host).c_str(), &sendaddr) != -1) {
             break;
         }
     }
@@ -1488,7 +1513,7 @@ int Datagram_Init(void)
     int csock;
 
     myDriverLevel = net_driverlevel;
-    Cmd_AddCommand("net_stats", NET_Stats_f);
+    Cmd::AddCommand("net_stats", NET_Stats_f);
 
     if (COM_CheckParm("-nolan")) {
         return -1;
@@ -1504,8 +1529,8 @@ int Datagram_Init(void)
         net_landrivers[i].controlSock = csock;
     }
 
-    Cmd_AddCommand("test", Test_f);
-    Cmd_AddCommand("test2", Test2_f);
+    Cmd::AddCommand("test", Test_f);
+    Cmd::AddCommand("test2", Test2_f);
 
     return 0;
 }
@@ -1654,14 +1679,14 @@ static qsocket_t* _Datagram_CheckNewConnections(void)
         // find the search start location
         prevCvarName = MSG_ReadString();
         if (*prevCvarName) {
-            var = Cvar_FindVar(prevCvarName);
+            var = Cvar::FindVar(prevCvarName);
             if (!var) {
                 return NULL;
             }
 
             var = var->next;
         } else {
-            var = cvar_vars;
+            var = Cvar::state.vars;
         }
 
         // search for the next server cvar
@@ -1941,7 +1966,7 @@ void Datagram_SearchForHosts(qboolean xmit)
     }
 }
 
-static qsocket_t* _Datagram_Connect(char* host)
+static qsocket_t* _Datagram_Connect(const char* host)
 {
     struct qsockaddr sendaddr;
     struct qsockaddr readaddr;
@@ -1951,7 +1976,7 @@ static qsocket_t* _Datagram_Connect(char* host)
     int reps;
     double start_time;
     int control;
-    char* reason;
+    const char* reason;
 
     // see if we can resolve the host name
     if (dfunc.GetAddrFromName(host, &sendaddr) == -1) {
@@ -2104,7 +2129,7 @@ ErrorReturn2:
     return NULL;
 }
 
-qsocket_t* Datagram_Connect(char* host)
+qsocket_t* Datagram_Connect(const char* host)
 {
     qsocket_t* ret = NULL;
 
@@ -2229,7 +2254,7 @@ void VCR_SearchForHosts(qboolean /*xmit*/)
 {
 }
 
-qsocket_t* VCR_Connect(char* /*host*/)
+qsocket_t* VCR_Connect(const char* /*host*/)
 {
     return NULL;
 }
@@ -2296,10 +2321,10 @@ void (*GetModemConfig)(int portNumber,
     char* init,
     char* hangup);
 void (*SetModemConfig)(int portNumber,
-    char* dialType,
-    char* clear,
-    char* init,
-    char* hangup);
+    const char* dialType,
+    const char* clear,
+    const char* init,
+    const char* hangup);
 
 static qboolean listening = false;
 
@@ -2414,13 +2439,13 @@ void NET_FreeQSocket(qsocket_t* sock)
 
 static void NET_Listen_f(void)
 {
-    if (Cmd_Argc() != 2) {
+    if (Cmd::Argc() != 2) {
         Con_Printf("\"listen\" is \"%u\"\n", listening ? 1 : 0);
 
         return;
     }
 
-    listening = Q_atoi(Cmd_Argv(1)) ? true : false;
+    listening = Q_atoi(Cmd::Argv(1)) ? true : false;
 
     for (net_driverlevel = 0; net_driverlevel < net_numdrivers;
         net_driverlevel++) {
@@ -2436,7 +2461,7 @@ static void MaxPlayers_f(void)
 {
     int n;
 
-    if (Cmd_Argc() != 2) {
+    if (Cmd::Argc() != 2) {
         Con_Printf("\"maxplayers\" is \"%u\"\n", svs.maxclients);
 
         return;
@@ -2448,7 +2473,7 @@ static void MaxPlayers_f(void)
         return;
     }
 
-    n = Q_atoi(Cmd_Argv(1));
+    n = Q_atoi(Cmd::Argv(1));
     if (n < 1) {
         n = 1;
     }
@@ -2459,18 +2484,18 @@ static void MaxPlayers_f(void)
     }
 
     if ((n == 1) && listening) {
-        Cbuf_AddText("listen 0\n");
+        Cmd::BufferAddText("listen 0\n");
     }
 
     if ((n > 1) && (!listening)) {
-        Cbuf_AddText("listen 1\n");
+        Cmd::BufferAddText("listen 1\n");
     }
 
     svs.maxclients = n;
     if (n == 1) {
-        Cvar_Set("deathmatch", "0");
+        Cvar::Set("deathmatch", "0");
     } else {
-        Cvar_Set("deathmatch", "1");
+        Cvar::Set("deathmatch", "1");
     }
 }
 
@@ -2478,13 +2503,13 @@ static void NET_Port_f(void)
 {
     int n;
 
-    if (Cmd_Argc() != 2) {
+    if (Cmd::Argc() != 2) {
         Con_Printf("\"port\" is \"%u\"\n", net_hostport);
 
         return;
     }
 
-    n = Q_atoi(Cmd_Argv(1));
+    n = Q_atoi(Cmd::Argv(1));
     if (n < 1 || n > 65534) {
         Con_Printf("Bad value, must be between 1 and 65534\n");
 
@@ -2496,8 +2521,8 @@ static void NET_Port_f(void)
 
     if (listening) {
         // force a change to the new port
-        Cbuf_AddText("listen 0\n");
-        Cbuf_AddText("listen 1\n");
+        Cmd::BufferAddText("listen 0\n");
+        Cmd::BufferAddText("listen 1\n");
     }
 }
 
@@ -2609,7 +2634,7 @@ static void Slist_Poll(void)
 int hostCacheCount = 0;
 hostcache_t hostcache[HOSTCACHESIZE];
 
-qsocket_t* NET_Connect(char* host)
+qsocket_t* NET_Connect(const char* host)
 {
     qsocket_t* ret;
     int n;
@@ -3040,21 +3065,21 @@ void NET_Init(void)
     // allocate space for network message buffer
     SZ_Alloc(&net_message, NET_MAXMESSAGE);
 
-    Cvar_RegisterVariable(&net_messagetimeout);
-    Cvar_RegisterVariable(&hostname);
-    Cvar_RegisterVariable(&config_com_port);
-    Cvar_RegisterVariable(&config_com_irq);
-    Cvar_RegisterVariable(&config_com_baud);
-    Cvar_RegisterVariable(&config_com_modem);
-    Cvar_RegisterVariable(&config_modem_dialtype);
-    Cvar_RegisterVariable(&config_modem_clear);
-    Cvar_RegisterVariable(&config_modem_init);
-    Cvar_RegisterVariable(&config_modem_hangup);
+    Cvar::Register(&net_messagetimeout);
+    Cvar::Register(&hostname);
+    Cvar::Register(&config_com_port);
+    Cvar::Register(&config_com_irq);
+    Cvar::Register(&config_com_baud);
+    Cvar::Register(&config_com_modem);
+    Cvar::Register(&config_modem_dialtype);
+    Cvar::Register(&config_modem_clear);
+    Cvar::Register(&config_modem_init);
+    Cvar::Register(&config_modem_hangup);
 
-    Cmd_AddCommand("slist", NET_Slist_f);
-    Cmd_AddCommand("listen", NET_Listen_f);
-    Cmd_AddCommand("maxplayers", MaxPlayers_f);
-    Cmd_AddCommand("port", NET_Port_f);
+    Cmd::AddCommand("slist", NET_Slist_f);
+    Cmd::AddCommand("listen", NET_Listen_f);
+    Cmd::AddCommand("maxplayers", MaxPlayers_f);
+    Cmd::AddCommand("port", NET_Port_f);
 
     // initialize all the drivers
     for (net_driverlevel = 0; net_driverlevel < net_numdrivers;

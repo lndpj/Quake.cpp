@@ -183,5 +183,3 @@ extern int c_surf;
 extern byte* r_warpbuffer;
 
 } // namespace Render
-
-using namespace Render;

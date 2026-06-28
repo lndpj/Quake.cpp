@@ -2,6 +2,31 @@
 
 #include "quakedef.hpp"
 
+using namespace CDAudio;
+using namespace Client;
+using namespace Common;
+using namespace Console;
+using namespace Render;
+using namespace Draw;
+using namespace Host;
+using namespace Input;
+using namespace Keys;
+using namespace Math;
+using namespace Menu;
+using namespace Model;
+using namespace Net;
+using namespace VM;
+using namespace Sbar;
+using namespace Screen;
+using namespace Server;
+using namespace Audio;
+using namespace Vid;
+using namespace View;
+using namespace Wad;
+using namespace Cvar;
+using namespace Cmd;
+
+
 #define MAXCMDLINE 256
 char key_lines[32][MAXCMDLINE];
 int key_linepos;
@@ -33,7 +58,7 @@ int key_repeats[256];      // if > 1, it is autorepeating
 qboolean keydown[256];
 
 typedef struct {
-    char* name;
+    const char* name;
     int keynum;
 } keyname_t;
 
@@ -141,11 +166,9 @@ Interactive line editing and console scrollback
 */
 void Key_Console(int key)
 {
-    char* cmd;
-
     if (key == K_ENTER) {
-        Cbuf_AddText(key_lines[edit_line] + 1); // skip the >
-        Cbuf_AddText("\n");
+        Cmd::BufferAddText(key_lines[edit_line] + 1); // skip the >
+        Cmd::BufferAddText("\n");
         Con_Printf("%s\n", key_lines[edit_line]);
         edit_line = (edit_line + 1) & 31;
         history_line = edit_line;
@@ -160,14 +183,15 @@ void Key_Console(int key)
     }
 
     if (key == K_TAB) { // command completion
-        cmd = Cmd_CompleteCommand(key_lines[edit_line] + 1);
-        if (!cmd) {
-            cmd = Cvar_CompleteVariable(key_lines[edit_line] + 1);
+        std::string_view cmd_view = Cmd::CompleteCommand(key_lines[edit_line] + 1);
+        if (cmd_view.empty()) {
+            cmd_view = Cvar::CompleteVariable(key_lines[edit_line] + 1);
         }
 
-        if (cmd) {
-            Q_strcpy(key_lines[edit_line] + 1, cmd);
-            key_linepos = Q_strlen(cmd) + 1;
+        if (!cmd_view.empty()) {
+            std::string cmd_str(cmd_view);
+            Q_strcpy(key_lines[edit_line] + 1, cmd_str.c_str());
+            key_linepos = Q_strlen(cmd_str.c_str()) + 1;
             key_lines[edit_line][key_linepos] = ' ';
             key_linepos++;
             key_lines[edit_line][key_linepos] = 0;
@@ -266,13 +290,13 @@ void Key_Message(int key)
 
     if (key == K_ENTER) {
         if (team_message) {
-            Cbuf_AddText("say_team \"");
+            Cmd::BufferAddText("say_team \"");
         } else {
-            Cbuf_AddText("say \"");
+            Cmd::BufferAddText("say \"");
         }
 
-        Cbuf_AddText(chat_buffer);
-        Cbuf_AddText("\"\n");
+        Cmd::BufferAddText(chat_buffer);
+        Cmd::BufferAddText("\"\n");
 
         key_dest = key_game;
         chat_bufferlen = 0;
@@ -321,15 +345,15 @@ the given string.  Single ascii characters return themselves, while
 the K_* names are matched up.
 ===================
 */
-int Key_StringToKeynum(char* str)
+int Key_StringToKeynum(std::string_view str)
 {
     keyname_t* kn;
 
-    if (!str || !str[0]) {
+    if (str.empty()) {
         return -1;
     }
 
-    if (!str[1]) {
+    if (str.size() == 1) {
         return str[0];
     }
 
@@ -351,7 +375,7 @@ given keynum.
 FIXME: handle quote special (general escape sequence?)
 ===================
 */
-char* Key_KeynumToString(int keynum)
+const char* Key_KeynumToString(int keynum)
 {
     keyname_t* kn;
     static char tinystr[2];
@@ -381,7 +405,7 @@ char* Key_KeynumToString(int keynum)
 Key_SetBinding
 ===================
 */
-void Key_SetBinding(int keynum, char* binding)
+void Key_SetBinding(int keynum, const char* binding)
 {
     char* new_binding;
     int l;
@@ -413,15 +437,15 @@ void Key_Unbind_f(void)
 {
     int b;
 
-    if (Cmd_Argc() != 2) {
+    if (Cmd::Argc() != 2) {
         Con_Printf("unbind <key> : remove commands from a key\n");
 
         return;
     }
 
-    b = Key_StringToKeynum(Cmd_Argv(1));
+    b = Key_StringToKeynum(Cmd::Argv(1));
     if (b == -1) {
-        Con_Printf("\"%s\" isn't a valid key\n", Cmd_Argv(1));
+        Con_Printf("\"%s\" isn't a valid key\n", Cmd::Argv(1));
 
         return;
     }
@@ -450,7 +474,7 @@ void Key_Bind_f(void)
     int i, c, b;
     char cmd[1024];
 
-    c = Cmd_Argc();
+    c = Cmd::Argc();
 
     if (c != 2 && c != 3) {
         Con_Printf("bind <key> [command] : attach a command to a key\n");
@@ -458,18 +482,18 @@ void Key_Bind_f(void)
         return;
     }
 
-    b = Key_StringToKeynum(Cmd_Argv(1));
+    b = Key_StringToKeynum(Cmd::Argv(1));
     if (b == -1) {
-        Con_Printf("\"%s\" isn't a valid key\n", Cmd_Argv(1));
+        Con_Printf("\"%s\" isn't a valid key\n", Cmd::Argv(1));
 
         return;
     }
 
     if (c == 2) {
         if (keybindings[b]) {
-            Con_Printf("\"%s\" = \"%s\"\n", Cmd_Argv(1), keybindings[b]);
+            Con_Printf("\"%s\" = \"%s\"\n", Cmd::Argv(1), keybindings[b]);
         } else {
-            Con_Printf("\"%s\" is not bound\n", Cmd_Argv(1));
+            Con_Printf("\"%s\" is not bound\n", Cmd::Argv(1));
         }
 
         return;
@@ -479,10 +503,10 @@ void Key_Bind_f(void)
     cmd[0] = 0; // start out with a null string
     for (i = 2; i < c; i++) {
         if (i > 2) {
-            strcat(cmd, " ");
+            Q_strcat(cmd, " ");
         }
 
-        strcat(cmd, Cmd_Argv(i));
+        Q_strcat(cmd, Cmd::Argv(i));
     }
 
     Key_SetBinding(b, cmd);
@@ -581,9 +605,9 @@ void Key_Init(void)
     //
     // register our functions
     //
-    Cmd_AddCommand("bind", Key_Bind_f);
-    Cmd_AddCommand("unbind", Key_Unbind_f);
-    Cmd_AddCommand("unbindall", Key_Unbindall_f);
+    Cmd::AddCommand("bind", Key_Bind_f);
+    Cmd::AddCommand("unbind", Key_Unbind_f);
+    Cmd::AddCommand("unbindall", Key_Unbindall_f);
 }
 
 /*
@@ -664,14 +688,14 @@ void Key_Event(int key, qboolean down)
         kb = keybindings[key];
         if (kb && kb[0] == '+') {
             sprintf(cmd, "-%s %i\n", kb + 1, key);
-            Cbuf_AddText(cmd);
+            Cmd::BufferAddText(cmd);
         }
 
         if (keyshift[key] != key) {
             kb = keybindings[keyshift[key]];
             if (kb && kb[0] == '+') {
                 sprintf(cmd, "-%s %i\n", kb + 1, key);
-                Cbuf_AddText(cmd);
+                Cmd::BufferAddText(cmd);
             }
         }
 
@@ -695,10 +719,10 @@ void Key_Event(int key, qboolean down)
         if (kb) {
             if (kb[0] == '+') { // button commands add keynum as a parm
                 sprintf(cmd, "%s %i\n", kb, key);
-                Cbuf_AddText(cmd);
+                Cmd::BufferAddText(cmd);
             } else {
-                Cbuf_AddText(kb);
-                Cbuf_AddText("\n");
+                Cmd::BufferAddText(kb);
+                Cmd::BufferAddText("\n");
             }
         }
 

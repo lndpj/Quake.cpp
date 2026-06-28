@@ -3,6 +3,31 @@
 
 #include "quakedef.hpp"
 
+using namespace CDAudio;
+using namespace Client;
+using namespace Common;
+using namespace Console;
+using namespace Render;
+using namespace Draw;
+using namespace Host;
+using namespace Input;
+using namespace Keys;
+using namespace Math;
+using namespace Menu;
+using namespace Model;
+using namespace Net;
+using namespace VM;
+using namespace Sbar;
+using namespace Screen;
+using namespace Server;
+using namespace Audio;
+using namespace Vid;
+using namespace View;
+using namespace Wad;
+using namespace Cvar;
+using namespace Cmd;
+
+
 typedef struct {
     vrect_t rect;
     int width;
@@ -36,7 +61,7 @@ int menu_numcachepics;
 Draw_CachePic
 ================
 */
-qpic_t* Draw_CachePic(char* path)
+qpic_t* Draw_CachePic(const char* path)
 {
     cachepic_t* pic;
     int i;
@@ -228,7 +253,7 @@ void Draw_Character(int x, int y, int num)
 Draw_String
 ================
 */
-void Draw_String(int x, int y, char* str)
+void Draw_String(int x, int y, const char* str)
 {
     while (*str) {
         Draw_Character(x, y, *str);

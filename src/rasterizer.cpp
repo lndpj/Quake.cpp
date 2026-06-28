@@ -4,6 +4,31 @@
 //              d_scan.cpp, d_sky.cpp, d_surf.cpp, d_sprite.cpp, d_polyse.cpp
 
 #include "quakedef.hpp"
+
+using namespace CDAudio;
+using namespace Client;
+using namespace Common;
+using namespace Console;
+using namespace Render;
+using namespace Draw;
+using namespace Host;
+using namespace Input;
+using namespace Keys;
+using namespace Math;
+using namespace Menu;
+using namespace Model;
+using namespace Net;
+using namespace VM;
+using namespace Sbar;
+using namespace Screen;
+using namespace Server;
+using namespace Audio;
+using namespace Vid;
+using namespace View;
+using namespace Wad;
+using namespace Cvar;
+using namespace Cmd;
+
 #include "d_local.hpp"
 #include "r_local.hpp"
 
@@ -185,9 +210,9 @@ void D_Init(void)
 {
     r_skydirect = 1;
 
-    Cvar_RegisterVariable(&d_subdiv16);
-    Cvar_RegisterVariable(&d_mipcap);
-    Cvar_RegisterVariable(&d_mipscale);
+    Cvar::Register(&d_subdiv16);
+    Cvar::Register(&d_mipcap);
+    Cvar::Register(&d_mipscale);
 
     r_drawpolys = false;
     r_worldpolysbacktofront = false;

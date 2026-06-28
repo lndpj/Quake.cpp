@@ -1,6 +1,31 @@
 // crc.cpp -- CRC-16 checksum computation
 
 #include "quakedef.hpp"
+
+using namespace CDAudio;
+using namespace Client;
+using namespace Common;
+using namespace Console;
+using namespace Render;
+using namespace Draw;
+using namespace Host;
+using namespace Input;
+using namespace Keys;
+using namespace Math;
+using namespace Menu;
+using namespace Model;
+using namespace Net;
+using namespace VM;
+using namespace Sbar;
+using namespace Screen;
+using namespace Server;
+using namespace Audio;
+using namespace Vid;
+using namespace View;
+using namespace Wad;
+using namespace Cvar;
+using namespace Cmd;
+
 #include "crc.hpp"
 
 // this is a 16 bit, non-reflected CRC using the polynomial 0x1021

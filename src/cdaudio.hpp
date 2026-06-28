@@ -12,5 +12,3 @@ void CDAudio_Shutdown(void);
 void CDAudio_Update(void);
 
 } // namespace CDAudio
-
-using namespace CDAudio;

@@ -53,5 +53,3 @@ surfcache_t* D_CacheSurface(msurface_t* surface, int miplevel);
 extern short* d_pzbuffer;
 
 } // namespace Render
-
-using namespace Render;

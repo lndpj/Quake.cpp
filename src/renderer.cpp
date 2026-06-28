@@ -1,6 +1,31 @@
 // renderer.cpp -- merged renderer subsystem
 
 #include "quakedef.hpp"
+
+using namespace CDAudio;
+using namespace Client;
+using namespace Common;
+using namespace Console;
+using namespace Render;
+using namespace Draw;
+using namespace Host;
+using namespace Input;
+using namespace Keys;
+using namespace Math;
+using namespace Menu;
+using namespace Model;
+using namespace Net;
+using namespace VM;
+using namespace Sbar;
+using namespace Screen;
+using namespace Server;
+using namespace Audio;
+using namespace Vid;
+using namespace View;
+using namespace Wad;
+using namespace Cvar;
+using namespace Cmd;
+
 #include "r_local.hpp"
 #include "d_local.hpp"
 
@@ -2221,10 +2246,10 @@ void R_SetupFrame(void)
 
     // don't allow cheats in multiplayer
     if (cl.maxclients > 1) {
-        Cvar_Set("r_draworder", "0");
-        Cvar_Set("r_fullbright", "0");
-        Cvar_Set("r_ambient", "0");
-        Cvar_Set("r_drawflat", "0");
+        Cvar::Set("r_draworder", "0");
+        Cvar::Set("r_fullbright", "0");
+        Cvar::Set("r_ambient", "0");
+        Cvar::Set("r_drawflat", "0");
     }
 
     if (r_numsurfs.value) {
@@ -5919,33 +5944,33 @@ void R_Init(void)
 
     R_InitTurb();
 
-    Cmd_AddCommand("timerefresh", R_TimeRefresh_f);
-    Cmd_AddCommand("pointfile", R_ReadPointFile_f);
+    Cmd::AddCommand("timerefresh", R_TimeRefresh_f);
+    Cmd::AddCommand("pointfile", R_ReadPointFile_f);
 
-    Cvar_RegisterVariable(&r_draworder);
-    Cvar_RegisterVariable(&r_speeds);
-    Cvar_RegisterVariable(&r_timegraph);
-    Cvar_RegisterVariable(&r_graphheight);
-    Cvar_RegisterVariable(&r_drawflat);
-    Cvar_RegisterVariable(&r_ambient);
-    Cvar_RegisterVariable(&r_clearcolor);
-    Cvar_RegisterVariable(&r_waterwarp);
-    Cvar_RegisterVariable(&r_fullbright);
-    Cvar_RegisterVariable(&r_drawentities);
-    Cvar_RegisterVariable(&r_drawviewmodel);
-    Cvar_RegisterVariable(&r_aliasstats);
-    Cvar_RegisterVariable(&r_dspeeds);
-    Cvar_RegisterVariable(&r_reportsurfout);
-    Cvar_RegisterVariable(&r_maxsurfs);
-    Cvar_RegisterVariable(&r_numsurfs);
-    Cvar_RegisterVariable(&r_reportedgeout);
-    Cvar_RegisterVariable(&r_maxedges);
-    Cvar_RegisterVariable(&r_numedges);
-    Cvar_RegisterVariable(&r_aliastransbase);
-    Cvar_RegisterVariable(&r_aliastransadj);
+    Cvar::Register(&r_draworder);
+    Cvar::Register(&r_speeds);
+    Cvar::Register(&r_timegraph);
+    Cvar::Register(&r_graphheight);
+    Cvar::Register(&r_drawflat);
+    Cvar::Register(&r_ambient);
+    Cvar::Register(&r_clearcolor);
+    Cvar::Register(&r_waterwarp);
+    Cvar::Register(&r_fullbright);
+    Cvar::Register(&r_drawentities);
+    Cvar::Register(&r_drawviewmodel);
+    Cvar::Register(&r_aliasstats);
+    Cvar::Register(&r_dspeeds);
+    Cvar::Register(&r_reportsurfout);
+    Cvar::Register(&r_maxsurfs);
+    Cvar::Register(&r_numsurfs);
+    Cvar::Register(&r_reportedgeout);
+    Cvar::Register(&r_maxedges);
+    Cvar::Register(&r_numedges);
+    Cvar::Register(&r_aliastransbase);
+    Cvar::Register(&r_aliastransadj);
 
-    Cvar_SetValue("r_maxedges", (float)NUMSTACKEDGES);
-    Cvar_SetValue("r_maxsurfs", (float)NUMSTACKSURFACES);
+    Cvar::SetValue("r_maxedges", (float)NUMSTACKEDGES);
+    Cvar::SetValue("r_maxsurfs", (float)NUMSTACKSURFACES);
 
     view_clipplanes[0].leftedge = true;
     view_clipplanes[1].rightedge = true;

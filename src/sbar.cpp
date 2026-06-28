@@ -2,6 +2,31 @@
 
 #include "quakedef.hpp"
 
+using namespace CDAudio;
+using namespace Client;
+using namespace Common;
+using namespace Console;
+using namespace Render;
+using namespace Draw;
+using namespace Host;
+using namespace Input;
+using namespace Keys;
+using namespace Math;
+using namespace Menu;
+using namespace Model;
+using namespace Net;
+using namespace VM;
+using namespace Sbar;
+using namespace Screen;
+using namespace Server;
+using namespace Audio;
+using namespace Vid;
+using namespace View;
+using namespace Wad;
+using namespace Cvar;
+using namespace Cmd;
+
+
 int sb_lines; // scan lines to draw
 
 namespace Sbar {
@@ -170,8 +195,8 @@ void Sbar_Init(void)
     sb_face_invis_invuln = Draw_PicFromWad("face_inv2");
     sb_face_quad = Draw_PicFromWad("face_quad");
 
-    Cmd_AddCommand("+showscores", Sbar_ShowScores);
-    Cmd_AddCommand("-showscores", Sbar_DontShowScores);
+    Cmd::AddCommand("+showscores", Sbar_ShowScores);
+    Cmd::AddCommand("-showscores", Sbar_DontShowScores);
 
     sb_sbar = Draw_PicFromWad("sbar");
     sb_ibar = Draw_PicFromWad("ibar");

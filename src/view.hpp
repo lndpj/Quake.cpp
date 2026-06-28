@@ -24,5 +24,3 @@ void V_ParseDamage(void);
 void V_SetContentsColor(int contents);
 
 } // namespace View
-
-using namespace View;

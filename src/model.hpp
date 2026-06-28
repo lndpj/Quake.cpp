@@ -334,7 +334,7 @@ namespace Model {
 void Mod_Print(void);
 void Mod_Init(void);
 void Mod_ClearAll(void);
-model_t* Mod_ForName(char* name, qboolean crash);
+model_t* Mod_ForName(const char* name, qboolean crash);
 void* Mod_Extradata(model_t* mod);
 void Mod_TouchModel(char* name);
 
@@ -343,6 +343,5 @@ byte* Mod_LeafPVS(mleaf_t* leaf, model_t* model);
 
 } // namespace Model
 
-using namespace Model;
 
 #endif // __MODEL__

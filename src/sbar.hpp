@@ -18,5 +18,3 @@ void Sbar_IntermissionOverlay(void);
 void Sbar_FinaleOverlay(void);
 
 } // namespace Sbar
-
-using namespace Sbar;

@@ -174,5 +174,3 @@ void R_SplitEntityOnNode2(mnode_t* node);
 void R_MarkLights(dlight_t* light, int bit, mnode_t* node);
 
 } // namespace Render
-
-using namespace Render;

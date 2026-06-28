@@ -3,6 +3,31 @@
 
 #include "quakedef.hpp"
 
+using namespace CDAudio;
+using namespace Client;
+using namespace Common;
+using namespace Console;
+using namespace Render;
+using namespace Draw;
+using namespace Host;
+using namespace Input;
+using namespace Keys;
+using namespace Math;
+using namespace Menu;
+using namespace Model;
+using namespace Net;
+using namespace VM;
+using namespace Sbar;
+using namespace Screen;
+using namespace Server;
+using namespace Audio;
+using namespace Vid;
+using namespace View;
+using namespace Wad;
+using namespace Cvar;
+using namespace Cmd;
+
+
 namespace Audio {
 
 // ============================================================================
@@ -132,26 +157,26 @@ void S_Init(void)
         fakedma = true;
     }
 
-    Cmd_AddCommand("play", S_Play);
-    Cmd_AddCommand("playvol", S_PlayVol);
-    Cmd_AddCommand("stopsound", []() { S_StopAllSounds(true); });
-    Cmd_AddCommand("soundlist", S_SoundList);
-    Cmd_AddCommand("soundinfo", S_SoundInfo_f);
+    Cmd::AddCommand("play", S_Play);
+    Cmd::AddCommand("playvol", S_PlayVol);
+    Cmd::AddCommand("stopsound", []() { S_StopAllSounds(true); });
+    Cmd::AddCommand("soundlist", S_SoundList);
+    Cmd::AddCommand("soundinfo", S_SoundInfo_f);
 
-    Cvar_RegisterVariable(&nosound);
-    Cvar_RegisterVariable(&volume);
-    Cvar_RegisterVariable(&precache);
-    Cvar_RegisterVariable(&loadas8bit);
-    Cvar_RegisterVariable(&bgmvolume);
-    Cvar_RegisterVariable(&bgmbuffer);
-    Cvar_RegisterVariable(&ambient_level);
-    Cvar_RegisterVariable(&ambient_fade);
-    Cvar_RegisterVariable(&snd_noextraupdate);
-    Cvar_RegisterVariable(&snd_show);
-    Cvar_RegisterVariable(&_snd_mixahead);
+    Cvar::Register(&nosound);
+    Cvar::Register(&volume);
+    Cvar::Register(&precache);
+    Cvar::Register(&loadas8bit);
+    Cvar::Register(&bgmvolume);
+    Cvar::Register(&bgmbuffer);
+    Cvar::Register(&ambient_level);
+    Cvar::Register(&ambient_fade);
+    Cvar::Register(&snd_noextraupdate);
+    Cvar::Register(&snd_show);
+    Cvar::Register(&_snd_mixahead);
 
     if (host_parms.memsize < 0x800000) {
-        Cvar_Set("loadas8bit", "1");
+        Cvar::Set("loadas8bit", "1");
         Con_Printf("loading all sounds as 8bit\n");
     }
 
@@ -222,7 +247,7 @@ S_FindName
 
 ==================
 */
-sfx_t* S_FindName(char* name)
+sfx_t* S_FindName(const char* name)
 {
     int i;
     sfx_t* sfx;
@@ -260,7 +285,7 @@ S_TouchSound
 
 ==================
 */
-void S_TouchSound(char* name)
+void S_TouchSound(const char* name)
 {
     sfx_t* sfx;
 
@@ -278,7 +303,7 @@ S_PrecacheSound
 
 ==================
 */
-sfx_t* S_PrecacheSound(char* name)
+sfx_t* S_PrecacheSound(const char* name)
 {
     sfx_t* sfx;
 
@@ -760,12 +785,12 @@ void S_Play(void)
     sfx_t* sfx;
 
     i = 1;
-    while (i < Cmd_Argc()) {
-        if (!Q_strrchr(Cmd_Argv(i), '.')) {
-            Q_strcpy(name, Cmd_Argv(i));
+    while (i < Cmd::Argc()) {
+        if (Cmd::Argv(i).find('.') == std::string_view::npos) {
+            Q_strcpy(name, Cmd::Argv(i));
             Q_strcat(name, ".wav");
         } else {
-            Q_strcpy(name, Cmd_Argv(i));
+            Q_strcpy(name, Cmd::Argv(i));
         }
 
         sfx = S_PrecacheSound(name);
@@ -783,16 +808,16 @@ void S_PlayVol(void)
     sfx_t* sfx;
 
     i = 1;
-    while (i < Cmd_Argc()) {
-        if (!Q_strrchr(Cmd_Argv(i), '.')) {
-            Q_strcpy(name, Cmd_Argv(i));
+    while (i < Cmd::Argc()) {
+        if (Cmd::Argv(i).find('.') == std::string_view::npos) {
+            Q_strcpy(name, Cmd::Argv(i));
             Q_strcat(name, ".wav");
         } else {
-            Q_strcpy(name, Cmd_Argv(i));
+            Q_strcpy(name, Cmd::Argv(i));
         }
 
         sfx = S_PrecacheSound(name);
-        vol = Q_atof(Cmd_Argv(i + 1));
+        vol = Q_atof(Cmd::Argv(i + 1));
         S_StartSound(hash++, 0, sfx, listener_origin, vol, 1.0);
         i += 2;
     }
@@ -825,7 +850,7 @@ void S_SoundList(void)
     Con_Printf("Total resident: %i\n", total);
 }
 
-void S_LocalSound(char* sound)
+void S_LocalSound(const char* sound)
 {
     sfx_t* sfx;
 
@@ -1030,7 +1055,7 @@ int GetLittleLong(void)
     return val;
 }
 
-void FindNextChunk(char* name)
+void FindNextChunk(const char* name)
 {
     while (1) {
         data_p = last_chunk;
@@ -1059,7 +1084,7 @@ void FindNextChunk(char* name)
     }
 }
 
-void FindChunk(char* name)
+void FindChunk(const char* name)
 {
     last_chunk = iff_data;
     FindNextChunk(name);

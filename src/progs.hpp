@@ -53,7 +53,7 @@ void PR_Init(void);
 void PR_ExecuteProgram(func_t fnum);
 void PR_LoadProgs(void);
 
-string_t PR_SetString(char* str);
+string_t PR_SetString(const char* str);
 char* PR_GetString(string_t handle);
 string_t PR_CreateString(int size, char** out_ptr);
 
@@ -110,13 +110,11 @@ extern int pr_xstatement;
 
 extern unsigned short pr_crc;
 
-void PR_RunError(char* error, ...);
+void PR_RunError(const char* error, ...);
 
 void ED_PrintEdicts(void);
 void ED_PrintNum(int ent);
 
-eval_t* GetEdictFieldValue(edict_t* ed, char* field);
+eval_t* GetEdictFieldValue(edict_t* ed, const char* field);
 
 } // namespace VM
-
-using namespace VM;

@@ -2,6 +2,31 @@
 
 #include "quakedef.hpp"
 
+using namespace CDAudio;
+using namespace Client;
+using namespace Common;
+using namespace Console;
+using namespace Render;
+using namespace Draw;
+using namespace Host;
+using namespace Input;
+using namespace Keys;
+using namespace Math;
+using namespace Menu;
+using namespace Model;
+using namespace Net;
+using namespace VM;
+using namespace Sbar;
+using namespace Screen;
+using namespace Server;
+using namespace Audio;
+using namespace Vid;
+using namespace View;
+using namespace Wad;
+using namespace Cvar;
+using namespace Cmd;
+
+
 namespace Client {
 
 //============================================================================
@@ -50,7 +75,7 @@ cvar_t cl_pitchspeed = { "cl_pitchspeed", "150" };
 cvar_t cl_anglespeedkey = { "cl_anglespeedkey", "1.5" };
 
 // from cl_parse.cpp
-char* svc_strings[] = {
+const char* svc_strings[] = {
     "svc_bad", "svc_nop", "svc_disconnect", "svc_updatestat",
     "svc_version",   // [long] server version
     "svc_setview",   // [short] entity number
@@ -184,7 +209,7 @@ CL_EstablishConnection
 Host should be either "local" or a net address to be passed on
 =====================
 */
-void CL_EstablishConnection(char* host)
+void CL_EstablishConnection(const char* host)
 {
     if (cls.state == ca_dedicated) {
         return;
@@ -281,7 +306,7 @@ void CL_NextDemo(void)
     }
 
     sprintf(str, "playdemo %s\n", cls.demos[cls.demonum]);
-    Cbuf_InsertText(str);
+    Cmd::BufferInsertText(str);
     cls.demonum++;
 }
 
@@ -685,35 +710,35 @@ void CL_Init(void)
     //
     // register our commands
     //
-    Cvar_RegisterVariable(&cl_name);
-    Cvar_RegisterVariable(&cl_color);
-    Cvar_RegisterVariable(&cl_upspeed);
-    Cvar_RegisterVariable(&cl_forwardspeed);
-    Cvar_RegisterVariable(&cl_backspeed);
-    Cvar_RegisterVariable(&cl_sidespeed);
-    Cvar_RegisterVariable(&cl_movespeedkey);
-    Cvar_RegisterVariable(&cl_yawspeed);
-    Cvar_RegisterVariable(&cl_pitchspeed);
-    Cvar_RegisterVariable(&cl_anglespeedkey);
-    Cvar_RegisterVariable(&cl_shownet);
-    Cvar_RegisterVariable(&cl_nolerp);
-    Cvar_RegisterVariable(&lookspring);
-    Cvar_RegisterVariable(&lookstrafe);
-    Cvar_RegisterVariable(&sensitivity);
+    Cvar::Register(&cl_name);
+    Cvar::Register(&cl_color);
+    Cvar::Register(&cl_upspeed);
+    Cvar::Register(&cl_forwardspeed);
+    Cvar::Register(&cl_backspeed);
+    Cvar::Register(&cl_sidespeed);
+    Cvar::Register(&cl_movespeedkey);
+    Cvar::Register(&cl_yawspeed);
+    Cvar::Register(&cl_pitchspeed);
+    Cvar::Register(&cl_anglespeedkey);
+    Cvar::Register(&cl_shownet);
+    Cvar::Register(&cl_nolerp);
+    Cvar::Register(&lookspring);
+    Cvar::Register(&lookstrafe);
+    Cvar::Register(&sensitivity);
 
-    Cvar_RegisterVariable(&m_pitch);
-    Cvar_RegisterVariable(&m_yaw);
-    Cvar_RegisterVariable(&m_forward);
-    Cvar_RegisterVariable(&m_side);
+    Cvar::Register(&m_pitch);
+    Cvar::Register(&m_yaw);
+    Cvar::Register(&m_forward);
+    Cvar::Register(&m_side);
 
-    //	Cvar_RegisterVariable (&cl_autofire);
+    //	Cvar::Register (&cl_autofire);
 
-    Cmd_AddCommand("entities", CL_PrintEntities_f);
-    Cmd_AddCommand("disconnect", CL_Disconnect_f);
-    Cmd_AddCommand("record", CL_Record_f);
-    Cmd_AddCommand("stop", CL_Stop_f);
-    Cmd_AddCommand("playdemo", CL_PlayDemo_f);
-    Cmd_AddCommand("timedemo", CL_TimeDemo_f);
+    Cmd::AddCommand("entities", CL_PrintEntities_f);
+    Cmd::AddCommand("disconnect", CL_Disconnect_f);
+    Cmd::AddCommand("record", CL_Record_f);
+    Cmd::AddCommand("stop", CL_Stop_f);
+    Cmd::AddCommand("playdemo", CL_PlayDemo_f);
+    Cmd::AddCommand("timedemo", CL_TimeDemo_f);
 }
 
 //============================================================================
@@ -728,11 +753,11 @@ KeyDown
 void KeyDown(kbutton_t* b)
 {
     int k;
-    char* c;
+    std::string_view c;
 
-    c = Cmd_Argv(1);
-    if (c[0]) {
-        k = atoi(c);
+    c = Cmd::Argv(1);
+    if (!c.empty()) {
+        k = Q_atoi(c);
     } else {
         k = -1; // typed manually at the console for continuous down
     }
@@ -761,11 +786,11 @@ void KeyDown(kbutton_t* b)
 void KeyUp(kbutton_t* b)
 {
     int k;
-    char* c;
+    std::string_view c;
 
-    c = Cmd_Argv(1);
-    if (c[0]) {
-        k = atoi(c);
+    c = Cmd::Argv(1);
+    if (!c.empty()) {
+        k = Q_atoi(c);
     } else { // typed manually at the console, assume for unsticking, so clear all
         b->down[0] = b->down[1] = 0;
         b->state = 4; // impulse up
@@ -1037,41 +1062,41 @@ CL_InitInput
 */
 void CL_InitInput(void)
 {
-    Cmd_AddCommand("+moveup", []() { KeyDown(&in_up); });
-    Cmd_AddCommand("-moveup", []() { KeyUp(&in_up); });
-    Cmd_AddCommand("+movedown", []() { KeyDown(&in_down); });
-    Cmd_AddCommand("-movedown", []() { KeyUp(&in_down); });
-    Cmd_AddCommand("+left", []() { KeyDown(&in_left); });
-    Cmd_AddCommand("-left", []() { KeyUp(&in_left); });
-    Cmd_AddCommand("+right", []() { KeyDown(&in_right); });
-    Cmd_AddCommand("-right", []() { KeyUp(&in_right); });
-    Cmd_AddCommand("+forward", []() { KeyDown(&in_forward); });
-    Cmd_AddCommand("-forward", []() { KeyUp(&in_forward); });
-    Cmd_AddCommand("+back", []() { KeyDown(&in_back); });
-    Cmd_AddCommand("-back", []() { KeyUp(&in_back); });
-    Cmd_AddCommand("+lookup", []() { KeyDown(&in_lookup); });
-    Cmd_AddCommand("-lookup", []() { KeyUp(&in_lookup); });
-    Cmd_AddCommand("+lookdown", []() { KeyDown(&in_lookdown); });
-    Cmd_AddCommand("-lookdown", []() { KeyUp(&in_lookdown); });
-    Cmd_AddCommand("+strafe", []() { KeyDown(&in_strafe); });
-    Cmd_AddCommand("-strafe", []() { KeyUp(&in_strafe); });
-    Cmd_AddCommand("+moveleft", []() { KeyDown(&in_moveleft); });
-    Cmd_AddCommand("-moveleft", []() { KeyUp(&in_moveleft); });
-    Cmd_AddCommand("+moveright", []() { KeyDown(&in_moveright); });
-    Cmd_AddCommand("-moveright", []() { KeyUp(&in_moveright); });
-    Cmd_AddCommand("+speed", []() { KeyDown(&in_speed); });
-    Cmd_AddCommand("-speed", []() { KeyUp(&in_speed); });
-    Cmd_AddCommand("+attack", []() { KeyDown(&in_attack); });
-    Cmd_AddCommand("-attack", []() { KeyUp(&in_attack); });
-    Cmd_AddCommand("+use", []() { KeyDown(&in_use); });
-    Cmd_AddCommand("-use", []() { KeyUp(&in_use); });
-    Cmd_AddCommand("+jump", []() { KeyDown(&in_jump); });
-    Cmd_AddCommand("-jump", []() { KeyUp(&in_jump); });
-    Cmd_AddCommand("impulse", []() { in_impulse = Q_atoi(Cmd_Argv(1)); });
-    Cmd_AddCommand("+klook", []() { KeyDown(&in_klook); });
-    Cmd_AddCommand("-klook", []() { KeyUp(&in_klook); });
-    Cmd_AddCommand("+mlook", []() { KeyDown(&in_mlook); });
-    Cmd_AddCommand("-mlook", []() { KeyUp(&in_mlook); if (!(in_mlook.state & 1) && lookspring.value) V_StartPitchDrift(); });
+    Cmd::AddCommand("+moveup", []() { KeyDown(&in_up); });
+    Cmd::AddCommand("-moveup", []() { KeyUp(&in_up); });
+    Cmd::AddCommand("+movedown", []() { KeyDown(&in_down); });
+    Cmd::AddCommand("-movedown", []() { KeyUp(&in_down); });
+    Cmd::AddCommand("+left", []() { KeyDown(&in_left); });
+    Cmd::AddCommand("-left", []() { KeyUp(&in_left); });
+    Cmd::AddCommand("+right", []() { KeyDown(&in_right); });
+    Cmd::AddCommand("-right", []() { KeyUp(&in_right); });
+    Cmd::AddCommand("+forward", []() { KeyDown(&in_forward); });
+    Cmd::AddCommand("-forward", []() { KeyUp(&in_forward); });
+    Cmd::AddCommand("+back", []() { KeyDown(&in_back); });
+    Cmd::AddCommand("-back", []() { KeyUp(&in_back); });
+    Cmd::AddCommand("+lookup", []() { KeyDown(&in_lookup); });
+    Cmd::AddCommand("-lookup", []() { KeyUp(&in_lookup); });
+    Cmd::AddCommand("+lookdown", []() { KeyDown(&in_lookdown); });
+    Cmd::AddCommand("-lookdown", []() { KeyUp(&in_lookdown); });
+    Cmd::AddCommand("+strafe", []() { KeyDown(&in_strafe); });
+    Cmd::AddCommand("-strafe", []() { KeyUp(&in_strafe); });
+    Cmd::AddCommand("+moveleft", []() { KeyDown(&in_moveleft); });
+    Cmd::AddCommand("-moveleft", []() { KeyUp(&in_moveleft); });
+    Cmd::AddCommand("+moveright", []() { KeyDown(&in_moveright); });
+    Cmd::AddCommand("-moveright", []() { KeyUp(&in_moveright); });
+    Cmd::AddCommand("+speed", []() { KeyDown(&in_speed); });
+    Cmd::AddCommand("-speed", []() { KeyUp(&in_speed); });
+    Cmd::AddCommand("+attack", []() { KeyDown(&in_attack); });
+    Cmd::AddCommand("-attack", []() { KeyUp(&in_attack); });
+    Cmd::AddCommand("+use", []() { KeyDown(&in_use); });
+    Cmd::AddCommand("-use", []() { KeyUp(&in_use); });
+    Cmd::AddCommand("+jump", []() { KeyDown(&in_jump); });
+    Cmd::AddCommand("-jump", []() { KeyUp(&in_jump); });
+    Cmd::AddCommand("impulse", []() { in_impulse = Q_atoi(Cmd::Argv(1)); });
+    Cmd::AddCommand("+klook", []() { KeyDown(&in_klook); });
+    Cmd::AddCommand("-klook", []() { KeyUp(&in_klook); });
+    Cmd::AddCommand("+mlook", []() { KeyDown(&in_mlook); });
+    Cmd::AddCommand("-mlook", []() { KeyUp(&in_mlook); if (!(in_mlook.state & 1) && lookspring.value) V_StartPitchDrift(); });
 }
 
 //============================================================================
@@ -1212,7 +1237,7 @@ stop recording a demo
 */
 void CL_Stop_f(void)
 {
-    if (cmd_source != src_command) {
+    if (Cmd::state.source != Cmd::Source::Command) {
         return;
     }
 
@@ -1247,18 +1272,18 @@ void CL_Record_f(void)
     char name[MAX_OSPATH];
     int track;
 
-    if (cmd_source != src_command) {
+    if (Cmd::state.source != Cmd::Source::Command) {
         return;
     }
 
-    c = Cmd_Argc();
+    c = Cmd::Argc();
     if (c != 2 && c != 3 && c != 4) {
         Con_Printf("record <demoname> [<map> [cd track]]\n");
 
         return;
     }
 
-    if (strstr(Cmd_Argv(1), "..")) {
+    if (Cmd::Argv(1).find("..") != std::string_view::npos) {
         Con_Printf("Relative pathnames are not allowed.\n");
 
         return;
@@ -1274,19 +1299,19 @@ void CL_Record_f(void)
 
     // write the forced cd track number, or -1
     if (c == 4) {
-        track = atoi(Cmd_Argv(3));
+        track = Q_atoi(Cmd::Argv(3));
         Con_Printf("Forcing CD track to %i\n", cls.forcetrack);
     } else {
         track = -1;
     }
 
-    sprintf(name, "%s/%s", com_gamedir, Cmd_Argv(1));
+    sprintf(name, "%s/%s", com_gamedir, std::string(Cmd::Argv(1)).c_str());
 
     //
     // start the map up
     //
     if (c > 2) {
-        Cmd_ExecuteString(va("map %s", Cmd_Argv(2)), src_command);
+        Cmd::ExecuteString(va("map %s", std::string(Cmd::Argv(2)).c_str()), Cmd::Source::Command);
     }
 
     //
@@ -1321,11 +1346,11 @@ void CL_PlayDemo_f(void)
     int c;
     qboolean neg = false;
 
-    if (cmd_source != src_command) {
+    if (Cmd::state.source != Cmd::Source::Command) {
         return;
     }
 
-    if (Cmd_Argc() != 2) {
+    if (Cmd::Argc() != 2) {
         Con_Printf("play <demoname> : plays a demo\n");
 
         return;
@@ -1339,7 +1364,7 @@ void CL_PlayDemo_f(void)
     //
     // open the demo file
     //
-    strcpy(name, Cmd_Argv(1));
+    Q_strcpy(name, Cmd::Argv(1));
     COM_DefaultExtension(name, ".dem");
 
     Con_Printf("Playing demo from %s.\n", name);
@@ -1401,11 +1426,11 @@ timedemo [demoname]
 */
 void CL_TimeDemo_f(void)
 {
-    if (cmd_source != src_command) {
+    if (Cmd::state.source != Cmd::Source::Command) {
         return;
     }
 
-    if (Cmd_Argc() != 2) {
+    if (Cmd::Argc() != 2) {
         Con_Printf("timedemo <demoname> : gets demo speeds\n");
 
         return;
@@ -2172,7 +2197,7 @@ void CL_ParseServerMessage(void)
             break;
 
         case svc_stufftext:
-            Cbuf_AddText(MSG_ReadString());
+            Cmd::BufferAddText(MSG_ReadString());
             break;
 
         case svc_damage:
@@ -2337,7 +2362,7 @@ void CL_ParseServerMessage(void)
             break;
 
         case svc_sellscreen:
-            Cmd_ExecuteString("help", src_command);
+            Cmd::ExecuteString("help", Cmd::Source::Command);
             break;
         }
     }

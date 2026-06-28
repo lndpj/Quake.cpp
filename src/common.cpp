@@ -2,6 +2,31 @@
 
 #include "quakedef.hpp"
 
+using namespace CDAudio;
+using namespace Client;
+using namespace Common;
+using namespace Console;
+using namespace Render;
+using namespace Draw;
+using namespace Host;
+using namespace Input;
+using namespace Keys;
+using namespace Math;
+using namespace Menu;
+using namespace Model;
+using namespace Net;
+using namespace VM;
+using namespace Sbar;
+using namespace Screen;
+using namespace Server;
+using namespace Audio;
+using namespace Vid;
+using namespace View;
+using namespace Wad;
+using namespace Cvar;
+using namespace Cmd;
+
+
 cvar_t registered = { "registered", "0" };
 cvar_t cmdline = { "cmdline", "0", false, true };
 
@@ -10,9 +35,9 @@ namespace Common {
 #define NUM_SAFE_ARGVS 7
 
 static char* largv[MAX_NUM_ARGVS + NUM_SAFE_ARGVS + 1];
-static char* argvdummy = " ";
+static const char* argvdummy = " ";
 
-static char* safeargvs[NUM_SAFE_ARGVS] = { "-stdvid", "-nolan", "-nosound",
+static const char* safeargvs[NUM_SAFE_ARGVS] = { "-stdvid", "-nolan", "-nosound",
     "-nocdaudio", "-nojoy", "-nomouse",
     "-dibonly" };
 
@@ -127,7 +152,7 @@ void Q_memset(void* dest, int fill, int count)
     }
 }
 
-void Q_memcpy(void* dest, void* src, int count)
+void Q_memcpy(void* dest, const void* src, int count)
 {
     int i;
 
@@ -135,16 +160,16 @@ void Q_memcpy(void* dest, void* src, int count)
     if ((((size_t)dest | (size_t)src | count) & 3) == 0) {
         count >>= 2;
         for (i = 0; i < count; i++) {
-            ((int*)dest)[i] = ((int*)src)[i];
+            ((int*)dest)[i] = ((const int*)src)[i];
         }
     } else {
         for (i = 0; i < count; i++) {
-            ((byte*)dest)[i] = ((byte*)src)[i];
+            ((byte*)dest)[i] = ((const byte*)src)[i];
         }
     }
 }
 
-void Q_strcpy(char* dest, char* src)
+void Q_strcpy(char* dest, const char* src)
 {
     while (*src) {
         *dest++ = *src++;
@@ -152,7 +177,7 @@ void Q_strcpy(char* dest, char* src)
     *dest++ = 0;
 }
 
-void Q_strncpy(char* dest, char* src, int count)
+void Q_strncpy(char* dest, const char* src, int count)
 {
     while (*src && count--) {
         *dest++ = *src++;
@@ -162,7 +187,7 @@ void Q_strncpy(char* dest, char* src, int count)
     }
 }
 
-int Q_strlen(char* str)
+int Q_strlen(const char* str)
 {
     int count;
 
@@ -174,26 +199,26 @@ int Q_strlen(char* str)
     return count;
 }
 
-char* Q_strrchr(char* s, char c)
+const char* Q_strrchr(const char* s, char c)
 {
     int len = Q_strlen(s);
-    s += len;
+    const char* ptr = s + len;
     while (len--) {
-        if (*--s == c) {
-            return s;
+        if (*--ptr == c) {
+            return ptr;
         }
     }
 
-    return 0;
+    return nullptr;
 }
 
-void Q_strcat(char* dest, char* src)
+void Q_strcat(char* dest, const char* src)
 {
     dest += Q_strlen(dest);
     Q_strcpy(dest, src);
 }
 
-int Q_strcmp(char* s1, char* s2)
+int Q_strcmp(const char* s1, const char* s2)
 {
     while (1) {
         if (*s1 != *s2) {
@@ -211,7 +236,7 @@ int Q_strcmp(char* s1, char* s2)
     return -1;
 }
 
-int Q_strncmp(char* s1, char* s2, int count)
+int Q_strncmp(const char* s1, const char* s2, int count)
 {
     while (1) {
         if (!count--) {
@@ -233,7 +258,7 @@ int Q_strncmp(char* s1, char* s2, int count)
     return -1;
 }
 
-int Q_strncasecmp(char* s1, char* s2, int n)
+int Q_strncasecmp(const char* s1, const char* s2, int n)
 {
     int c1, c2;
 
@@ -270,15 +295,18 @@ int Q_strncasecmp(char* s1, char* s2, int n)
     return -1;
 }
 
-int Q_atoi(char* str)
+int Q_atoi(std::string_view str_view)
 {
+    std::string str(str_view);
+    const char* s = str.c_str();
+
     int val;
     int sign;
     int c;
 
-    if (*str == '-') {
+    if (*s == '-') {
         sign = -1;
-        str++;
+        s++;
     } else {
         sign = 1;
     }
@@ -288,10 +316,10 @@ int Q_atoi(char* str)
     //
     // check for hex
     //
-    if (str[0] == '0' && (str[1] == 'x' || str[1] == 'X')) {
-        str += 2;
+    if (s[0] == '0' && (s[1] == 'x' || s[1] == 'X')) {
+        s += 2;
         while (1) {
-            c = *str++;
+            c = *s++;
             if (c >= '0' && c <= '9') {
                 val = (val << 4) + c - '0';
             } else if (c >= 'a' && c <= 'f') {
@@ -307,15 +335,15 @@ int Q_atoi(char* str)
     //
     // check for character
     //
-    if (str[0] == '\'') {
-        return sign * str[1];
+    if (s[0] == '\'') {
+        return sign * s[1];
     }
 
     //
     // assume decimal
     //
     while (1) {
-        c = *str++;
+        c = *s++;
         if (c < '0' || c > '9') {
             return val * sign;
         }
@@ -326,16 +354,19 @@ int Q_atoi(char* str)
     return 0;
 }
 
-float Q_atof(char* str)
+float Q_atof(std::string_view str_view)
 {
+    std::string str(str_view);
+    const char* s = str.c_str();
+
     double val;
     int sign;
     int c;
     int decimal, total;
 
-    if (*str == '-') {
+    if (*s == '-') {
         sign = -1;
-        str++;
+        s++;
     } else {
         sign = 1;
     }
@@ -345,10 +376,10 @@ float Q_atof(char* str)
     //
     // check for hex
     //
-    if (str[0] == '0' && (str[1] == 'x' || str[1] == 'X')) {
-        str += 2;
+    if (s[0] == '0' && (s[1] == 'x' || s[1] == 'X')) {
+        s += 2;
         while (1) {
-            c = *str++;
+            c = *s++;
             if (c >= '0' && c <= '9') {
                 val = (val * 16) + c - '0';
             } else if (c >= 'a' && c <= 'f') {
@@ -356,7 +387,7 @@ float Q_atof(char* str)
             } else if (c >= 'A' && c <= 'F') {
                 val = (val * 16) + c - 'A' + 10;
             } else {
-                return val * sign;
+                return (float)(val * sign);
             }
         }
     }
@@ -364,8 +395,8 @@ float Q_atof(char* str)
     //
     // check for character
     //
-    if (str[0] == '\'') {
-        return sign * str[1];
+    if (s[0] == '\'') {
+        return (float)(sign * s[1]);
     }
 
     //
@@ -374,7 +405,7 @@ float Q_atof(char* str)
     decimal = -1;
     total = 0;
     while (1) {
-        c = *str++;
+        c = *s++;
         if (c == '.') {
             decimal = total;
             continue;
@@ -389,7 +420,7 @@ float Q_atof(char* str)
     }
 
     if (decimal == -1) {
-        return val * sign;
+        return (float)(val * sign);
     }
 
     while (total > decimal) {
@@ -397,7 +428,7 @@ float Q_atof(char* str)
         total--;
     }
 
-    return val * sign;
+    return (float)(val * sign);
 }
 
 /*
@@ -557,7 +588,7 @@ void MSG_WriteFloat(sizebuf_t* sb, float f)
     SZ_Write(sb, &dat.l, 4);
 }
 
-void MSG_WriteString(sizebuf_t* sb, char* s)
+void MSG_WriteString(sizebuf_t* sb, const char* s)
 {
     if (!s) {
         SZ_Write(sb, "", 1);
@@ -727,7 +758,7 @@ void* SZ_GetSpace(sizebuf_t* buf, int length)
     return data;
 }
 
-void SZ_Print(sizebuf_t* buf, char* data)
+void SZ_Print(sizebuf_t* buf, const char* data)
 {
     int len;
 
@@ -758,7 +789,8 @@ char* COM_FileExtension(char* in)
         in++;
     }
     if (!*in) {
-        return "";
+        exten[0] = 0;
+        return exten;
     }
 
     in++;
@@ -775,9 +807,9 @@ char* COM_FileExtension(char* in)
 COM_FileBase
 ============
 */
-void COM_FileBase(char* in, char* out)
+void COM_FileBase(const char* in, char* out)
 {
-    char *s, *s2;
+    const char *s, *s2;
 
     s = in + strlen(in) - 1;
 
@@ -803,7 +835,7 @@ void COM_FileBase(char* in, char* out)
 COM_DefaultExtension
 ==================
 */
-void COM_DefaultExtension(char* path, char* extension)
+void COM_DefaultExtension(char* path, const char* extension)
 {
     char* src;
     //
@@ -830,7 +862,7 @@ COM_Parse
 Parse a token out of a string
 ==============
 */
-char* COM_Parse(char* data)
+const char* COM_Parse(const char* data)
 {
     int c;
     int len;
@@ -909,7 +941,7 @@ Returns the position (1 to argc-1) in the program's argument list
 where the given parameter apears, or 0 if not present
 ================
 */
-int COM_CheckParm(char* parm)
+int COM_CheckParm(const char* parm)
 {
     int i;
 
@@ -966,8 +998,8 @@ void COM_CheckRegistered(void)
         }
     }
 
-    Cvar_Set("cmdline", com_cmdline);
-    Cvar_Set("registered", "1");
+    Cvar::Set("cmdline", com_cmdline);
+    Cvar::Set("registered", "1");
     static_registered = 1;
     Con_Printf("Playing registered version.\n");
 }
@@ -1017,12 +1049,12 @@ void COM_InitArgv(int argc, char** argv)
         // force all the safe-mode switches. Note that we reserved extra space in
         // case we need to add these, so we don't need an overflow check
         for (i = 0; i < NUM_SAFE_ARGVS; i++) {
-            largv[com_argc] = safeargvs[i];
+            largv[com_argc] = const_cast<char*>(safeargvs[i]);
             com_argc++;
         }
     }
 
-    largv[com_argc] = argvdummy;
+    largv[com_argc] = const_cast<char*>(argvdummy);
     com_argv = largv;
 
     if (COM_CheckParm("-rogue")) {
@@ -1069,9 +1101,9 @@ void COM_Init()
         LittleFloat = FloatSwap;
     }
 
-    Cvar_RegisterVariable(&registered);
-    Cvar_RegisterVariable(&cmdline);
-    Cmd_AddCommand("path", COM_Path_f);
+    Cvar::Register(&registered);
+    Cvar::Register(&cmdline);
+    Cmd::AddCommand("path", COM_Path_f);
 
     COM_InitFilesystem();
     COM_CheckRegistered();
@@ -1086,7 +1118,7 @@ varargs versions of all text functions.
 FIXME: make this buffer size safe someday
 ============
 */
-char* va(char* format, ...)
+char* va(const char* format, ...)
 {
     va_list argptr;
     static char string[1024];
@@ -1178,7 +1210,7 @@ COM_WriteFile
 The filename will be prefixed by the current game directory
 ============
 */
-void COM_WriteFile(char* filename, void* data, int len)
+void COM_WriteFile(const char* filename, void* data, int len)
 {
     int handle;
     char name[MAX_OSPATH];
@@ -1259,7 +1291,7 @@ Finds the file in the search path.
 Sets com_filesize and one of handle or file
 ===========
 */
-int COM_FindFile(char* filename, int* handle, FILE** file)
+int COM_FindFile(const char* filename, int* handle, FILE** file)
 {
     searchpath_t* search;
     char netpath[MAX_OSPATH];
@@ -1397,7 +1429,7 @@ cache_user_t* loadcache;
 byte* loadbuf;
 int loadsize;
 
-byte* COM_LoadFile(char* path, int usehunk)
+byte* COM_LoadFile(const char* path, int usehunk)
 {
     int h;
     byte* buf;
@@ -1447,14 +1479,14 @@ byte* COM_LoadFile(char* path, int usehunk)
     return buf;
 }
 
-void COM_LoadCacheFile(char* path, struct cache_user_s* cu)
+void COM_LoadCacheFile(const char* path, struct cache_user_s* cu)
 {
     loadcache = cu;
     COM_LoadFile(path, 3);
 }
 
 // uses temp hunk if larger than bufsize
-byte* COM_LoadStackFile(char* path, void* buffer, int bufsize)
+byte* COM_LoadStackFile(const char* path, void* buffer, int bufsize)
 {
     byte* buf;
 

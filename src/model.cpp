@@ -4,6 +4,31 @@
 // on the same machine.
 
 #include "quakedef.hpp"
+
+using namespace CDAudio;
+using namespace Client;
+using namespace Common;
+using namespace Console;
+using namespace Render;
+using namespace Draw;
+using namespace Host;
+using namespace Input;
+using namespace Keys;
+using namespace Math;
+using namespace Menu;
+using namespace Model;
+using namespace Net;
+using namespace VM;
+using namespace Sbar;
+using namespace Screen;
+using namespace Server;
+using namespace Audio;
+using namespace Vid;
+using namespace View;
+using namespace Wad;
+using namespace Cvar;
+using namespace Cmd;
+
 #include "r_local.hpp"
 
 namespace Model {
@@ -35,7 +60,7 @@ Mod_Init
 void Mod_Init(void)
 {
     memset(mod_novis, 0xff, sizeof(mod_novis));
-    Cmd_AddCommand("modellist", Mod_Print);
+    Cmd::AddCommand("modellist", Mod_Print);
 }
 
 /*
@@ -171,7 +196,7 @@ Mod_FindName
 
 ==================
 */
-model_t* Mod_FindName(char* name)
+model_t* Mod_FindName(const char* name)
 {
     int i;
     model_t* mod;
@@ -316,7 +341,7 @@ Mod_ForName
 Loads in a model for the given name
 ==================
 */
-model_t* Mod_ForName(char* name, qboolean crash)
+model_t* Mod_ForName(const char* name, qboolean crash)
 {
     model_t* mod;
 

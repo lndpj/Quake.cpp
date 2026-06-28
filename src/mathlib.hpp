@@ -62,7 +62,6 @@ float anglemod(float a);
 
 } // namespace Math
 
-using namespace Math;
 
 #define BOX_ON_PLANE_SIDE(emins, emaxs, p)                                    \
     (((p)->type < 3) ? (((p)->dist <= (emins)[(p)->type])                     \

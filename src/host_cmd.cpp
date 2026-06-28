@@ -2,6 +2,31 @@
 
 #include "quakedef.hpp"
 
+using namespace CDAudio;
+using namespace Client;
+using namespace Common;
+using namespace Console;
+using namespace Render;
+using namespace Draw;
+using namespace Host;
+using namespace Input;
+using namespace Keys;
+using namespace Math;
+using namespace Menu;
+using namespace Model;
+using namespace Net;
+using namespace VM;
+using namespace Sbar;
+using namespace Screen;
+using namespace Server;
+using namespace Audio;
+using namespace Vid;
+using namespace View;
+using namespace Wad;
+using namespace Cvar;
+using namespace Cmd;
+
+
 namespace Host {
 
 extern cvar_t pausable;
@@ -40,11 +65,11 @@ void Host_Status_f(void)
     int minutes;
     int hours = 0;
     int j;
-    void (*print)(char* fmt, ...);
+    void (*print)(const char* fmt, ...);
 
-    if (cmd_source == src_command) {
+    if (Cmd::state.source == Cmd::Source::Command) {
         if (!sv.active) {
-            Cmd_ForwardToServer();
+            Cmd::ForwardToServer();
 
             return;
         }
@@ -54,7 +79,7 @@ void Host_Status_f(void)
         print = SV_ClientPrintf;
     }
 
-    print("host:    %s\n", Cvar_VariableString("hostname"));
+    print("host:    %s\n", Cvar::VariableString("hostname"));
     print("version: %4.2f\n", VERSION);
     if (tcpipAvailable) {
         print("tcp/ip:  %s\n", my_tcpip_address);
@@ -99,8 +124,8 @@ Sets client to godmode
 */
 void Host_God_f(void)
 {
-    if (cmd_source == src_command) {
-        Cmd_ForwardToServer();
+    if (Cmd::state.source == Cmd::Source::Command) {
+        Cmd::ForwardToServer();
 
         return;
     }
@@ -119,8 +144,8 @@ void Host_God_f(void)
 
 void Host_Notarget_f(void)
 {
-    if (cmd_source == src_command) {
-        Cmd_ForwardToServer();
+    if (Cmd::state.source == Cmd::Source::Command) {
+        Cmd::ForwardToServer();
 
         return;
     }
@@ -141,8 +166,8 @@ qboolean noclip_anglehack;
 
 void Host_Noclip_f(void)
 {
-    if (cmd_source == src_command) {
-        Cmd_ForwardToServer();
+    if (Cmd::state.source == Cmd::Source::Command) {
+        Cmd::ForwardToServer();
 
         return;
     }
@@ -171,8 +196,8 @@ Sets client to flymode
 */
 void Host_Fly_f(void)
 {
-    if (cmd_source == src_command) {
-        Cmd_ForwardToServer();
+    if (Cmd::state.source == Cmd::Source::Command) {
+        Cmd::ForwardToServer();
 
         return;
     }
@@ -202,8 +227,8 @@ void Host_Ping_f(void)
     float total;
     client_t* client;
 
-    if (cmd_source == src_command) {
-        Cmd_ForwardToServer();
+    if (Cmd::state.source == Cmd::Source::Command) {
+        Cmd::ForwardToServer();
 
         return;
     }
@@ -245,7 +270,7 @@ void Host_Map_f(void)
     int i;
     char name[MAX_QPATH];
 
-    if (cmd_source != src_command) {
+    if (Cmd::state.source != Cmd::Source::Command) {
         return;
     }
 
@@ -258,14 +283,14 @@ void Host_Map_f(void)
     SCR_BeginLoadingPlaque();
 
     cls.mapstring[0] = 0;
-    for (i = 0; i < Cmd_Argc(); i++) {
-        strcat(cls.mapstring, Cmd_Argv(i));
-        strcat(cls.mapstring, " ");
+    for (i = 0; i < Cmd::Argc(); i++) {
+        Q_strcat(cls.mapstring, Cmd::Argv(i));
+        Q_strcat(cls.mapstring, " ");
     }
     strcat(cls.mapstring, "\n");
 
     svs.serverflags = 0; // haven't completed an episode yet
-    strcpy(name, Cmd_Argv(1));
+    Q_strcpy(name, Cmd::Argv(1));
     SV_SpawnServer(name);
     if (!sv.active) {
         return;
@@ -274,12 +299,12 @@ void Host_Map_f(void)
     if (cls.state != ca_dedicated) {
         strcpy(cls.spawnparms, "");
 
-        for (i = 2; i < Cmd_Argc(); i++) {
-            strcat(cls.spawnparms, Cmd_Argv(i));
-            strcat(cls.spawnparms, " ");
+        for (i = 2; i < Cmd::Argc(); i++) {
+            Q_strcat(cls.spawnparms, Cmd::Argv(i));
+            Q_strcat(cls.spawnparms, " ");
         }
 
-        Cmd_ExecuteString("connect local", src_command);
+        Cmd::ExecuteString("connect local", Cmd::Source::Command);
     }
 }
 
@@ -294,7 +319,7 @@ void Host_Changelevel_f(void)
 {
     char level[MAX_QPATH];
 
-    if (Cmd_Argc() != 2) {
+    if (Cmd::Argc() != 2) {
         Con_Printf("changelevel <levelname> : continue game on a new level\n");
 
         return;
@@ -307,7 +332,7 @@ void Host_Changelevel_f(void)
     }
 
     SV_SaveSpawnparms();
-    strcpy(level, Cmd_Argv(1));
+    Q_strcpy(level, Cmd::Argv(1));
     SV_SpawnServer(level);
 }
 
@@ -326,7 +351,7 @@ void Host_Restart_f(void)
         return;
     }
 
-    if (cmd_source != src_command) {
+    if (Cmd::state.source != Cmd::Source::Command) {
         return;
     }
 
@@ -366,7 +391,7 @@ void Host_Connect_f(void)
         CL_Disconnect();
     }
 
-    strcpy(name, Cmd_Argv(1));
+    Q_strcpy(name, Cmd::Argv(1));
     CL_EstablishConnection(name);
     Host_Reconnect_f();
 }
@@ -421,7 +446,7 @@ void Host_Savegame_f(void)
     int i;
     char comment[SAVEGAME_COMMENT_LENGTH + 1];
 
-    if (cmd_source != src_command) {
+    if (Cmd::state.source != Cmd::Source::Command) {
         return;
     }
 
@@ -443,13 +468,13 @@ void Host_Savegame_f(void)
         return;
     }
 
-    if (Cmd_Argc() != 2) {
+    if (Cmd::Argc() != 2) {
         Con_Printf("save <savename> : save a game\n");
 
         return;
     }
 
-    if (strstr(Cmd_Argv(1), "..")) {
+    if (Cmd::Argv(1).find("..") != std::string_view::npos) {
         Con_Printf("Relative pathnames are not allowed.\n");
 
         return;
@@ -463,7 +488,7 @@ void Host_Savegame_f(void)
         }
     }
 
-    sprintf(name, "%s/%s", com_gamedir, Cmd_Argv(1));
+    sprintf(name, "%s/%s", com_gamedir, std::string(Cmd::Argv(1)).c_str());
     COM_DefaultExtension(name, ".sav");
 
     Con_Printf("Saving game to %s...\n", name);
@@ -521,11 +546,11 @@ void Host_Loadgame_f(void)
     int version;
     float spawn_parms[NUM_SPAWN_PARMS];
 
-    if (cmd_source != src_command) {
+    if (Cmd::state.source != Cmd::Source::Command) {
         return;
     }
 
-    if (Cmd_Argc() != 2) {
+    if (Cmd::Argc() != 2) {
         Con_Printf("load <savename> : load a game\n");
 
         return;
@@ -533,7 +558,7 @@ void Host_Loadgame_f(void)
 
     cls.demonum = -1; // stop demo loop in case this fails
 
-    sprintf(name, "%s/%s", com_gamedir, Cmd_Argv(1));
+    sprintf(name, "%s/%s", com_gamedir, std::string(Cmd::Argv(1)).c_str());
     COM_DefaultExtension(name, ".sav");
 
     // we can't call SCR_BeginLoadingPlaque, because too much stack space has
@@ -563,7 +588,7 @@ void Host_Loadgame_f(void)
     // this silliness is so we can load 1.06 save files, which have float skill values
     fscanf(f, "%f\n", &tfloat);
     current_skill = (int)(tfloat + 0.1);
-    Cvar_SetValue("skill", (float)current_skill);
+    Cvar::SetValue("skill", (float)current_skill);
 
 
     fscanf(f, "%s\n", mapname);
@@ -662,30 +687,30 @@ Host_Name_f
 */
 void Host_Name_f(void)
 {
-    char* newName;
+    char newName[64];
 
-    if (Cmd_Argc() == 1) {
+    if (Cmd::Argc() == 1) {
         Con_Printf("\"name\" is \"%s\"\n", cl_name.string);
 
         return;
     }
 
-    if (Cmd_Argc() == 2) {
-        newName = Cmd_Argv(1);
+    if (Cmd::Argc() == 2) {
+        Q_strncpy(newName, std::string(Cmd::Argv(1)).c_str(), sizeof(newName) - 1);
     } else {
-        newName = Cmd_Args();
+        Q_strncpy(newName, std::string(Cmd::Args()).c_str(), sizeof(newName) - 1);
     }
 
     newName[15] = 0;
 
-    if (cmd_source == src_command) {
+    if (Cmd::state.source == Cmd::Source::Command) {
         if (Q_strcmp(cl_name.string, newName) == 0) {
             return;
         }
 
-        Cvar_Set("_cl_name", newName);
+        Cvar::Set("_cl_name", newName);
         if (cls.state == ca_connected) {
-            Cmd_ForwardToServer();
+            Cmd::ForwardToServer();
         }
 
         return;
@@ -722,32 +747,33 @@ void Host_Say(qboolean teamonly)
     client_t* client;
     client_t* save;
     int j;
-    char* p;
     unsigned char text[64];
     qboolean fromServer = false;
 
-    if (cmd_source == src_command) {
+    if (Cmd::state.source == Cmd::Source::Command) {
         if (cls.state == ca_dedicated) {
             fromServer = true;
             teamonly = false;
         } else {
-            Cmd_ForwardToServer();
+            Cmd::ForwardToServer();
 
             return;
         }
     }
 
-    if (Cmd_Argc() < 2) {
+    if (Cmd::Argc() < 2) {
         return;
     }
 
     save = host_client;
 
-    p = Cmd_Args();
+    std::string arg_str(Cmd::Args());
     // remove quotes if present
-    if (*p == '"') {
-        p++;
-        p[Q_strlen(p) - 1] = 0;
+    if (!arg_str.empty() && arg_str.front() == '"') {
+        arg_str = arg_str.substr(1);
+        if (!arg_str.empty() && arg_str.back() == '"') {
+            arg_str.pop_back();
+        }
     }
 
     // turn on color set 1
@@ -758,9 +784,10 @@ void Host_Say(qboolean teamonly)
     }
 
     j = sizeof(text) - 2 - Q_strlen((char*)text); // -2 for /n and null terminator
-    if (Q_strlen(p) > j) {
-        p[j] = 0;
+    if (arg_str.length() > (size_t)j) {
+        arg_str.resize(j);
     }
+    const char* p = arg_str.c_str();
 
     strcat((char*)text, p);
     strcat((char*)text, "\n");
@@ -787,35 +814,37 @@ void Host_Tell_f(void)
     client_t* client;
     client_t* save;
     int j;
-    char* p;
     char text[64];
 
-    if (cmd_source == src_command) {
-        Cmd_ForwardToServer();
+    if (Cmd::state.source == Cmd::Source::Command) {
+        Cmd::ForwardToServer();
 
         return;
     }
 
-    if (Cmd_Argc() < 3) {
+    if (Cmd::Argc() < 3) {
         return;
     }
 
     Q_strcpy(text, host_client->name);
     Q_strcat(text, ": ");
 
-    p = Cmd_Args();
+    std::string arg_str(Cmd::Args());
 
     // remove quotes if present
-    if (*p == '"') {
-        p++;
-        p[Q_strlen(p) - 1] = 0;
+    if (!arg_str.empty() && arg_str.front() == '"') {
+        arg_str = arg_str.substr(1);
+        if (!arg_str.empty() && arg_str.back() == '"') {
+            arg_str.pop_back();
+        }
     }
 
     // check length & truncate if necessary
     j = sizeof(text) - 2 - Q_strlen(text); // -2 for /n and null terminator
-    if (Q_strlen(p) > j) {
-        p[j] = 0;
+    if (arg_str.length() > (size_t)j) {
+        arg_str.resize(j);
     }
+    const char* p = arg_str.c_str();
 
     strcat(text, p);
     strcat(text, "\n");
@@ -826,7 +855,7 @@ void Host_Tell_f(void)
             continue;
         }
 
-        if (Q_strcasecmp(client->name, Cmd_Argv(1))) {
+        if (Q_strcasecmp(client->name, Cmd::Argv(1))) {
             continue;
         }
 
@@ -847,7 +876,7 @@ void Host_Color_f(void)
     int top, bottom;
     int pcolor;
 
-    if (Cmd_Argc() == 1) {
+    if (Cmd::Argc() == 1) {
         Con_Printf("\"color\" is \"%i %i\"\n", ((int)cl_color.value) >> 4,
             ((int)cl_color.value) & 0x0f);
         Con_Printf("color <0-13> [0-13]\n");
@@ -855,11 +884,11 @@ void Host_Color_f(void)
         return;
     }
 
-    if (Cmd_Argc() == 2) {
-        top = bottom = atoi(Cmd_Argv(1));
+    if (Cmd::Argc() == 2) {
+        top = bottom = Q_atoi(Cmd::Argv(1));
     } else {
-        top = atoi(Cmd_Argv(1));
-        bottom = atoi(Cmd_Argv(2));
+        top = Q_atoi(Cmd::Argv(1));
+        bottom = Q_atoi(Cmd::Argv(2));
     }
 
     top &= 15;
@@ -874,10 +903,10 @@ void Host_Color_f(void)
 
     pcolor = top * 16 + bottom;
 
-    if (cmd_source == src_command) {
-        Cvar_SetValue("_cl_color", pcolor);
+    if (Cmd::state.source == Cmd::Source::Command) {
+        Cvar::SetValue("_cl_color", pcolor);
         if (cls.state == ca_connected) {
-            Cmd_ForwardToServer();
+            Cmd::ForwardToServer();
         }
 
         return;
@@ -899,8 +928,8 @@ Host_Kill_f
 */
 void Host_Kill_f(void)
 {
-    if (cmd_source == src_command) {
-        Cmd_ForwardToServer();
+    if (Cmd::state.source == Cmd::Source::Command) {
+        Cmd::ForwardToServer();
 
         return;
     }
@@ -923,8 +952,8 @@ Host_Pause_f
 */
 void Host_Pause_f(void)
 {
-    if (cmd_source == src_command) {
-        Cmd_ForwardToServer();
+    if (Cmd::state.source == Cmd::Source::Command) {
+        Cmd::ForwardToServer();
 
         return;
     }
@@ -957,7 +986,7 @@ Host_PreSpawn_f
 */
 void Host_PreSpawn_f(void)
 {
-    if (cmd_source == src_command) {
+    if (Cmd::state.source == Cmd::Source::Command) {
         Con_Printf("prespawn is not valid from the console\n");
 
         return;
@@ -986,7 +1015,7 @@ void Host_Spawn_f(void)
     client_t* client;
     edict_t* ent;
 
-    if (cmd_source == src_command) {
+    if (Cmd::state.source == Cmd::Source::Command) {
         Con_Printf("spawn is not valid from the console\n");
 
         return;
@@ -1102,7 +1131,7 @@ Host_Begin_f
 */
 void Host_Begin_f(void)
 {
-    if (cmd_source == src_command) {
+    if (Cmd::state.source == Cmd::Source::Command) {
         Con_Printf("begin is not valid from the console\n");
 
         return;
@@ -1122,15 +1151,16 @@ Kicks a user off of the server
 */
 void Host_Kick_f(void)
 {
-    char* who;
-    char* message = NULL;
+    const char* who;
+    const char* message = NULL;
     client_t* save;
     int i;
     qboolean byNumber = false;
+    std::string args_holder;
 
-    if (cmd_source == src_command) {
+    if (Cmd::state.source == Cmd::Source::Command) {
         if (!sv.active) {
-            Cmd_ForwardToServer();
+            Cmd::ForwardToServer();
 
             return;
         }
@@ -1140,8 +1170,8 @@ void Host_Kick_f(void)
 
     save = host_client;
 
-    if (Cmd_Argc() > 2 && Q_strcmp(Cmd_Argv(1), "#") == 0) {
-        i = Q_atof(Cmd_Argv(2)) - 1;
+    if (Cmd::Argc() > 2 && Q_strcmp(Cmd::Argv(1), "#") == 0) {
+        i = Q_atof(Cmd::Argv(2)) - 1;
         if (i < 0 || i >= svs.maxclients) {
             return;
         }
@@ -1159,14 +1189,14 @@ void Host_Kick_f(void)
                 continue;
             }
 
-            if (Q_strcasecmp(host_client->name, Cmd_Argv(1)) == 0) {
+            if (Q_strcasecmp(host_client->name, Cmd::Argv(1)) == 0) {
                 break;
             }
         }
     }
 
     if (i < svs.maxclients) {
-        if (cmd_source == src_command) {
+        if (Cmd::state.source == Cmd::Source::Command) {
             if (cls.state == ca_dedicated) {
                 who = "Console";
             } else {
@@ -1181,14 +1211,15 @@ void Host_Kick_f(void)
             return;
         }
 
-        if (Cmd_Argc() > 2) {
-            message = COM_Parse(Cmd_Args());
+        if (Cmd::Argc() > 2) {
+            args_holder = Cmd::Args();
+            message = COM_Parse(args_holder.c_str());
             if (byNumber) {
                 message++;                // skip the #
                 while (*message == ' ') { // skip white space
                     message++;
                 }
-                message += Q_strlen(Cmd_Argv(2)); // skip the number
+                message += Cmd::Argv(2).length(); // skip the number
             }
 
             while (*message && *message == ' ') {
@@ -1223,12 +1254,12 @@ Host_Give_f
 */
 void Host_Give_f(void)
 {
-    char* t;
+    std::string_view t;
     int v;
     eval_t* val;
 
-    if (cmd_source == src_command) {
-        Cmd_ForwardToServer();
+    if (Cmd::state.source == Cmd::Source::Command) {
+        Cmd::ForwardToServer();
 
         return;
     }
@@ -1237,8 +1268,12 @@ void Host_Give_f(void)
         return;
     }
 
-    t = Cmd_Argv(1);
-    v = atoi(Cmd_Argv(2));
+    t = Cmd::Argv(1);
+    v = Q_atoi(Cmd::Argv(2));
+
+    if (t.empty()) {
+        return;
+    }
 
     switch (t[0]) {
     case '0':
@@ -1254,7 +1289,7 @@ void Host_Give_f(void)
         // MED 01/04/97 added hipnotic give stuff
         if (hipnotic) {
             if (t[0] == '6') {
-                if (t[1] == 'a') {
+                if (t.size() > 1 && t[1] == 'a') {
                     sv_player->v.items = (int)sv_player->v.items | HIT_PROXIMITY_GUN;
                 } else {
                     sv_player->v.items = (int)sv_player->v.items | IT_GRENADE_LAUNCHER;
@@ -1399,9 +1434,9 @@ void Host_Viewmodel_f(void)
         return;
     }
 
-    m = Mod_ForName(Cmd_Argv(1), false);
+    m = Mod_ForName(std::string(Cmd::Argv(1)).c_str(), false);
     if (!m) {
-        Con_Printf("Can't load %s\n", Cmd_Argv(1));
+        Con_Printf("Can't load %s\n", Cmd::Argv(1));
 
         return;
     }
@@ -1428,7 +1463,7 @@ void Host_Viewframe_f(void)
 
     m = cl.model_precache[(int)e->v.modelindex];
 
-    f = atoi(Cmd_Argv(1));
+    f = Q_atoi(Cmd::Argv(1));
     if (f >= m->numframes) {
         f = m->numframes - 1;
     }
@@ -1520,13 +1555,13 @@ void Host_Startdemos_f(void)
 
     if (cls.state == ca_dedicated) {
         if (!sv.active) {
-            Cbuf_AddText("map start\n");
+            Cmd::BufferAddText("map start\n");
         }
 
         return;
     }
 
-    c = Cmd_Argc() - 1;
+    c = Cmd::Argc() - 1;
     if (c > MAX_DEMOS) {
         Con_Printf("Max %i demos in demoloop\n", MAX_DEMOS);
         c = MAX_DEMOS;
@@ -1535,7 +1570,7 @@ void Host_Startdemos_f(void)
     Con_Printf("%i demo(s) in loop\n", c);
 
     for (i = 1; i < c + 1; i++) {
-        strncpy(cls.demos[i - 1], Cmd_Argv(i), sizeof(cls.demos[0]) - 1);
+        Q_strncpy(cls.demos[i - 1], std::string(Cmd::Argv(i)).c_str(), sizeof(cls.demos[0]) - 1);
     }
 
     if (!sv.active && cls.demonum != -1 && !cls.demoplayback) {
@@ -1597,44 +1632,44 @@ Host_InitCommands
 */
 void Host_InitCommands(void)
 {
-    Cmd_AddCommand("status", Host_Status_f);
-    Cmd_AddCommand("quit", Host_Quit_f);
-    Cmd_AddCommand("god", Host_God_f);
-    Cmd_AddCommand("notarget", Host_Notarget_f);
-    Cmd_AddCommand("fly", Host_Fly_f);
-    Cmd_AddCommand("map", Host_Map_f);
-    Cmd_AddCommand("restart", Host_Restart_f);
-    Cmd_AddCommand("changelevel", Host_Changelevel_f);
-    Cmd_AddCommand("connect", Host_Connect_f);
-    Cmd_AddCommand("reconnect", Host_Reconnect_f);
-    Cmd_AddCommand("name", Host_Name_f);
-    Cmd_AddCommand("noclip", Host_Noclip_f);
-    Cmd_AddCommand("version", Host_Version_f);
-    Cmd_AddCommand("say", []() { Host_Say(false); });
-    Cmd_AddCommand("say_team", []() { Host_Say(true); });
-    Cmd_AddCommand("tell", Host_Tell_f);
-    Cmd_AddCommand("color", Host_Color_f);
-    Cmd_AddCommand("kill", Host_Kill_f);
-    Cmd_AddCommand("pause", Host_Pause_f);
-    Cmd_AddCommand("spawn", Host_Spawn_f);
-    Cmd_AddCommand("begin", Host_Begin_f);
-    Cmd_AddCommand("prespawn", Host_PreSpawn_f);
-    Cmd_AddCommand("kick", Host_Kick_f);
-    Cmd_AddCommand("ping", Host_Ping_f);
-    Cmd_AddCommand("load", Host_Loadgame_f);
-    Cmd_AddCommand("save", Host_Savegame_f);
-    Cmd_AddCommand("give", Host_Give_f);
+    Cmd::AddCommand("status", Host_Status_f);
+    Cmd::AddCommand("quit", Host_Quit_f);
+    Cmd::AddCommand("god", Host_God_f);
+    Cmd::AddCommand("notarget", Host_Notarget_f);
+    Cmd::AddCommand("fly", Host_Fly_f);
+    Cmd::AddCommand("map", Host_Map_f);
+    Cmd::AddCommand("restart", Host_Restart_f);
+    Cmd::AddCommand("changelevel", Host_Changelevel_f);
+    Cmd::AddCommand("connect", Host_Connect_f);
+    Cmd::AddCommand("reconnect", Host_Reconnect_f);
+    Cmd::AddCommand("name", Host_Name_f);
+    Cmd::AddCommand("noclip", Host_Noclip_f);
+    Cmd::AddCommand("version", Host_Version_f);
+    Cmd::AddCommand("say", []() { Host_Say(false); });
+    Cmd::AddCommand("say_team", []() { Host_Say(true); });
+    Cmd::AddCommand("tell", Host_Tell_f);
+    Cmd::AddCommand("color", Host_Color_f);
+    Cmd::AddCommand("kill", Host_Kill_f);
+    Cmd::AddCommand("pause", Host_Pause_f);
+    Cmd::AddCommand("spawn", Host_Spawn_f);
+    Cmd::AddCommand("begin", Host_Begin_f);
+    Cmd::AddCommand("prespawn", Host_PreSpawn_f);
+    Cmd::AddCommand("kick", Host_Kick_f);
+    Cmd::AddCommand("ping", Host_Ping_f);
+    Cmd::AddCommand("load", Host_Loadgame_f);
+    Cmd::AddCommand("save", Host_Savegame_f);
+    Cmd::AddCommand("give", Host_Give_f);
 
-    Cmd_AddCommand("startdemos", Host_Startdemos_f);
-    Cmd_AddCommand("demos", Host_Demos_f);
-    Cmd_AddCommand("stopdemo", Host_Stopdemo_f);
+    Cmd::AddCommand("startdemos", Host_Startdemos_f);
+    Cmd::AddCommand("demos", Host_Demos_f);
+    Cmd::AddCommand("stopdemo", Host_Stopdemo_f);
 
-    Cmd_AddCommand("viewmodel", Host_Viewmodel_f);
-    Cmd_AddCommand("viewframe", Host_Viewframe_f);
-    Cmd_AddCommand("viewnext", Host_Viewnext_f);
-    Cmd_AddCommand("viewprev", Host_Viewprev_f);
+    Cmd::AddCommand("viewmodel", Host_Viewmodel_f);
+    Cmd::AddCommand("viewframe", Host_Viewframe_f);
+    Cmd::AddCommand("viewnext", Host_Viewnext_f);
+    Cmd::AddCommand("viewprev", Host_Viewprev_f);
 
-    Cmd_AddCommand("mcache", Mod_Print);
+    Cmd::AddCommand("mcache", Mod_Print);
 }
 
 } // namespace Host

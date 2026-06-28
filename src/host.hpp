@@ -5,8 +5,8 @@
 #include "cvar.hpp"
 
 typedef struct {
-    char* basedir;
-    char* cachedir;
+    const char* basedir;
+    const char* cachedir;
     int argc;
     char** argv;
     void* membase;
@@ -33,11 +33,11 @@ void Host_ServerFrame(void);
 void Host_InitCommands(void);
 void Host_Init(quakeparms_t* parms);
 void Host_Shutdown(void);
-[[noreturn]] void Host_Error(char* error, ...);
-void Host_EndGame(char* message, ...);
+[[noreturn]] void Host_Error(const char* error, ...);
+void Host_EndGame(const char* message, ...);
 void Host_Frame(float time);
 void Host_Quit_f(void);
-void Host_ClientCommands(char* fmt, ...);
+void Host_ClientCommands(const char* fmt, ...);
 void Host_ShutdownServer(qboolean crash);
 
 extern int current_skill;
@@ -50,5 +50,3 @@ extern jmp_buf host_abortserver;
 extern double host_time;
 
 } // namespace Host
-
-using namespace Host;

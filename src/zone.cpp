@@ -2,6 +2,31 @@
 
 
 #include "quakedef.hpp"
+
+using namespace CDAudio;
+using namespace Client;
+using namespace Common;
+using namespace Console;
+using namespace Render;
+using namespace Draw;
+using namespace Host;
+using namespace Input;
+using namespace Keys;
+using namespace Math;
+using namespace Menu;
+using namespace Model;
+using namespace Net;
+using namespace VM;
+using namespace Sbar;
+using namespace Screen;
+using namespace Server;
+using namespace Audio;
+using namespace Vid;
+using namespace View;
+using namespace Wad;
+using namespace Cvar;
+using namespace Cmd;
+
 #include <stdlib.h>
 
 namespace Common {
@@ -456,7 +481,7 @@ void Hunk_Print(qboolean all)
 Hunk_Alloc
 ===================
 */
-void* Hunk_Alloc(int size, char* name)
+void* Hunk_Alloc(int size, const char* name)
 {
     hunk_t* h;
 
@@ -533,7 +558,7 @@ void Hunk_FreeToHighMark(int mark)
 Hunk_HighAllocName
 ===================
 */
-void* Hunk_HighAllocName(int size, char* name)
+void* Hunk_HighAllocName(int size, const char* name)
 {
     hunk_t* h;
 
@@ -871,7 +896,7 @@ void Cache_Init(void)
     cache_head.next = cache_head.prev = &cache_head;
     cache_head.lru_next = cache_head.lru_prev = &cache_head;
 
-    Cmd_AddCommand("flush", Cache_Flush);
+    Cmd::AddCommand("flush", Cache_Flush);
 }
 
 /*
@@ -927,7 +952,7 @@ void* Cache_Check(cache_user_t* c)
 Cache_Alloc
 ==============
 */
-void* Cache_Alloc(cache_user_t* c, int size, char* name)
+void* Cache_Alloc(cache_user_t* c, int size, const char* name)
 {
     cache_system_t* cs;
 

@@ -2,6 +2,31 @@
 
 #include "quakedef.hpp"
 
+using namespace CDAudio;
+using namespace Client;
+using namespace Common;
+using namespace Console;
+using namespace Render;
+using namespace Draw;
+using namespace Host;
+using namespace Input;
+using namespace Keys;
+using namespace Math;
+using namespace Menu;
+using namespace Model;
+using namespace Net;
+using namespace VM;
+using namespace Sbar;
+using namespace Screen;
+using namespace Server;
+using namespace Audio;
+using namespace Vid;
+using namespace View;
+using namespace Wad;
+using namespace Cvar;
+using namespace Cmd;
+
+
 namespace Vid {
 
 void (*vid_menudrawfn)(void);
@@ -118,7 +143,7 @@ inline void M_DrawCharacter(int cx, int line, int num)
     Draw_Character(cx + ((vid.width - 320) >> 1), line, num);
 }
 
-void M_Print(int cx, int cy, char* str)
+void M_Print(int cx, int cy, const char* str)
 {
     while (*str) {
         M_DrawCharacter(cx, cy, (*str) + 128);
@@ -127,7 +152,7 @@ void M_Print(int cx, int cy, char* str)
     }
 }
 
-void M_PrintWhite(int cx, int cy, char* str)
+void M_PrintWhite(int cx, int cy, const char* str)
 {
     while (*str) {
         M_DrawCharacter(cx, cy, *str);
@@ -426,11 +451,11 @@ void M_SinglePlayer_Key(int key)
 
             key_dest = key_game;
             if (sv.active) {
-                Cbuf_AddText("disconnect\n");
+                Cmd::BufferAddText("disconnect\n");
             }
 
-            Cbuf_AddText("maxplayers 1\n");
-            Cbuf_AddText("map start\n");
+            Cmd::BufferAddText("maxplayers 1\n");
+            Cmd::BufferAddText("map start\n");
             break;
 
         case 1:
@@ -565,7 +590,7 @@ void M_Load_Key(int k)
         SCR_BeginLoadingPlaque();
 
         // issue the load command
-        Cbuf_AddText(va("load s%i\n", load_cursor));
+        Cmd::BufferAddText(va("load s%i\n", load_cursor));
 
         return;
 
@@ -601,7 +626,7 @@ void M_Save_Key(int k)
     case K_ENTER:
         m_state = m_none;
         key_dest = key_game;
-        Cbuf_AddText(va("save s%i\n", load_cursor));
+        Cmd::BufferAddText(va("save s%i\n", load_cursor));
 
         return;
 
@@ -849,15 +874,15 @@ void M_Setup_Key(int k)
 
         // setup_cursor == 4 (OK)
         if (Q_strcmp(cl_name.string, setup_myname) != 0) {
-            Cbuf_AddText(va("name \"%s\"\n", setup_myname));
+            Cmd::BufferAddText(va("name \"%s\"\n", setup_myname));
         }
 
         if (Q_strcmp(hostname.string, setup_hostname) != 0) {
-            Cvar_Set("hostname", setup_hostname);
+            Cvar::Set("hostname", setup_hostname);
         }
 
         if (setup_top != setup_oldtop || setup_bottom != setup_oldbottom) {
-            Cbuf_AddText(va("color %i %i\n", setup_top, setup_bottom));
+            Cmd::BufferAddText(va("color %i %i\n", setup_top, setup_bottom));
         }
 
         m_entersound = true;
@@ -925,7 +950,7 @@ int m_net_cursor;
 int m_net_items;
 int m_net_saveHeight;
 
-char* net_helpMessage[] = {
+const char* net_helpMessage[] = {
     /* .........1.........2.... */
     "                        ", " Two computers connected",
     "   through two modems.  ", "                        ",
@@ -1126,7 +1151,7 @@ void M_AdjustSliders(int dir)
             scr_viewsize.value = 120;
         }
 
-        Cvar_SetValue("viewsize", scr_viewsize.value);
+        Cvar::SetValue("viewsize", scr_viewsize.value);
         break;
     case 4: // gamma
         v_gamma.value -= dir * 0.05;
@@ -1138,7 +1163,7 @@ void M_AdjustSliders(int dir)
             v_gamma.value = 1;
         }
 
-        Cvar_SetValue("gamma", v_gamma.value);
+        Cvar::SetValue("gamma", v_gamma.value);
         break;
     case 5: // mouse speed
         sensitivity.value += dir * 0.5;
@@ -1150,7 +1175,7 @@ void M_AdjustSliders(int dir)
             sensitivity.value = 11;
         }
 
-        Cvar_SetValue("sensitivity", sensitivity.value);
+        Cvar::SetValue("sensitivity", sensitivity.value);
         break;
     case 6: // music volume
         bgmvolume.value += dir * 0.1;
@@ -1162,7 +1187,7 @@ void M_AdjustSliders(int dir)
             bgmvolume.value = 1;
         }
 
-        Cvar_SetValue("bgmvolume", bgmvolume.value);
+        Cvar::SetValue("bgmvolume", bgmvolume.value);
         break;
     case 7: // sfx volume
         volume.value += dir * 0.1;
@@ -1174,30 +1199,30 @@ void M_AdjustSliders(int dir)
             volume.value = 1;
         }
 
-        Cvar_SetValue("volume", volume.value);
+        Cvar::SetValue("volume", volume.value);
         break;
 
     case 8: // allways run
         if (cl_forwardspeed.value > 200) {
-            Cvar_SetValue("cl_forwardspeed", 200);
-            Cvar_SetValue("cl_backspeed", 200);
+            Cvar::SetValue("cl_forwardspeed", 200);
+            Cvar::SetValue("cl_backspeed", 200);
         } else {
-            Cvar_SetValue("cl_forwardspeed", 400);
-            Cvar_SetValue("cl_backspeed", 400);
+            Cvar::SetValue("cl_forwardspeed", 400);
+            Cvar::SetValue("cl_backspeed", 400);
         }
 
         break;
 
     case 9: // invert mouse
-        Cvar_SetValue("m_pitch", -m_pitch.value);
+        Cvar::SetValue("m_pitch", -m_pitch.value);
         break;
 
     case 10: // lookspring
-        Cvar_SetValue("lookspring", !lookspring.value);
+        Cvar::SetValue("lookspring", !lookspring.value);
         break;
 
     case 11: // lookstrafe
-        Cvar_SetValue("lookstrafe", !lookstrafe.value);
+        Cvar::SetValue("lookstrafe", !lookstrafe.value);
         break;
 
 
@@ -1306,7 +1331,7 @@ void M_Options_Key(int k)
             Con_ToggleConsole_f();
             break;
         case 2:
-            Cbuf_AddText("exec default.cfg\n");
+            Cmd::BufferAddText("exec default.cfg\n");
             break;
         case 12:
             M_Menu_Video_f();
@@ -1359,7 +1384,7 @@ void M_Options_Key(int k)
 //=============================================================================
 /* KEYS MENU */
 
-char* bindnames[][2] = {
+const char* bindnames[][2] = {
     { "+attack", "attack" }, { "impulse 10", "change weapon" },
     { "+jump", "jump / swim up" }, { "+forward", "walk forward" },
     { "+back", "backpedal" }, { "+left", "turn left" },
@@ -1383,7 +1408,7 @@ void M_Menu_Keys_f(void)
     m_entersound = true;
 }
 
-void M_FindKeysForCommand(char* command, int* twokeys)
+void M_FindKeysForCommand(const char* command, int* twokeys)
 {
     int count;
     int j;
@@ -1410,7 +1435,7 @@ void M_FindKeysForCommand(char* command, int* twokeys)
     }
 }
 
-void M_UnbindCommand(char* command)
+void M_UnbindCommand(const char* command)
 {
     int j;
     int l;
@@ -1434,7 +1459,7 @@ void M_Keys_Draw(void)
 {
     int i, l;
     int keys[2];
-    char* name;
+    const char* name;
     int x, y;
     qpic_t* p;
 
@@ -1489,7 +1514,7 @@ void M_Keys_Key(int k)
         } else if (k != '`') {
             sprintf(cmd, "bind \"%s\" \"%s\"\n", Key_KeynumToString(k),
                 bindnames[keys_cursor][0]);
-            Cbuf_InsertText(cmd);
+            Cmd::BufferInsertText(cmd);
         }
 
         bind_grab = false;
@@ -1687,8 +1712,8 @@ void M_SerialConfig_Draw(void)
 {
     qpic_t* p;
     int basex;
-    char* startJoin;
-    char* directModem;
+    const char* startJoin;
+    const char* directModem;
 
     M_DrawTransPic(16, 4, Draw_CachePic("gfx/qplaque.lmp"));
     p = Draw_CachePic("gfx/p_multi.lmp");
@@ -1893,9 +1918,9 @@ void M_SerialConfig_Key(int key)
         m_state = m_none;
 
         if (SerialConfig) {
-            Cbuf_AddText(va("connect \"%s\"\n", serialConfig_phone));
+            Cmd::BufferAddText(va("connect \"%s\"\n", serialConfig_phone));
         } else {
-            Cbuf_AddText("connect\n");
+            Cmd::BufferAddText("connect\n");
         }
 
         break;
@@ -2164,8 +2189,8 @@ void M_LanConfig_Draw(void)
 {
     qpic_t* p;
     int basex;
-    char* startJoin;
-    char* protocol;
+    const char* startJoin;
+    const char* protocol;
 
     M_DrawTransPic(16, 4, Draw_CachePic("gfx/qplaque.lmp"));
     p = Draw_CachePic("gfx/p_multi.lmp");
@@ -2277,7 +2302,7 @@ void M_LanConfig_Key(int key)
             m_return_onerror = true;
             key_dest = key_game;
             m_state = m_none;
-            Cbuf_AddText(va("connect \"%s\"\n", lanConfig_joinname));
+            Cmd::BufferAddText(va("connect \"%s\"\n", lanConfig_joinname));
             break;
         }
 
@@ -2346,8 +2371,8 @@ void M_LanConfig_Key(int key)
 /* GAME OPTIONS MENU */
 
 typedef struct {
-    char* name;
-    char* description;
+    const char* name;
+    const char* description;
 } level_t;
 
 level_t levels[] = { { "start", "Entrance" }, // 0
@@ -2437,7 +2462,7 @@ level_t roguelevels[] = {
 };
 
 typedef struct {
-    char* description;
+    const char* description;
     int firstLevel;
     int levels;
 } episode_t;
@@ -2511,7 +2536,7 @@ void M_GameOptions_Draw(void)
 
     M_Print(0, 72, "        Teamplay");
     if (rogue) {
-        char* msg;
+        const char* msg;
 
         switch ((int)teamplay.value) {
         case 1:
@@ -2538,7 +2563,7 @@ void M_GameOptions_Draw(void)
         }
         M_Print(160, 72, msg);
     } else {
-        char* msg;
+        const char* msg;
 
         switch ((int)teamplay.value) {
         case 1:
@@ -2657,7 +2682,7 @@ void M_NetStart_Change(int dir)
         break;
 
     case 2:
-        Cvar_SetValue("coop", coop.value ? 0 : 1);
+        Cvar::SetValue("coop", coop.value ? 0 : 1);
         break;
 
     case 3:
@@ -2667,47 +2692,47 @@ void M_NetStart_Change(int dir)
             count = 2;
         }
 
-        Cvar_SetValue("teamplay", teamplay.value + dir);
+        Cvar::SetValue("teamplay", teamplay.value + dir);
         if (teamplay.value > count) {
-            Cvar_SetValue("teamplay", 0);
+            Cvar::SetValue("teamplay", 0);
         } else if (teamplay.value < 0) {
-            Cvar_SetValue("teamplay", count);
+            Cvar::SetValue("teamplay", count);
         }
 
         break;
 
     case 4:
-        Cvar_SetValue("skill", skill.value + dir);
+        Cvar::SetValue("skill", skill.value + dir);
         if (skill.value > 3) {
-            Cvar_SetValue("skill", 0);
+            Cvar::SetValue("skill", 0);
         }
 
         if (skill.value < 0) {
-            Cvar_SetValue("skill", 3);
+            Cvar::SetValue("skill", 3);
         }
 
         break;
 
     case 5:
-        Cvar_SetValue("fraglimit", fraglimit.value + dir * 10);
+        Cvar::SetValue("fraglimit", fraglimit.value + dir * 10);
         if (fraglimit.value > 100) {
-            Cvar_SetValue("fraglimit", 0);
+            Cvar::SetValue("fraglimit", 0);
         }
 
         if (fraglimit.value < 0) {
-            Cvar_SetValue("fraglimit", 100);
+            Cvar::SetValue("fraglimit", 100);
         }
 
         break;
 
     case 6:
-        Cvar_SetValue("timelimit", timelimit.value + dir * 5);
+        Cvar::SetValue("timelimit", timelimit.value + dir * 5);
         if (timelimit.value > 60) {
-            Cvar_SetValue("timelimit", 0);
+            Cvar::SetValue("timelimit", 0);
         }
 
         if (timelimit.value < 0) {
-            Cvar_SetValue("timelimit", 60);
+            Cvar::SetValue("timelimit", 60);
         }
 
         break;
@@ -2811,25 +2836,25 @@ void M_GameOptions_Key(int key)
         S_LocalSound("misc/menu2.wav");
         if (gameoptions_cursor == 0) {
             if (sv.active) {
-                Cbuf_AddText("disconnect\n");
+                Cmd::BufferAddText("disconnect\n");
             }
 
-            Cbuf_AddText("listen 0\n"); // so host_netport will be re-examined
-            Cbuf_AddText(va("maxplayers %u\n", maxplayers));
+            Cmd::BufferAddText("listen 0\n"); // so host_netport will be re-examined
+            Cmd::BufferAddText(va("maxplayers %u\n", maxplayers));
             SCR_BeginLoadingPlaque();
 
             if (hipnotic) {
-                Cbuf_AddText(
+                Cmd::BufferAddText(
                     va("map %s\n",
                         hipnoticlevels[hipnoticepisodes[startepisode].firstLevel + startlevel]
                             .name));
             } else if (rogue) {
-                Cbuf_AddText(va(
+                Cmd::BufferAddText(va(
                     "map %s\n",
                     roguelevels[rogueepisodes[startepisode].firstLevel + startlevel]
                         .name));
             } else {
-                Cbuf_AddText(
+                Cmd::BufferAddText(
                     va("map %s\n",
                         levels[episodes[startepisode].firstLevel + startlevel].name));
             }
@@ -2998,7 +3023,7 @@ void M_ServerList_Key(int k)
         slist_sorted = false;
         key_dest = key_game;
         m_state = m_none;
-        Cbuf_AddText(va("connect \"%s\"\n", hostcache[slist_cursor].cname));
+        Cmd::BufferAddText(va("connect \"%s\"\n", hostcache[slist_cursor].cname));
         break;
 
     default:
@@ -3011,19 +3036,19 @@ void M_ServerList_Key(int k)
 
 void M_Init(void)
 {
-    Cmd_AddCommand("togglemenu", M_ToggleMenu_f);
+    Cmd::AddCommand("togglemenu", M_ToggleMenu_f);
 
-    Cmd_AddCommand("menu_main", M_Menu_Main_f);
-    Cmd_AddCommand("menu_singleplayer", M_Menu_SinglePlayer_f);
-    Cmd_AddCommand("menu_load", M_Menu_Load_f);
-    Cmd_AddCommand("menu_save", M_Menu_Save_f);
-    Cmd_AddCommand("menu_multiplayer", M_Menu_MultiPlayer_f);
-    Cmd_AddCommand("menu_setup", M_Menu_Setup_f);
-    Cmd_AddCommand("menu_options", M_Menu_Options_f);
-    Cmd_AddCommand("menu_keys", M_Menu_Keys_f);
-    Cmd_AddCommand("menu_video", M_Menu_Video_f);
-    Cmd_AddCommand("help", M_Menu_Help_f);
-    Cmd_AddCommand("menu_quit", M_Menu_Quit_f);
+    Cmd::AddCommand("menu_main", M_Menu_Main_f);
+    Cmd::AddCommand("menu_singleplayer", M_Menu_SinglePlayer_f);
+    Cmd::AddCommand("menu_load", M_Menu_Load_f);
+    Cmd::AddCommand("menu_save", M_Menu_Save_f);
+    Cmd::AddCommand("menu_multiplayer", M_Menu_MultiPlayer_f);
+    Cmd::AddCommand("menu_setup", M_Menu_Setup_f);
+    Cmd::AddCommand("menu_options", M_Menu_Options_f);
+    Cmd::AddCommand("menu_keys", M_Menu_Keys_f);
+    Cmd::AddCommand("menu_video", M_Menu_Video_f);
+    Cmd::AddCommand("help", M_Menu_Help_f);
+    Cmd::AddCommand("menu_quit", M_Menu_Quit_f);
 }
 
 void M_Draw(void)
@@ -3228,9 +3253,9 @@ void M_ConfigureNetSubsystem(void)
 {
     // enable/disable net systems to match desired config
 
-    Cbuf_AddText("stopdemo\n");
+    Cmd::BufferAddText("stopdemo\n");
     if (SerialConfig || DirectConfig) {
-        Cbuf_AddText("com1 enable\n");
+        Cmd::BufferAddText("com1 enable\n");
     }
 
     if (IPXConfig || TCPIPConfig) {

@@ -131,7 +131,7 @@ typedef struct qsocket_s {
 // ============================================================================
 
 typedef struct {
-    char* name;
+    const char* name;
     qboolean initialized;
     int controlSock;
     int (*Init)(void);
@@ -145,10 +145,10 @@ typedef struct {
     int (*Write)(int socket, byte* buf, int len, struct qsockaddr* addr);
     int (*Broadcast)(int socket, byte* buf, int len);
     char* (*AddrToString)(struct qsockaddr* addr);
-    int (*StringToAddr)(char* string, struct qsockaddr* addr);
+    int (*StringToAddr)(const char* string, struct qsockaddr* addr);
     int (*GetSocketAddr)(int socket, struct qsockaddr* addr);
     int (*GetNameFromAddr)(struct qsockaddr* addr, char* name);
-    int (*GetAddrFromName)(char* name, struct qsockaddr* addr);
+    int (*GetAddrFromName)(const char* name, struct qsockaddr* addr);
     int (*AddrCompare)(struct qsockaddr* addr1, struct qsockaddr* addr2);
     int (*GetSocketPort)(struct qsockaddr* addr);
     int (*SetSocketPort)(struct qsockaddr* addr, int port);
@@ -157,12 +157,12 @@ typedef struct {
 #define MAX_NET_DRIVERS 8
 
 typedef struct {
-    char* name;
+    const char* name;
     qboolean initialized;
     int (*Init)(void);
     void (*Listen)(qboolean state);
     void (*SearchForHosts)(qboolean xmit);
-    qsocket_t* (*Connect)(char* host);
+    qsocket_t* (*Connect)(const char* host);
     qsocket_t* (*CheckNewConnections)(void);
     int (*QGetMessage)(qsocket_t* sock);
     int (*QSendMessage)(qsocket_t* sock, sizebuf_t* data);
@@ -256,7 +256,7 @@ void NET_Shutdown(void);
 
 struct qsocket_s* NET_CheckNewConnections(void);
 
-struct qsocket_s* NET_Connect(char* host);
+struct qsocket_s* NET_Connect(const char* host);
 
 qboolean NET_CanSendMessage(qsocket_t* sock);
 
@@ -294,10 +294,10 @@ extern void (*GetModemConfig)(int portNumber,
     char* init,
     char* hangup);
 extern void (*SetModemConfig)(int portNumber,
-    char* dialType,
-    char* clear,
-    char* init,
-    char* hangup);
+    const char* dialType,
+    const char* clear,
+    const char* init,
+    const char* hangup);
 
 extern qboolean slistInProgress;
 extern qboolean slistSilent;
@@ -306,5 +306,3 @@ extern qboolean slistLocal;
 void NET_Slist_f(void);
 
 } // namespace Net
-
-using namespace Net;

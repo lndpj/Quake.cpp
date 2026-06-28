@@ -19,6 +19,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <setjmp.h>
+#include "core_types.hpp"
 
 inline void VID_LockBuffer(void) {}
 inline void VID_UnlockBuffer(void) {}

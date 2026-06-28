@@ -17,13 +17,11 @@ void Draw_EndDisc(void);
 void Draw_TileClear(int x, int y, int w, int h);
 void Draw_Fill(int x, int y, int w, int h, int c);
 void Draw_FadeScreen(void);
-void Draw_String(int x, int y, char* str);
-inline qpic_t* Draw_PicFromWad(char* name)
+void Draw_String(int x, int y, const char* str);
+inline qpic_t* Draw_PicFromWad(const char* name)
 {
-    return (qpic_t*)W_GetLumpName(name);
+    return (qpic_t*)Wad::W_GetLumpName(name);
 }
-qpic_t* Draw_CachePic(char* path);
+qpic_t* Draw_CachePic(const char* path);
 
 } // namespace Draw
-
-using namespace Draw;

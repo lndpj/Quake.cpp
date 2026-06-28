@@ -15,8 +15,33 @@
 
 #include "quakedef.hpp"
 
-char* basedir = ".";
-char* cachedir = "/tmp";
+using namespace CDAudio;
+using namespace Client;
+using namespace Common;
+using namespace Console;
+using namespace Render;
+using namespace Draw;
+using namespace Host;
+using namespace Input;
+using namespace Keys;
+using namespace Math;
+using namespace Menu;
+using namespace Model;
+using namespace Net;
+using namespace VM;
+using namespace Sbar;
+using namespace Screen;
+using namespace Server;
+using namespace Audio;
+using namespace Vid;
+using namespace View;
+using namespace Wad;
+using namespace Cvar;
+using namespace Cmd;
+
+
+const char* basedir = ".";
+const char* cachedir = "/tmp";
 
 cvar_t sys_linerefresh = { "sys_linerefresh", "0" }; // set for entity display
 
@@ -27,7 +52,7 @@ cvar_t sys_nostdout = { "sys_nostdout", "0" };
 
 namespace Common {
 
-void Sys_Printf(char* fmt, ...)
+void Sys_Printf(const char* fmt, ...)
 {
     va_list argptr;
     char text[1024];
@@ -70,7 +95,7 @@ void Sys_HighFPPrecision(void)
     // causes weird problems on Nextstep
 }
 
-[[noreturn]] void Sys_Error(char* error, ...)
+[[noreturn]] void Sys_Error(const char* error, ...)
 {
     va_list argptr;
     char string[1024];
@@ -125,7 +150,7 @@ static int Qfilelength(FILE* f)
     return end;
 }
 
-int Sys_FileOpenRead(char* path, int* hndl)
+int Sys_FileOpenRead(const char* path, int* hndl)
 {
     FILE* f;
     int i;
@@ -145,7 +170,7 @@ int Sys_FileOpenRead(char* path, int* hndl)
     return Qfilelength(f);
 }
 
-int Sys_FileOpenWrite(char* path)
+int Sys_FileOpenWrite(const char* path)
 {
     FILE* f;
     int i;
@@ -200,16 +225,16 @@ int Sys_FileRead(int handle, void* dst, int count)
     return size;
 }
 
-int Sys_FileWrite(int handle, void* src, int count)
+int Sys_FileWrite(int handle, const void* src, int count)
 {
-    char* data;
+    const char* data;
     int size, done;
 
     size = 0;
     if (handle >= 0) {
-        data = (char*)src;
+        data = (const char*)src;
         while (count > 0) {
-            done = (int)fread(data, 1, count, sys_handles[handle]);
+            done = (int)fwrite(data, 1, count, sys_handles[handle]);
             if (done == 0) {
                 break;
             }
@@ -223,7 +248,7 @@ int Sys_FileWrite(int handle, void* src, int count)
     return size;
 }
 
-int Sys_FileTime(char* path)
+int Sys_FileTime(const char* path)
 {
     FILE* f;
 
@@ -237,7 +262,7 @@ int Sys_FileTime(char* path)
     return -1;
 }
 
-void Sys_mkdir(char* /*path*/)
+void Sys_mkdir(const char* /*path*/)
 {
 }
 
@@ -292,7 +317,7 @@ int main(int c, char** v)
 
     Host_Init(&parms);
 
-    Cvar_RegisterVariable(&sys_nostdout);
+    Cvar::Register(&sys_nostdout);
 
     oldtime = Sys_FloatTime() - 0.1;
     while (1) {
