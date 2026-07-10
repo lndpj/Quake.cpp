@@ -653,7 +653,7 @@ R_EntityParticles
 */
 
 #define NUMVERTEXNORMALS 162
-extern float r_avertexnormals[NUMVERTEXNORMALS][3];
+float r_avertexnormals[NUMVERTEXNORMALS][3];
 Vector3 avelocities[NUMVERTEXNORMALS];
 float beamlength = 16;
 
@@ -4788,14 +4788,127 @@ typedef struct {
 static aedge_t aedges[12] = { { 0, 1 }, { 1, 2 }, { 2, 3 }, { 3, 0 }, { 4, 5 }, { 5, 6 },
     { 6, 7 }, { 7, 4 }, { 0, 5 }, { 1, 4 }, { 2, 7 }, { 3, 6 } };
 
-#define NUMVERTEXNORMALS 162
+/*
+================
+R_InitVertexNormals
 
-float r_avertexnormals[NUMVERTEXNORMALS][3] = {
-#pragma warning(push)
-#pragma warning(disable : 4305)
-#include "anorms.hpp"
-#pragma warning(pop)
-};
+Generate the 162 vertex normals by subdividing an icosahedron.
+This reproduces the exact set and ordering from the original
+Quake Pascal tool used to create anorms.h.
+================
+*/
+void R_InitVertexNormals(void)
+{
+    static bool initialized = false;
+    if (initialized) return;
+    initialized = true;
+
+    const float X = 0.525731112119133606f;
+    const float Z = 0.850650808352039932f;
+
+    const float verts[12][3] = {
+        {-X, 0.0f, Z}, {X, 0.0f, Z}, {-X, 0.0f, -Z}, {X, 0.0f, -Z},
+        {0.0f, Z, X}, {0.0f, Z, -X}, {0.0f, -Z, X}, {0.0f, -Z, -X},
+        {Z, X, 0.0f}, {-Z, X, 0.0f}, {Z, -X, 0.0f}, {-Z, -X, 0.0f},
+    };
+
+    const int faces[20][3] = {
+        {0, 4, 1}, {0, 9, 4}, {9, 5, 4}, {4, 5, 8}, {4, 8, 1},
+        {8, 10, 1}, {8, 3, 10}, {5, 3, 8}, {5, 2, 3}, {2, 7, 3},
+        {7, 10, 3}, {7, 6, 10}, {7, 11, 6}, {11, 0, 6}, {0, 1, 6},
+        {6, 1, 10}, {9, 0, 11}, {9, 11, 2}, {9, 2, 5}, {7, 2, 11}
+    };
+
+    const int subdiv = 4;
+    const int max_low_i = subdiv / 2 - 1;
+
+    float temp[400][3];
+    int num_temp = 0;
+
+    for (int f = 0; f < 20; f++) {
+        const float* a = verts[faces[f][0]];
+        const float* b = verts[faces[f][1]];
+        const float* c = verts[faces[f][2]];
+
+        // High i part (i >= n/2)
+        for (int i = subdiv; i >= subdiv / 2; i--) {
+            for (int j = subdiv - i; j >= 0; j--) {
+                int k = subdiv - i - j;
+                float px = (i * a[0] + j * b[0] + k * c[0]) / subdiv;
+                float py = (i * a[1] + j * b[1] + k * c[1]) / subdiv;
+                float pz = (i * a[2] + j * b[2] + k * c[2]) / subdiv;
+                float len = std::sqrt(px * px + py * py + pz * pz);
+                if (len > 0) {
+                    temp[num_temp][0] = px / len;
+                    temp[num_temp][1] = py / len;
+                    temp[num_temp][2] = pz / len;
+                    num_temp++;
+                }
+            }
+        }
+
+        // Low i part, high j (j >= n/2)
+        for (int j = subdiv; j >= subdiv / 2; j--) {
+            int max_i = (max_low_i < subdiv - j) ? max_low_i : (subdiv - j);
+            for (int i = max_i; i >= 0; i--) {
+                int k = subdiv - i - j;
+                float px = (i * a[0] + j * b[0] + k * c[0]) / subdiv;
+                float py = (i * a[1] + j * b[1] + k * c[1]) / subdiv;
+                float pz = (i * a[2] + j * b[2] + k * c[2]) / subdiv;
+                float len = std::sqrt(px * px + py * py + pz * pz);
+                if (len > 0) {
+                    temp[num_temp][0] = px / len;
+                    temp[num_temp][1] = py / len;
+                    temp[num_temp][2] = pz / len;
+                    num_temp++;
+                }
+            }
+        }
+
+        // Low i part, low j (j < n/2)
+        for (int j = 0; j < subdiv / 2; j++) {
+            int max_i = (max_low_i < subdiv - j) ? max_low_i : (subdiv - j);
+            for (int i = 0; i <= max_i; i++) {
+                int k = subdiv - i - j;
+                float px = (i * a[0] + j * b[0] + k * c[0]) / subdiv;
+                float py = (i * a[1] + j * b[1] + k * c[1]) / subdiv;
+                float pz = (i * a[2] + j * b[2] + k * c[2]) / subdiv;
+                float len = std::sqrt(px * px + py * py + pz * pz);
+                if (len > 0) {
+                    temp[num_temp][0] = px / len;
+                    temp[num_temp][1] = py / len;
+                    temp[num_temp][2] = pz / len;
+                    num_temp++;
+                }
+            }
+        }
+    }
+
+    // Dedup preserving first occurrence (order matches original)
+    int out_idx = 0;
+    for (int i = 0; i < num_temp && out_idx < NUMVERTEXNORMALS; i++) {
+        int key_x = (int)std::round(temp[i][0] * 10000.0f);
+        int key_y = (int)std::round(temp[i][1] * 10000.0f);
+        int key_z = (int)std::round(temp[i][2] * 10000.0f);
+
+        bool dup = false;
+        for (int j = 0; j < out_idx; j++) {
+            int jx = (int)std::round(r_avertexnormals[j][0] * 10000.0f);
+            int jy = (int)std::round(r_avertexnormals[j][1] * 10000.0f);
+            int jz = (int)std::round(r_avertexnormals[j][2] * 10000.0f);
+            if (jx == key_x && jy == key_y && jz == key_z) {
+                dup = true;
+                break;
+            }
+        }
+        if (!dup) {
+            r_avertexnormals[out_idx][0] = temp[i][0];
+            r_avertexnormals[out_idx][1] = temp[i][1];
+            r_avertexnormals[out_idx][2] = temp[i][2];
+            out_idx++;
+        }
+    }
+}
 
 void R_AliasTransformAndProjectFinalVerts(finalvert_t* fv, stvert_t* pstverts);
 void R_AliasSetUpTransform(int trivial_accept);
@@ -5870,6 +5983,7 @@ void R_Init(void)
     r_stack_start = (byte*)&dummy;
 
     R_InitTurb();
+    R_InitVertexNormals();
 
     Cmd::AddCommand("timerefresh", R_TimeRefresh_f);
     Cmd::AddCommand("pointfile", R_ReadPointFile_f);

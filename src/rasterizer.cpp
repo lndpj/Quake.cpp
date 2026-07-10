@@ -120,14 +120,7 @@ typedef struct {
     int* prightedgevert2;
 } edgetable;
 
-typedef struct {
-    int quotient;
-    int remainder;
-} adivtab_t;
 
-static adivtab_t adivtab[32 * 32] = {
-#include "adivtab.hpp"
-};
 
 typedef struct {
     void* pdest;
@@ -1855,26 +1848,18 @@ void D_PolysetSetUpForLineScan(fixed8_t startvertu,
 {
     double dm, dn;
     int tm, tn;
-    adivtab_t* ptemp;
 
     errorterm = -1;
 
     tm = endvertu - startvertu;
     tn = endvertv - startvertv;
 
-    if (((tm <= 16) && (tm >= -15)) && ((tn <= 16) && (tn >= -15))) {
-        ptemp = &adivtab[((tm + 15) << 5) + (tn + 15)];
-        ubasestep = ptemp->quotient;
-        erroradjustup = ptemp->remainder;
-        erroradjustdown = tn;
-    } else {
-        dm = (double)tm;
-        dn = (double)tn;
+    dm = (double)tm;
+    dn = (double)tn;
 
-        FloorDivMod(dm, dn, &ubasestep, &erroradjustup);
+    FloorDivMod(dm, dn, &ubasestep, &erroradjustup);
 
-        erroradjustdown = dn;
-    }
+    erroradjustdown = tn;
 }
 
 void D_PolysetCalcGradients(int s_width)
