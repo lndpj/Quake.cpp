@@ -21,7 +21,7 @@ cmake --build build > build.log 2>&1
 :: Step 3: Filter the log dynamically based on the src/ folder
 echo.
 echo [3/4] Filtering log for all warnings, errors, and relevant discarded code...
-powershell -Command "$srcNames = (Get-ChildItem -Path '%~dp0src' -File).BaseName -join '|'; Select-String -Path build.log -Pattern 'Discarded|warning|error' | ForEach-Object { $_.Line } | Where-Object { $d = ($_ -match 'Discarded' -and $_ -match ('(' + $srcNames + ').*\.(o|obj)') -and $_ -notmatch '\.lib|SDL2'); $w = ($_ -match 'warning|error' -and $_ -notmatch 'SDL2|LIBCMT|msvcrt|OLDNAMES|uuid\.lib|ws2_32\.lib|winmm\.lib|kernel32\.lib'); $d -or $w } | Out-File -FilePath clean_build.log -Encoding utf8"
+powershell -Command "$srcNames = (Get-ChildItem -Path '%~dp0src' -File).BaseName -join '|'; Select-String -Path build.log -Pattern 'warning|error|Discarded' | ForEach-Object { $_.Line } | Where-Object { $d = ($_ -match 'Discarded' -and $_ -match ('\b(' + $srcNames + ')\.(o|obj)\b')); $w = ($_ -match 'warning|error' -and $_ -notmatch 'SDL2|LIBCMT|msvcrt|OLDNAMES|uuid\.lib|ws2_32\.lib|winmm\.lib|kernel32\.lib'); $d -or $w } | Out-File -FilePath clean_build.log -Encoding utf8"
 
 :: Step 4: Finish and open the log
 echo.

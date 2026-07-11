@@ -2,6 +2,8 @@
 
 #include <io.h>
 #include <fcntl.h>
+#include <share.h>
+#include <sys/stat.h>
 #include "quakedef.hpp"
 
 using namespace CDAudio;
@@ -203,8 +205,8 @@ void Con_Init(void)
 
     if (con_debuglog) {
         if (strlen(com_gamedir) < (MAXGAMEDIRLEN - strlen(t2))) {
-            sprintf(temp, "%s%s", com_gamedir, t2);
-            unlink(temp);
+            sprintf_s(temp, sizeof(temp), "%s%s", com_gamedir, t2);
+            _unlink(temp);
         }
     }
 
@@ -302,7 +304,7 @@ void Con_Print(const char* txt)
             Con_Linefeed();
             // mark time for transparent overlay
             if (con_current >= 0) {
-                con_times[con_current % NUM_CON_TIMES] = realtime;
+                con_times[con_current % NUM_CON_TIMES] = static_cast<float>(realtime);
             }
         }
 
@@ -318,7 +320,7 @@ void Con_Print(const char* txt)
 
         default: // display character and advance
             y = con_current % con_totallines;
-            con_text[y * con_linewidth + con_x] = c | mask;
+            con_text[y * con_linewidth + con_x] = static_cast<char>(c | mask);
             con_x++;
             if (con_x >= con_linewidth) {
                 con_x = 0;
@@ -341,9 +343,9 @@ void Con_DebugLog(const char* file, const char* fmt, ...)
     int fd;
 
     va_start(argptr, fmt);
-    vsprintf(data, fmt, argptr);
+    vsprintf_s(data, sizeof(data), fmt, argptr);
     va_end(argptr);
-    fd = _open(file, O_WRONLY | O_CREAT | O_APPEND, 0666);
+    _sopen_s(&fd, file, O_WRONLY | O_CREAT | O_APPEND, _SH_DENYNO, _S_IREAD | _S_IWRITE);
     _write(fd, data, (unsigned int)strlen(data));
     _close(fd);
 }
@@ -365,7 +367,7 @@ void Con_Printf(const char* fmt, ...)
     static qboolean inupdate;
 
     va_start(argptr, fmt);
-    vsprintf(msg, fmt, argptr);
+    vsprintf_s(msg, sizeof(msg), fmt, argptr);
     va_end(argptr);
 
     // also echo to debugging console
@@ -416,7 +418,7 @@ void Con_DPrintf(const char* fmt, ...)
     }
 
     va_start(argptr, fmt);
-    vsprintf(msg, fmt, argptr);
+    vsprintf_s(msg, sizeof(msg), fmt, argptr);
     va_end(argptr);
 
     Con_Printf("%s", msg);
@@ -494,7 +496,7 @@ void Con_DrawNotify(void)
             continue;
         }
 
-        time = realtime - time;
+        time = static_cast<float>(realtime - time);
         if (time > con_notifytime.value) {
             continue;
         }
