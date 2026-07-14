@@ -19,6 +19,7 @@ FetchContent_Declare(
 set(SDL_TEST OFF CACHE BOOL "" FORCE)
 set(SDL_SHARED OFF CACHE BOOL "" FORCE)
 set(SDL_STATIC ON CACHE BOOL "" FORCE)
+set(SDL_PIPEWIRE OFF CACHE BOOL "" FORCE)
 
 FetchContent_MakeAvailable(SDL2)
 
@@ -60,7 +61,11 @@ add_executable(Quake.cpp ${CORE_SRCS})
 target_include_directories(Quake.cpp PRIVATE src)
 
 # Link SDL2 and Windows libraries
-target_link_libraries(Quake.cpp PRIVATE SDL2main SDL2-static ws2_32 winmm)
+if(WIN32)
+    target_link_libraries(Quake.cpp PRIVATE SDL2main SDL2-static ws2_32 winmm)
+else()
+    target_link_libraries(Quake.cpp PRIVATE SDL2main SDL2-static)
+endif()
 
 # Suppress some old C warnings for cleaner output
 if(MSVC)

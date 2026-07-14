@@ -48,6 +48,21 @@ typedef int socklen_t;
 #ifndef MAXHOSTNAMELEN
 #define MAXHOSTNAMELEN 256
 #endif
+#else
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <unistd.h>
+#include <sys/ioctl.h>
+#include <netdb.h>
+#include <sys/param.h>
+#include <errno.h>
+
+#define ioctl ioctl
+#define close close
+#ifndef MAXHOSTNAMELEN
+#define MAXHOSTNAMELEN 256
+#endif
 #endif
 
 // VCR op constants
@@ -646,7 +661,7 @@ int UDP_CheckNewConnections(void)
 
 int UDP_Read(int socket, byte* buf, int len, struct qsockaddr* addr)
 {
-    int addrlen = sizeof(struct qsockaddr);
+    socklen_t addrlen = sizeof(struct qsockaddr);
     int ret;
 
     ret = recvfrom(socket, (char*)buf, len, 0, (struct sockaddr*)addr, &addrlen);
@@ -746,7 +761,7 @@ int UDP_StringToAddr(const char* string, struct qsockaddr* addr)
 
 int UDP_GetSocketAddr(int socket, struct qsockaddr* addr)
 {
-    int addrlen = sizeof(struct qsockaddr);
+    socklen_t addrlen = sizeof(struct qsockaddr);
     unsigned int a;
 
     Q_memset(addr, 0, sizeof(struct qsockaddr));

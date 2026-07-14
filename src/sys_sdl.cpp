@@ -258,9 +258,20 @@ int Sys_FileTime(const char* path)
 
     return -1;
 }
+#ifdef _WIN32
+#include <direct.h>
+#else
+#include <sys/stat.h>
+#include <sys/types.h>
+#endif
 
-void Sys_mkdir(const char* /*path*/)
+void Sys_mkdir(const char* path)
 {
+#ifdef _WIN32
+    _mkdir(path);
+#else
+    mkdir(path, 0777);
+#endif
 }
 
 double Sys_FloatTime(void)

@@ -1,6 +1,7 @@
 // winquake.h: Win32-specific Quake header file
 #pragma once
 
+#ifdef _WIN32
 #pragma warning(disable : 4229) // mgraph gets this
 
 #include <windows.h>
@@ -41,5 +42,23 @@ void S_BlockSound(void);
 void S_UnblockSound(void);
 
 void VID_SetDefaultMode(void);
+#else
+// Mock definitions for Unix/Linux compilation
+#include "core_types.hpp"
+
+typedef struct tagRECT {
+    long left;
+    long top;
+    long right;
+    long bottom;
+} RECT;
+
+typedef void* HWND;
+typedef void* HINSTANCE;
+typedef void* HANDLE;
+typedef int BOOL;
+
+extern cvar_t _windowed_mouse;
+#endif
 
 

@@ -78,9 +78,16 @@ void VID_Init(unsigned char* palette)
     int cachesize;
     Uint32 flags;
 
-    // Load the SDL library
-    if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO) < 0) {
-        Sys_Error("VID: Couldn't load SDL: %s", SDL_GetError());
+    // Load the SDL library (Video first, then Audio with dummy fallback)
+    if (SDL_Init(SDL_INIT_VIDEO) < 0) {
+        Sys_Error("VID: Couldn't load SDL Video: %s", SDL_GetError());
+    }
+
+    if (SDL_InitSubSystem(SDL_INIT_AUDIO) < 0) {
+        SDL_setenv("SDL_AUDIODRIVER", "dummy", 1);
+        if (SDL_InitSubSystem(SDL_INIT_AUDIO) < 0) {
+            fprintf(stderr, "Warning: VID: Couldn't load SDL Audio: %s\n", SDL_GetError());
+        }
     }
 
     // Set up display mode (width and height)
@@ -217,10 +224,8 @@ void VID_Update(vrect_t* rects)
     SDL_Surface* window_surface = SDL_GetWindowSurface(window);
     if (screen != window_surface) {
         SDL_BlitSurface(screen, NULL, window_surface, NULL);
-        SDL_UpdateWindowSurfaceRects(window, sdlrects, n);
-    } else {
-        SDL_UpdateWindowSurfaceRects(window, sdlrects, n);
     }
+    SDL_UpdateWindowSurface(window);
 }
 
 /*

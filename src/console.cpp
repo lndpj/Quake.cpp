@@ -1,8 +1,12 @@
 // console.cpp -- console text display and input
 
+#ifdef _WIN32
 #include <io.h>
-#include <fcntl.h>
 #include <share.h>
+#else
+#include <unistd.h>
+#endif
+#include <fcntl.h>
 #include <sys/stat.h>
 #include "quakedef.hpp"
 
