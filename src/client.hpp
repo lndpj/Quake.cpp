@@ -1,32 +1,35 @@
-// client.h -- client state, connection, and entity structures
+// client.hpp -- client state, connection, and entity structures
 #pragma once
 
-typedef struct {
+#include <array>
+#include <stdio.h>
+
+struct usercmd_t {
     Vector3 viewangles;
 
     // intended velocities
     float forwardmove;
     float sidemove;
     float upmove;
-} usercmd_t;
+};
 
-typedef struct {
+struct lightstyle_t {
     int length;
     char map[MAX_STYLESTRING];
-} lightstyle_t;
+};
 
-typedef struct {
+struct scoreboard_t {
     char name[MAX_SCOREBOARDNAME];
     float entertime;
     int frags;
     int colors; // two 4 bit fields
     byte translations[VID_GRADES * 256];
-} scoreboard_t;
+};
 
-typedef struct {
-    int destcolor[3];
+struct cshift_t {
+    std::array<int, 3> destcolor;
     int percent; // 0-256
-} cshift_t;
+};
 
 #define CSHIFT_CONTENTS 0
 #define CSHIFT_DAMAGE 1
@@ -44,23 +47,23 @@ typedef struct {
 
 #define MAX_DLIGHTS 32
 
-typedef struct {
+struct dlight_t {
     Vector3 origin;
     float radius;
     float die;      // stop lighting after this time
     float decay;    // drop this each second
     float minlight; // don't add when contributing less
     int key;
-} dlight_t;
+};
 
 #define MAX_BEAMS 24
 
-typedef struct {
+struct beam_t {
     int entity;
-    struct model_s* model;
+    model_t* model;
     float endtime;
     Vector3 start, end;
-} beam_t;
+};
 
 #define MAX_EFRAGS 640
 
@@ -68,17 +71,17 @@ typedef struct {
 #define MAX_DEMOS 8
 #define MAX_DEMONAME 16
 
-typedef enum {
+enum cactive_t {
     ca_dedicated,    // a dedicated server with no ability to start a client
     ca_disconnected, // full screen console with no connection
     ca_connected     // valid netcon, talking to a server
-} cactive_t;
+};
 
 //
 // the client_static_t structure is persistant through an arbitrary number
 // of server connections
 //
-typedef struct {
+struct client_static_t {
     cactive_t state;
 
     // personalization data sent to server
@@ -91,9 +94,9 @@ typedef struct {
 
     // demo recording info must be here, because record is started before
     // entering a map (and clearing client_state_t)
-    qboolean demorecording;
-    qboolean demoplayback;
-    qboolean timedemo;
+    bool demorecording;
+    bool demoplayback;
+    bool timedemo;
     int forcetrack; // -1 = use normal cd track
     FILE* demofile;
     int td_lastframe;   // to meter out one message a frame
@@ -104,16 +107,21 @@ typedef struct {
     int signon; // 0 to SIGNONS
     struct qsocket_s* netcon;
     sizebuf_t message; // writing buffer to send to server
-
-} client_static_t;
+};
 
 namespace Client {
+
+template <typename T, std::size_t N>
+struct compat_array : public std::array<T, N> {
+    operator T*() { return this->data(); }
+    operator const T*() const { return this->data(); }
+};
 
 //
 // the client_state_t structure is wiped completely at every
 // server signon
 //
-typedef struct {
+struct client_state_t {
     int movemessages; // since connecting to this server
     // throw out the first couple, so the player
     // doesn't accidentally do something the
@@ -121,23 +129,23 @@ typedef struct {
     usercmd_t cmd; // last command sent to the server
 
     // information for local display
-    int stats[MAX_CL_STATS]; // health, etc
+    std::array<int, MAX_CL_STATS> stats; // health, etc
     int items;               // inventory bit flags
-    float item_gettime[32];  // cl.time of aquiring item, for blinking
+    std::array<float, 32> item_gettime;  // cl.time of aquiring item, for blinking
     float faceanimtime;      // use anim frame if cl.time < this
 
-    cshift_t cshifts[NUM_CSHIFTS];      // color shifts for damage, powerups
-    cshift_t prev_cshifts[NUM_CSHIFTS]; // and content types
+    std::array<cshift_t, NUM_CSHIFTS> cshifts;      // color shifts for damage, powerups
+    std::array<cshift_t, NUM_CSHIFTS> prev_cshifts; // and content types
 
     // the client maintains its own idea of view angles, which are
     // sent to the server each frame.  The server sets punchangle when
     // the view is temporarliy offset, and an angle reset commands at the start
     // of each level and after teleporting.
-    Vector3 mviewangles[2]; // during demo playback viewangles is lerped
+    std::array<Vector3, 2> mviewangles; // during demo playback viewangles is lerped
     // between these
     Vector3 viewangles;
 
-    Vector3 mvelocity[2]; // update by server, used for lean+bob
+    std::array<Vector3, 2> mvelocity; // update by server, used for lean+bob
     // (0 is newest)
     Vector3 velocity; // lerped between mvelocity[0] and [1]
 
@@ -146,21 +154,21 @@ typedef struct {
     // pitch drifting vars
     float idealpitch;
     float pitchvel;
-    qboolean nodrift;
+    bool nodrift;
     float driftmove;
     double laststop;
 
     float viewheight;
     float crouch; // local amount for smoothing stepups
 
-    qboolean paused; // send over by server
-    qboolean onground;
-    qboolean inwater;
+    bool paused; // send over by server
+    bool onground;
+    bool inwater;
 
     int intermission;   // don't change view angle, full screen, etc
     int completed_time; // latched at intermission start
 
-    double mtime[2]; // the timestamp of last two messages
+    std::array<double, 2> mtime; // the timestamp of last two messages
     double time;     // clients view of time, should be between
     // servertime and oldservertime to generate
     // a lerp point for other data
@@ -172,8 +180,8 @@ typedef struct {
     //
     // information that is static for the entire time connected to a server
     //
-    struct model_s* model_precache[MAX_MODELS];
-    struct sfx_s* sound_precache[MAX_SOUNDS];
+    std::array<model_t*, MAX_MODELS> model_precache;
+    std::array<sfx_t*, MAX_SOUNDS> sound_precache;
 
     char levelname[40]; // for display on solo scoreboard
     int viewentity;     // cl_entitites[cl.viewentity] = player
@@ -181,7 +189,7 @@ typedef struct {
     int gametype;
 
     // refresh related state
-    struct model_s* worldmodel; // cl_entitites[0].model
+    model_t* worldmodel; // cl_entitites[0].model
     struct efrag_s* free_efrags;
     int num_entities; // held in cl_entities array
     int num_statics;  // held in cl_staticentities array
@@ -191,8 +199,7 @@ typedef struct {
 
     // frag scoreboard
     scoreboard_t* scores; // [cl.maxclients]
-
-} client_state_t;
+};
 
 //
 // cvars
@@ -230,13 +237,13 @@ extern cvar_t m_side;
 #define MAX_TEMP_ENTITIES 64    // lightning bolts, etc
 #define MAX_STATIC_ENTITIES 128 // torches, etc
 
-using EfragArray = efrag_t[MAX_EFRAGS];
-using EntityArray = entity_t[MAX_EDICTS];
-using StaticEntityArray = entity_t[MAX_STATIC_ENTITIES];
-using LightstyleArray = lightstyle_t[MAX_LIGHTSTYLES];
-using DlightArray = dlight_t[MAX_DLIGHTS];
-using TempEntityArray = entity_t[MAX_TEMP_ENTITIES];
-using BeamArray = beam_t[MAX_BEAMS];
+using EfragArray = compat_array<efrag_t, MAX_EFRAGS>;
+using EntityArray = compat_array<entity_t, MAX_EDICTS>;
+using StaticEntityArray = compat_array<entity_t, MAX_STATIC_ENTITIES>;
+using LightstyleArray = compat_array<lightstyle_t, MAX_LIGHTSTYLES>;
+using DlightArray = compat_array<dlight_t, MAX_DLIGHTS>;
+using TempEntityArray = compat_array<entity_t, MAX_TEMP_ENTITIES>;
+using BeamArray = compat_array<beam_t, MAX_BEAMS>;
 
 class ClientSubsystem {
 public:
@@ -257,13 +264,13 @@ public:
 private:
     client_static_t cls_;
     client_state_t cl_;
-    efrag_t cl_efrags_[MAX_EFRAGS];
-    entity_t cl_entities_[MAX_EDICTS];
-    entity_t cl_static_entities_[MAX_STATIC_ENTITIES];
-    lightstyle_t cl_lightstyle_[MAX_LIGHTSTYLES];
-    dlight_t cl_dlights_[MAX_DLIGHTS];
-    entity_t cl_temp_entities_[MAX_TEMP_ENTITIES];
-    beam_t cl_beams_[MAX_BEAMS];
+    EfragArray cl_efrags_;
+    EntityArray cl_entities_;
+    StaticEntityArray cl_static_entities_;
+    LightstyleArray cl_lightstyle_;
+    DlightArray cl_dlights_;
+    TempEntityArray cl_temp_entities_;
+    BeamArray cl_beams_;
 };
 
 ClientSubsystem& GetClientSubsystem();
@@ -284,19 +291,19 @@ inline BeamArray& cl_beams = GetClientSubsystem().GetBeams();
 // cl_main
 //
 dlight_t* CL_AllocDlight(int key);
-void CL_DecayLights(void);
+void CL_DecayLights();
 
-void CL_Init(void);
+void CL_Init();
 
 void CL_EstablishConnection(const char* host);
-void CL_Signon1(void);
-void CL_Signon2(void);
-void CL_Signon3(void);
-void CL_Signon4(void);
+void CL_Signon1();
+void CL_Signon2();
+void CL_Signon3();
+void CL_Signon4();
 
-void CL_Disconnect(void);
-void CL_Disconnect_f(void);
-void CL_NextDemo(void);
+void CL_Disconnect();
+void CL_Disconnect_f();
+void CL_NextDemo();
 
 #define MAX_VISEDICTS 256
 extern int cl_numvisedicts;
@@ -305,25 +312,25 @@ extern entity_t* cl_visedicts[MAX_VISEDICTS];
 //
 // cl_input
 //
-typedef struct {
-    int down[2]; // key nums holding it down
+struct kbutton_t {
+    std::array<int, 2> down; // key nums holding it down
     int state;   // low bit is down state
-} kbutton_t;
+};
 
 extern kbutton_t in_mlook, in_klook;
 extern kbutton_t in_strafe;
 extern kbutton_t in_speed;
 
-void CL_InitInput(void);
-void CL_SendCmd(void);
+void CL_InitInput();
+void CL_SendCmd();
 void CL_SendMove(usercmd_t* cmd);
 
-void CL_ParseTEnt(void);
-void CL_UpdateTEnts(void);
+void CL_ParseTEnt();
+void CL_UpdateTEnts();
 
-void CL_ClearState(void);
+void CL_ClearState();
 
-int CL_ReadFromServer(void);
+int CL_ReadFromServer();
 void CL_WriteToServer(usercmd_t* cmd);
 void CL_BaseMove(usercmd_t* cmd);
 
@@ -332,33 +339,33 @@ float CL_KeyState(kbutton_t* key);
 //
 // cl_demo.cpp
 //
-void CL_StopPlayback(void);
-int CL_GetMessage(void);
+void CL_StopPlayback();
+int CL_GetMessage();
 
-void CL_Stop_f(void);
-void CL_Record_f(void);
-void CL_PlayDemo_f(void);
-void CL_TimeDemo_f(void);
+void CL_Stop_f();
+void CL_Record_f();
+void CL_PlayDemo_f();
+void CL_TimeDemo_f();
 
 //
 // cl_parse.cpp
 //
-void CL_ParseServerMessage(void);
+void CL_ParseServerMessage();
 void CL_NewTranslation(int slot);
 
 //
 //
 // cl_tent
 //
-void CL_InitTEnts(void);
-void CL_SignonReply(void);
+void CL_InitTEnts();
+void CL_SignonReply();
 
 //
 // chase
 //
 extern cvar_t chase_active;
 
-void Chase_Init(void);
-void Chase_Update(void);
+void Chase_Init();
+void Chase_Update();
 
 } // namespace Client
