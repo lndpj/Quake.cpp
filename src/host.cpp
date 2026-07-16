@@ -2,7 +2,6 @@
 
 #include "quakedef.hpp"
 
-using namespace CDAudio;
 using namespace Client;
 using namespace Common;
 using namespace Console;
@@ -721,7 +720,6 @@ void _Host_Frame(float time)
             S_Update(vec3_origin, vec3_origin, vec3_origin, vec3_origin);
         }
 
-        CDAudio_Update();
 
         if (host_speeds.value) {
             pass1 = static_cast<int>((time1 - time3) * 1000);
@@ -906,7 +904,6 @@ void Host_Init(quakeparms_t* parms)
         SCR_Init();
         R_Init();
         S_Init();
-        CDAudio_Init();
         Sbar_Init();
         CL_Init();
         IN_Init();
@@ -947,7 +944,6 @@ void Host_Shutdown(void)
 
     Host_WriteConfiguration();
 
-    CDAudio_Shutdown();
     NET_Shutdown();
     S_Shutdown();
     IN_Shutdown();

@@ -3,7 +3,6 @@
 #include "quakedef.hpp"
 #include <cstring>
 
-using namespace CDAudio;
 using namespace Client;
 using namespace Common;
 using namespace Console;

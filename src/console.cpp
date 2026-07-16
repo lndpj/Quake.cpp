@@ -10,7 +10,6 @@
 #include <sys/stat.h>
 #include "quakedef.hpp"
 
-using namespace CDAudio;
 using namespace Client;
 using namespace Common;
 using namespace Console;

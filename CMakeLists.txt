@@ -25,7 +25,6 @@ FetchContent_MakeAvailable(SDL2)
 
 # Gather source files
 set(CORE_SRCS
-    src/cd_sdl.cpp
     src/chase.cpp
     src/client.cpp
     src/cmd.cpp
