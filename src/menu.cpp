@@ -753,8 +753,8 @@ void M_Menu_Setup_f(void)
     key_dest = key_menu;
     m_state = m_setup;
     m_entersound = true;
-    Q_strcpy(setup_myname, cl_name.string);
-    Q_strcpy(setup_hostname, hostname.string);
+    Q_strcpy(setup_myname, cl_name.string.c_str());
+    Q_strcpy(setup_hostname, hostname.string.c_str());
     setup_top = setup_oldtop = ((int)cl_color.value) >> 4;
     setup_bottom = setup_oldbottom = ((int)cl_color.value) & 15;
 }
@@ -872,11 +872,11 @@ void M_Setup_Key(int k)
         }
 
         // setup_cursor == 4 (OK)
-        if (Q_strcmp(cl_name.string, setup_myname) != 0) {
+        if (Q_strcmp(cl_name.string.c_str(), setup_myname) != 0) {
             Cmd::BufferAddText(va("name \"%s\"\n", setup_myname));
         }
 
-        if (Q_strcmp(hostname.string, setup_hostname) != 0) {
+        if (Q_strcmp(hostname.string.c_str(), setup_hostname) != 0) {
             Cvar::Set("hostname", setup_hostname);
         }
 

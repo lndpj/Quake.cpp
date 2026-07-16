@@ -689,7 +689,7 @@ void Host_Name_f(void)
     char newName[64];
 
     if (Cmd::Argc() == 1) {
-        Con_Printf("\"name\" is \"%s\"\n", cl_name.string);
+        Con_Printf("\"name\" is \"%s\"\n", cl_name.string.c_str());
 
         return;
     }
@@ -703,7 +703,7 @@ void Host_Name_f(void)
     newName[15] = 0;
 
     if (Cmd::state.source == Cmd::Source::Command) {
-        if (Q_strcmp(cl_name.string, newName) == 0) {
+        if (Q_strcmp(cl_name.string.c_str(), newName) == 0) {
             return;
         }
 
@@ -779,7 +779,7 @@ void Host_Say(qboolean teamonly)
     if (!fromServer) {
         sprintf_s((char*)text, sizeof(text), "%c%s: ", 1, save->name);
     } else {
-        sprintf_s((char*)text, sizeof(text), "%c<%s> ", 1, hostname.string);
+        sprintf_s((char*)text, sizeof(text), "%c<%s> ", 1, hostname.string.c_str());
     }
 
     j = sizeof(text) - 2 - Q_strlen((char*)text); // -2 for /n and null terminator
@@ -1199,7 +1199,7 @@ void Host_Kick_f(void)
             if (cls.state == ca_dedicated) {
                 who = "Console";
             } else {
-                who = cl_name.string;
+                who = cl_name.string.c_str();
             }
         } else {
             who = save->name;

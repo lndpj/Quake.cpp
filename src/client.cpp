@@ -249,7 +249,7 @@ void CL_SignonReply()
 
     case 2: {
         MSG_WriteByte(&cls.message, clc_stringcmd);
-        MSG_WriteString(&cls.message, va("name \"%s\"\n", cl_name.string));
+        MSG_WriteString(&cls.message, va("name \"%s\"\n", cl_name.string.c_str()));
 
         MSG_WriteByte(&cls.message, clc_stringcmd);
         MSG_WriteString(&cls.message,

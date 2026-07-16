@@ -214,10 +214,10 @@ void Loop_SearchForHosts(qboolean /*xmit*/)
     }
 
     hostCacheCount = 1;
-    if (Q_strcmp(hostname.string, "UNNAMED") == 0) {
+    if (Q_strcmp(hostname.string.c_str(), "UNNAMED") == 0) {
         Q_strcpy(hostcache[0].name, "local");
     } else {
-        Q_strcpy(hostcache[0].name, hostname.string);
+        Q_strcpy(hostcache[0].name, hostname.string.c_str());
     }
 
     Q_strcpy(hostcache[0].map, sv.name);
@@ -472,7 +472,7 @@ int UDP_Init(void)
     }
 
     // if the quake hostname isn't set, set it to the machine name
-    if (Q_strcmp(hostname.string, "UNNAMED") == 0) {
+    if (Q_strcmp(hostname.string.c_str(), "UNNAMED") == 0) {
         buff[15] = 0;
         Cvar::Set("hostname", buff);
     }
@@ -1647,7 +1647,7 @@ static qsocket_t* _Datagram_CheckNewConnections(void)
         MSG_WriteByte(&net_message, CCREP_SERVER_INFO);
         dfunc.GetSocketAddr(acceptsock, &newaddr);
         MSG_WriteString(&net_message, dfunc.AddrToString(&newaddr));
-        MSG_WriteString(&net_message, hostname.string);
+        MSG_WriteString(&net_message, hostname.string.c_str());
         MSG_WriteString(&net_message, sv.name);
         MSG_WriteByte(&net_message, net_activeconnections);
         MSG_WriteByte(&net_message, svs.maxclients);
@@ -1731,8 +1731,8 @@ static qsocket_t* _Datagram_CheckNewConnections(void)
         MSG_WriteLong(&net_message, 0);
         MSG_WriteByte(&net_message, CCREP_RULE_INFO);
         if (var) {
-            MSG_WriteString(&net_message, var->name);
-            MSG_WriteString(&net_message, var->string);
+            MSG_WriteString(&net_message, var->name.c_str());
+            MSG_WriteString(&net_message, var->string.c_str());
         }
 
         *((int*)net_message.data) = BigLong(NETFLAG_CTL | (net_message.cursize & NETFLAG_LENGTH_MASK));
@@ -3175,8 +3175,8 @@ void NET_Poll(void)
 
             SetComPortConfig(0, (int)config_com_port.value, (int)config_com_irq.value,
                 (int)config_com_baud.value, useModem);
-            SetModemConfig(0, config_modem_dialtype.string, config_modem_clear.string,
-                config_modem_init.string, config_modem_hangup.string);
+            SetModemConfig(0, config_modem_dialtype.string.c_str(), config_modem_clear.string.c_str(),
+                config_modem_init.string.c_str(), config_modem_hangup.string.c_str());
         }
 
         configRestored = true;

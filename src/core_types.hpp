@@ -6,43 +6,53 @@
 template <typename T, typename E>
 class Expected {
 public:
-    Expected(const T& val) : data_(val) {}
-    Expected(T&& val) : data_(std::move(val)) {}
-    Expected(const E& err) : data_(err) {}
-    Expected(E&& err) : data_(std::move(err)) {}
+    constexpr Expected(const T& val) : data_(val) {}
+    constexpr Expected(T&& val) : data_(std::move(val)) {}
+    constexpr Expected(const E& err) : data_(err) {}
+    constexpr Expected(E&& err) : data_(std::move(err)) {}
 
-    bool has_value() const noexcept {
+    [[nodiscard]] constexpr bool has_value() const noexcept {
         return std::holds_alternative<T>(data_);
     }
 
-    explicit operator bool() const noexcept {
+    [[nodiscard]] explicit constexpr operator bool() const noexcept {
         return has_value();
     }
 
-    const T& value() const& {
+    [[nodiscard]] constexpr const T& value() const& {
         if (!has_value()) throw std::runtime_error("bad expected access");
         return std::get<T>(data_);
     }
 
-    T& value() & {
+    [[nodiscard]] constexpr T& value() & {
         if (!has_value()) throw std::runtime_error("bad expected access");
         return std::get<T>(data_);
     }
 
-    const E& error() const& {
+    [[nodiscard]] constexpr const E& error() const& {
         if (has_value()) throw std::runtime_error("bad expected access");
         return std::get<E>(data_);
     }
 
-    E& error() & {
+    [[nodiscard]] constexpr E& error() & {
         if (has_value()) throw std::runtime_error("bad expected access");
         return std::get<E>(data_);
     }
 
-    const T& operator*() const& { return value(); }
-    T& operator*() & { return value(); }
-    const T* operator->() const { return &value(); }
-    T* operator->() { return &value(); }
+    [[nodiscard]] constexpr const T& operator*() const& { return value(); }
+    [[nodiscard]] constexpr T& operator*() & { return value(); }
+    [[nodiscard]] constexpr const T* operator->() const { return &value(); }
+    [[nodiscard]] constexpr T* operator->() { return &value(); }
+
+    template <typename U>
+    [[nodiscard]] constexpr T value_or(U&& default_value) const& {
+        return has_value() ? std::get<T>(data_) : static_cast<T>(std::forward<U>(default_value));
+    }
+
+    template <typename U>
+    [[nodiscard]] constexpr T value_or(U&& default_value) && {
+        return has_value() ? std::move(std::get<T>(data_)) : static_cast<T>(std::forward<U>(default_value));
+    }
 
 private:
     std::variant<T, E> data_;
@@ -52,14 +62,14 @@ private:
 template <typename E>
 class Expected<void, E> {
 public:
-    Expected() : has_value_(true) {}
-    Expected(const E& err) : error_(err), has_value_(false) {}
-    Expected(E&& err) : error_(std::move(err)), has_value_(false) {}
+    constexpr Expected() : has_value_(true) {}
+    constexpr Expected(const E& err) : error_(err), has_value_(false) {}
+    constexpr Expected(E&& err) : error_(std::move(err)), has_value_(false) {}
 
-    bool has_value() const noexcept { return has_value_; }
-    explicit operator bool() const noexcept { return has_value_; }
+    [[nodiscard]] constexpr bool has_value() const noexcept { return has_value_; }
+    [[nodiscard]] explicit constexpr operator bool() const noexcept { return has_value_; }
 
-    const E& error() const {
+    [[nodiscard]] constexpr const E& error() const {
         if (has_value_) throw std::runtime_error("bad expected access");
         return error_;
     }

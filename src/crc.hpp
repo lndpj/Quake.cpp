@@ -1,9 +1,16 @@
-// crc.h -- CRC-16 checksum function declarations
+// crc.hpp -- CRC-16 checksum function declarations
 #pragma once
+#include <cstdint>
+#include "common.hpp"
 
 namespace Common {
 
-void CRC_Init(unsigned short* crcvalue);
-void CRC_ProcessByte(unsigned short* crcvalue, byte data);
+// Reference-based functions for modern C++ code
+void CRC_Init(std::uint16_t& crcvalue) noexcept;
+void CRC_ProcessByte(std::uint16_t& crcvalue, byte data) noexcept;
+
+// Pointer-based overloads for backward compatibility
+void CRC_Init(std::uint16_t* crcvalue) noexcept;
+void CRC_ProcessByte(std::uint16_t* crcvalue, byte data) noexcept;
 
 } // namespace Common

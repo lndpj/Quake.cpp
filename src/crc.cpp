@@ -1,40 +1,15 @@
 // crc.cpp -- CRC-16 checksum computation
-
 #include "quakedef.hpp"
-
-using namespace Client;
-using namespace Common;
-using namespace Console;
-using namespace Render;
-using namespace Draw;
-using namespace Host;
-using namespace Input;
-using namespace Keys;
-using namespace Math;
-using namespace Menu;
-using namespace Model;
-using namespace Net;
-using namespace VM;
-using namespace Sbar;
-using namespace Screen;
-using namespace Server;
-using namespace Audio;
-using namespace Vid;
-using namespace View;
-using namespace Wad;
-using namespace Cvar;
-using namespace Cmd;
-
 #include "crc.hpp"
+#include <array>
 
+namespace Common {
+
+namespace {
 // this is a 16 bit, non-reflected CRC using the polynomial 0x1021
 // and the initial and final xor values shown below...  in other words, the
 // CCITT standard CRC used by XMODEM
-
-#define CRC_INIT_VALUE 0xffff
-#define CRC_XOR_VALUE 0x0000
-
-static unsigned short crctable[256] = {
+constexpr std::array<std::uint16_t, 256> crctable = {
     0x0000, 0x1021, 0x2042, 0x3063, 0x4084, 0x50a5, 0x60c6, 0x70e7, 0x8108,
     0x9129, 0xa14a, 0xb16b, 0xc18c, 0xd1ad, 0xe1ce, 0xf1ef, 0x1231, 0x0210,
     0x3273, 0x2252, 0x52b5, 0x4294, 0x72f7, 0x62d6, 0x9339, 0x8318, 0xb37b,
@@ -65,17 +40,31 @@ static unsigned short crctable[256] = {
     0xdf7c, 0xaf9b, 0xbfba, 0x8fd9, 0x9ff8, 0x6e17, 0x7e36, 0x4e55, 0x5e74,
     0x2e93, 0x3eb2, 0x0ed1, 0x1ef0
 };
+constexpr std::uint16_t CRC_INIT_VALUE = 0xffff;
+} // namespace
 
-namespace Common {
-
-void CRC_Init(unsigned short* crcvalue)
+void CRC_Init(std::uint16_t& crcvalue) noexcept
 {
-    *crcvalue = CRC_INIT_VALUE;
+    crcvalue = CRC_INIT_VALUE;
 }
 
-void CRC_ProcessByte(unsigned short* crcvalue, byte data)
+void CRC_ProcessByte(std::uint16_t& crcvalue, byte data) noexcept
 {
-    *crcvalue = (*crcvalue << 8) ^ crctable[(*crcvalue >> 8) ^ data];
+    crcvalue = (crcvalue << 8) ^ crctable[(crcvalue >> 8) ^ data];
+}
+
+void CRC_Init(std::uint16_t* crcvalue) noexcept
+{
+    if (crcvalue) {
+        CRC_Init(*crcvalue);
+    }
+}
+
+void CRC_ProcessByte(std::uint16_t* crcvalue, byte data) noexcept
+{
+    if (crcvalue) {
+        CRC_ProcessByte(*crcvalue, data);
+    }
 }
 
 } // namespace Common

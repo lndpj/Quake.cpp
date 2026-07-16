@@ -1101,7 +1101,7 @@ void SV_SpawnServer(char* server)
     int i;
 
     // let's not have any servers with no name
-    if (hostname.string[0] == 0) {
+    if (hostname.string.empty()) {
         Cvar::Set("hostname", "UNNAMED");
     }
 
