@@ -152,20 +152,21 @@ void Q_memcpy(void* dest, const void* src, int count)
 
 void Q_strcpy(char* dest, const char* src)
 {
-    std::strcpy(dest, src);
+    std::size_t len = std::strlen(src);
+    std::copy_n(src, len + 1, dest);
 }
 
 void Q_strncpy(char* dest, const char* src, int count)
 {
-    std::strncpy(dest, src, count);
-    if (count > 0) {
-        // Ensure null termination if src was longer or equal
-        // Wait, the original code only set a single null terminator if count was not decremented to 0:
-        // while (*src && count--) { *dest++ = *src++; }
-        // if (count) { *dest++ = 0; }
-        // In other words, if the src was longer than count, the destination is NOT null-terminated!
-        // std::strncpy does NOT null-terminate if the count is reached.
-        // So std::strncpy behaves exactly like the original in that respect!
+    if (count <= 0) {
+        return;
+    }
+    std::size_t len = std::strlen(src);
+    if (len < static_cast<std::size_t>(count)) {
+        std::copy_n(src, len, dest);
+        dest[len] = '\0';
+    } else {
+        std::copy_n(src, count, dest);
     }
 }
 
@@ -181,7 +182,9 @@ const char* Q_strrchr(const char* s, char c)
 
 void Q_strcat(char* dest, const char* src)
 {
-    std::strcat(dest, src);
+    std::size_t dest_len = std::strlen(dest);
+    std::size_t src_len = std::strlen(src);
+    std::copy_n(src, src_len + 1, dest + dest_len);
 }
 
 int Q_strcmp(const char* s1, const char* s2)
