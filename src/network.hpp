@@ -1,6 +1,11 @@
 // network.hpp -- quake's interface to the networking layer
 #pragma once
 
+#include <EASTL/array.h>
+#include <EASTL/vector.h>
+#include <EASTL/unique_ptr.h>
+#include <EASTL/functional.h>
+
 struct qsockaddr {
     short sa_family;
     unsigned char sa_data[14];
@@ -27,11 +32,6 @@ struct qsockaddr {
 // servers, get info about them, and connect to them.  Once connected, the
 // Quake game protocol (documented elsewhere) is used.
 //
-//
-// General notes:
-//	game_name is currently always "QUAKE", but is there so this same protocol
-//		can be used for future games as well; can you say Quake2?
-//
 // CCREQ_CONNECT
 //		string	game_name				"QUAKE"
 //		byte	net_protocol_version	NET_PROTOCOL_VERSION
@@ -45,8 +45,6 @@ struct qsockaddr {
 //
 // CCREQ_RULE_INFO
 //		string	rule
-//
-//
 //
 // CCREP_ACCEPT
 //		long	port
@@ -74,16 +72,6 @@ struct qsockaddr {
 //		string	rule
 //		string	value
 
-//	note:
-//		There are two address forms used above.  The short form is just a
-//		port number.  The address that goes along with the port is defined as
-//		"whatever address you receive this reponse from".  This lets us use
-//		the host OS to solve the problem of multiple host addresses (possibly
-//		with no routing between them); the host will use the right address
-//		when we reply to the inbound connection request.  The long from is
-//		a full address and port in a string.  It is used for returning the
-//		address of a server that is not running locally.
-
 #define CCREQ_CONNECT 0x01
 #define CCREQ_SERVER_INFO 0x02
 #define CCREQ_PLAYER_INFO 0x03
@@ -95,88 +83,101 @@ struct qsockaddr {
 #define CCREP_PLAYER_INFO 0x84
 #define CCREP_RULE_INFO 0x85
 
-typedef struct qsocket_s {
-    struct qsocket_s* next;
-    double connecttime;
-    double lastMessageTime;
-    double lastSendTime;
+struct qsocket_s {
+    struct qsocket_s* next = nullptr;
+    double connecttime = 0.0;
+    double lastMessageTime = 0.0;
+    double lastSendTime = 0.0;
 
-    qboolean disconnected;
-    qboolean canSend;
-    qboolean sendNext;
+    qboolean disconnected = true;
+    qboolean canSend = true;
+    qboolean sendNext = false;
 
-    int driver;
-    int landriver;
-    int socket;
-    void* driverdata;
+    int driver = 0;
+    int landriver = 0;
+    int socket = 0;
+    void* driverdata = nullptr;
 
-    unsigned int ackSequence;
-    unsigned int sendSequence;
-    unsigned int unreliableSendSequence;
-    int sendMessageLength;
-    byte sendMessage[NET_MAXMESSAGE];
+    unsigned int ackSequence = 0;
+    unsigned int sendSequence = 0;
+    unsigned int unreliableSendSequence = 0;
+    int sendMessageLength = 0;
+    eastl::array<byte, NET_MAXMESSAGE> sendMessage{};
 
-    unsigned int receiveSequence;
-    unsigned int unreliableReceiveSequence;
-    int receiveMessageLength;
-    byte receiveMessage[NET_MAXMESSAGE];
+    unsigned int receiveSequence = 0;
+    unsigned int unreliableReceiveSequence = 0;
+    int receiveMessageLength = 0;
+    eastl::array<byte, NET_MAXMESSAGE> receiveMessage{};
 
-    struct qsockaddr addr;
-    char address[NET_NAMELEN];
+    struct qsockaddr addr{};
+    char address[NET_NAMELEN]{};
+};
 
-} qsocket_t;
+using qsocket_t = struct qsocket_s;
 
 // ============================================================================
-// Type definitions (global scope)
+// Polymorphic driver interfaces
 // ============================================================================
 
-typedef struct {
-    const char* name;
-    qboolean initialized;
-    int controlSock;
-    int (*Init)(void);
-    void (*Shutdown)(void);
-    void (*Listen)(qboolean state);
-    int (*OpenSocket)(int port);
-    int (*CloseSocket)(int socket);
-    int (*Connect)(int socket, struct qsockaddr* addr);
-    int (*CheckNewConnections)(void);
-    int (*Read)(int socket, byte* buf, int len, struct qsockaddr* addr);
-    int (*Write)(int socket, byte* buf, int len, struct qsockaddr* addr);
-    int (*Broadcast)(int socket, byte* buf, int len);
-    char* (*AddrToString)(struct qsockaddr* addr);
-    int (*StringToAddr)(const char* string, struct qsockaddr* addr);
-    int (*GetSocketAddr)(int socket, struct qsockaddr* addr);
-    int (*GetNameFromAddr)(struct qsockaddr* addr, char* name);
-    int (*GetAddrFromName)(const char* name, struct qsockaddr* addr);
-    int (*AddrCompare)(struct qsockaddr* addr1, struct qsockaddr* addr2);
-    int (*GetSocketPort)(struct qsockaddr* addr);
-    int (*SetSocketPort)(struct qsockaddr* addr, int port);
-} net_landriver_t;
+namespace Net {
+
+class NetDriver {
+public:
+    virtual ~NetDriver() = default;
+    virtual const char* GetName() const = 0;
+    virtual qboolean IsInitialized() const = 0;
+    virtual void SetInitialized(qboolean state) = 0;
+    virtual int GetControlSocket() const = 0;
+    virtual void SetControlSocket(int sock) = 0;
+
+    virtual int Init() = 0;
+    virtual void Listen(qboolean state) = 0;
+    virtual void SearchForHosts(qboolean xmit) = 0;
+    virtual qsocket_t* Connect(const char* host) = 0;
+    virtual qsocket_t* CheckNewConnections() = 0;
+    virtual int GetMessage(qsocket_t* sock) = 0;
+    virtual int SendMessage(qsocket_t* sock, sizebuf_t* data) = 0;
+    virtual int SendUnreliableMessage(qsocket_t* sock, sizebuf_t* data) = 0;
+    virtual qboolean CanSendMessage(qsocket_t* sock) = 0;
+    virtual qboolean CanSendUnreliableMessage() = 0;
+    virtual void Close(qsocket_t* sock) = 0;
+    virtual void Shutdown() = 0;
+};
+
+class NetLanDriver {
+public:
+    virtual ~NetLanDriver() = default;
+    virtual const char* GetName() const = 0;
+    virtual qboolean IsInitialized() const = 0;
+    virtual void SetInitialized(qboolean state) = 0;
+    virtual int GetControlSocket() const = 0;
+    virtual void SetControlSocket(int sock) = 0;
+
+    virtual int Init() = 0;
+    virtual void Shutdown() = 0;
+    virtual void Listen(qboolean state) = 0;
+    virtual int OpenSocket(int port) = 0;
+    virtual int CloseSocket(int socket) = 0;
+    virtual int Connect(int socket, struct qsockaddr* addr) = 0;
+    virtual int CheckNewConnections() = 0;
+    virtual int Read(int socket, byte* buf, int len, struct qsockaddr* addr) = 0;
+    virtual int Write(int socket, byte* buf, int len, struct qsockaddr* addr) = 0;
+    virtual int Broadcast(int socket, byte* buf, int len) = 0;
+    virtual char* AddrToString(struct qsockaddr* addr) = 0;
+    virtual int StringToAddr(const char* string, struct qsockaddr* addr) = 0;
+    virtual int GetSocketAddr(int socket, struct qsockaddr* addr) = 0;
+    virtual int GetNameFromAddr(struct qsockaddr* addr, char* name) = 0;
+    virtual int GetAddrFromName(const char* name, struct qsockaddr* addr) = 0;
+    virtual int AddrCompare(struct qsockaddr* addr1, struct qsockaddr* addr2) = 0;
+    virtual int GetSocketPort(struct qsockaddr* addr) = 0;
+    virtual int SetSocketPort(struct qsockaddr* addr, int port) = 0;
+};
 
 #define MAX_NET_DRIVERS 8
 
-typedef struct {
-    const char* name;
-    qboolean initialized;
-    int (*Init)(void);
-    void (*Listen)(qboolean state);
-    void (*SearchForHosts)(qboolean xmit);
-    qsocket_t* (*Connect)(const char* host);
-    qsocket_t* (*CheckNewConnections)(void);
-    int (*QGetMessage)(qsocket_t* sock);
-    int (*QSendMessage)(qsocket_t* sock, sizebuf_t* data);
-    int (*SendUnreliableMessage)(qsocket_t* sock, sizebuf_t* data);
-    qboolean (*CanSendMessage)(qsocket_t* sock);
-    qboolean (*CanSendUnreliableMessage)(void);
-    void (*Close)(qsocket_t* sock);
-    void (*Shutdown)(void);
-    int controlSock;
-} net_driver_t;
-
 #define HOSTCACHESIZE 8
 
-typedef struct {
+struct hostcache_t {
     char name[16];
     char map[16];
     char cname[32];
@@ -185,14 +186,13 @@ typedef struct {
     int driver;
     int ldriver;
     struct qsockaddr addr;
-} hostcache_t;
+};
 
-typedef struct _PollProcedure {
-    struct _PollProcedure* next;
-    double nextTime;
-    void (*procedure)();
-    void* arg;
-} PollProcedure;
+struct PollProcedure {
+    PollProcedure* next = nullptr;
+    double nextTime = 0.0;
+    eastl::function<void()> procedure;
+};
 
 #if !defined(_WIN32) && !defined(__linux__) && !defined(__sun__)
 #ifndef htonl
@@ -209,17 +209,15 @@ extern unsigned short ntohs(unsigned short netshort);
 #endif
 #endif
 
-namespace Net {
-
 extern qsocket_t* net_activeSockets;
 extern qsocket_t* net_freeSockets;
 extern int net_numsockets;
 
 extern int net_numlandrivers;
-extern net_landriver_t net_landrivers[MAX_NET_DRIVERS];
+extern eastl::vector<eastl::unique_ptr<NetLanDriver>> net_landrivers;
 
 extern int net_numdrivers;
-extern net_driver_t net_drivers[MAX_NET_DRIVERS];
+extern eastl::vector<eastl::unique_ptr<NetDriver>> net_drivers;
 
 extern int DEFAULTnet_hostport;
 extern int net_hostport;
@@ -239,7 +237,7 @@ void NET_FreeQSocket(qsocket_t*);
 double SetNetTime(void);
 
 extern int hostCacheCount;
-extern hostcache_t hostcache[HOSTCACHESIZE];
+extern eastl::array<hostcache_t, HOSTCACHESIZE> hostcache;
 
 //============================================================================
 //

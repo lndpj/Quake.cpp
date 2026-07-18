@@ -78,43 +78,11 @@ namespace Net {
 // net_bsd.cpp -- network driver registration tables
 // ============================================================================
 
-net_driver_t net_drivers[MAX_NET_DRIVERS] = {
-    { "Loopback", false, Loop_Init, Loop_Listen, Loop_SearchForHosts,
-        Loop_Connect, Loop_CheckNewConnections, Loop_GetMessage, Loop_SendMessage,
-        Loop_SendUnreliableMessage, Loop_CanSendMessage,
-        Loop_CanSendUnreliableMessage, Loop_Close, Loop_Shutdown, {} },
-    { "Datagram", false, Datagram_Init, Datagram_Listen, Datagram_SearchForHosts,
-        Datagram_Connect, Datagram_CheckNewConnections, Datagram_GetMessage,
-        Datagram_SendMessage, Datagram_SendUnreliableMessage,
-        Datagram_CanSendMessage, Datagram_CanSendUnreliableMessage, Datagram_Close,
-        Datagram_Shutdown, {} }
-};
+eastl::vector<eastl::unique_ptr<NetDriver>> net_drivers;
+int net_numdrivers = 0;
 
-int net_numdrivers = 2;
-
-net_landriver_t net_landrivers[MAX_NET_DRIVERS] = { { "UDP",
-    false,
-    0,
-    UDP_Init,
-    UDP_Shutdown,
-    UDP_Listen,
-    UDP_OpenSocket,
-    UDP_CloseSocket,
-    UDP_Connect,
-    UDP_CheckNewConnections,
-    UDP_Read,
-    UDP_Write,
-    UDP_Broadcast,
-    UDP_AddrToString,
-    UDP_StringToAddr,
-    UDP_GetSocketAddr,
-    UDP_GetNameFromAddr,
-    UDP_GetAddrFromName,
-    UDP_AddrCompare,
-    UDP_GetSocketPort,
-    UDP_SetSocketPort } };
-
-int net_numlandrivers = 1;
+eastl::vector<eastl::unique_ptr<NetLanDriver>> net_landrivers;
+int net_numlandrivers = 0;
 
 // ============================================================================
 // net_loop.cpp -- loopback network driver
@@ -244,7 +212,7 @@ int Loop_GetMessage(qsocket_t* sock)
     sock->receiveMessageLength -= length;
 
     if (sock->receiveMessageLength) {
-        Q_memcpy(sock->receiveMessage, &sock->receiveMessage[length],
+        Q_memcpy(sock->receiveMessage.data(), &sock->receiveMessage[length],
             sock->receiveMessageLength);
     }
 
@@ -270,7 +238,7 @@ int Loop_SendMessage(qsocket_t* sock, sizebuf_t* data)
         Sys_Error("Loop_SendMessage: overflow\n");
     }
 
-    buffer = ((qsocket_t*)sock->driverdata)->receiveMessage + *bufferLength;
+    buffer = ((qsocket_t*)sock->driverdata)->receiveMessage.data() + *bufferLength;
 
     // message type
     *buffer++ = 1;
@@ -306,7 +274,7 @@ int Loop_SendUnreliableMessage(qsocket_t* sock, sizebuf_t* data)
         return 0;
     }
 
-    buffer = ((qsocket_t*)sock->driverdata)->receiveMessage + *bufferLength;
+    buffer = ((qsocket_t*)sock->driverdata)->receiveMessage.data() + *bufferLength;
 
     // message type
     *buffer++ = 2;
@@ -354,6 +322,30 @@ void Loop_Close(qsocket_t* sock)
         loop_server = NULL;
     }
 }
+
+class LoopbackDriver : public NetDriver {
+    qboolean initialized = false;
+    int controlSock = 0;
+public:
+    const char* GetName() const override { return "Loopback"; }
+    qboolean IsInitialized() const override { return initialized; }
+    void SetInitialized(qboolean state) override { initialized = state; }
+    int GetControlSocket() const override { return controlSock; }
+    void SetControlSocket(int sock) override { controlSock = sock; }
+
+    int Init() override { return Loop_Init(); }
+    void Listen(qboolean state) override { Loop_Listen(state); }
+    void SearchForHosts(qboolean xmit) override { Loop_SearchForHosts(xmit); }
+    qsocket_t* Connect(const char* host) override { return Loop_Connect(host); }
+    qsocket_t* CheckNewConnections() override { return Loop_CheckNewConnections(); }
+    int GetMessage(qsocket_t* sock) override { return Loop_GetMessage(sock); }
+    int SendMessage(qsocket_t* sock, sizebuf_t* data) override { return Loop_SendMessage(sock, data); }
+    int SendUnreliableMessage(qsocket_t* sock, sizebuf_t* data) override { return Loop_SendUnreliableMessage(sock, data); }
+    qboolean CanSendMessage(qsocket_t* sock) override { return Loop_CanSendMessage(sock); }
+    qboolean CanSendUnreliableMessage() override { return Loop_CanSendUnreliableMessage(); }
+    void Close(qsocket_t* sock) override { Loop_Close(sock); }
+    void Shutdown() override { Loop_Shutdown(); }
+};
 
 // ============================================================================
 // net_udp.cpp -- UDP network socket driver
@@ -787,14 +779,44 @@ int UDP_SetSocketPort(struct qsockaddr* addr, int port)
     return 0;
 }
 
+class UDPDriver : public NetLanDriver {
+    qboolean initialized = false;
+    int controlSock = 0;
+public:
+    const char* GetName() const override { return "UDP"; }
+    qboolean IsInitialized() const override { return initialized; }
+    void SetInitialized(qboolean state) override { initialized = state; }
+    int GetControlSocket() const override { return controlSock; }
+    void SetControlSocket(int sock) override { controlSock = sock; }
+
+    int Init() override { return UDP_Init(); }
+    void Shutdown() override { UDP_Shutdown(); }
+    void Listen(qboolean state) override { UDP_Listen(state); }
+    int OpenSocket(int port) override { return UDP_OpenSocket(port); }
+    int CloseSocket(int socket) override { return UDP_CloseSocket(socket); }
+    int Connect(int socket, struct qsockaddr* addr) override { return UDP_Connect(socket, addr); }
+    int CheckNewConnections() override { return UDP_CheckNewConnections(); }
+    int Read(int socket, byte* buf, int len, struct qsockaddr* addr) override { return UDP_Read(socket, buf, len, addr); }
+    int Write(int socket, byte* buf, int len, struct qsockaddr* addr) override { return UDP_Write(socket, buf, len, addr); }
+    int Broadcast(int socket, byte* buf, int len) override { return UDP_Broadcast(socket, buf, len); }
+    char* AddrToString(struct qsockaddr* addr) override { return UDP_AddrToString(addr); }
+    int StringToAddr(const char* string, struct qsockaddr* addr) override { return UDP_StringToAddr(string, addr); }
+    int GetSocketAddr(int socket, struct qsockaddr* addr) override { return UDP_GetSocketAddr(socket, addr); }
+    int GetNameFromAddr(struct qsockaddr* addr, char* name) override { return UDP_GetNameFromAddr(addr, name); }
+    int GetAddrFromName(const char* name, struct qsockaddr* addr) override { return UDP_GetAddrFromName(name, addr); }
+    int AddrCompare(struct qsockaddr* addr1, struct qsockaddr* addr2) override { return UDP_AddrCompare(addr1, addr2); }
+    int GetSocketPort(struct qsockaddr* addr) override { return UDP_GetSocketPort(addr); }
+    int SetSocketPort(struct qsockaddr* addr, int port) override { return UDP_SetSocketPort(addr, port); }
+};
+
 // ============================================================================
 // net_dgrm.cpp -- datagram network driver
 // ============================================================================
 
 // These two macros are to make the code more readable for the datagram driver.
 // They refer to net_landrivers[] (not net_drivers[]).
-#define sfunc net_landrivers[sock->landriver]
-#define dfunc net_landrivers[net_landriverlevel]
+#define sfunc (*net_landrivers[sock->landriver])
+#define dfunc (*net_landrivers[net_landriverlevel])
 
 static int net_landriverlevel;
 static int myDriverLevel;
@@ -818,14 +840,14 @@ static int testDriver;
 static int testSocket;
 
 static void Test_Poll(void);
-PollProcedure testPollProcedure = { NULL, 0.0, Test_Poll, {} };
+PollProcedure testPollProcedure = { nullptr, 0.0, Test_Poll };
 
 static qboolean test2InProgress = false;
 static int test2Driver;
 static int test2Socket;
 
 static void Test2_Poll(void);
-PollProcedure test2PollProcedure = { NULL, 0.0, Test2_Poll, {} };
+PollProcedure test2PollProcedure = { nullptr, 0.0, Test2_Poll };
 
 #ifdef DEBUG
 char* StrAddr(struct qsockaddr* addr)
@@ -864,7 +886,7 @@ int Datagram_SendMessage(qsocket_t* sock, sizebuf_t* data)
 
 #endif
 
-    Q_memcpy(sock->sendMessage, data->data, data->cursize);
+    Q_memcpy(sock->sendMessage.data(), data->data, data->cursize);
     sock->sendMessageLength = data->cursize;
 
     if (data->cursize <= MAX_DATAGRAM) {
@@ -879,7 +901,7 @@ int Datagram_SendMessage(qsocket_t* sock, sizebuf_t* data)
 
     packetBuffer.length = BigLong(packetLen | (NETFLAG_DATA | eom));
     packetBuffer.sequence = BigLong(sock->sendSequence++);
-    Q_memcpy(packetBuffer.data, sock->sendMessage, dataLen);
+    Q_memcpy(packetBuffer.data, sock->sendMessage.data(), dataLen);
 
     sock->canSend = false;
 
@@ -911,7 +933,7 @@ int SendMessageNext(qsocket_t* sock)
 
     packetBuffer.length = BigLong(packetLen | (NETFLAG_DATA | eom));
     packetBuffer.sequence = BigLong(sock->sendSequence++);
-    Q_memcpy(packetBuffer.data, sock->sendMessage, dataLen);
+    Q_memcpy(packetBuffer.data, sock->sendMessage.data(), dataLen);
 
     sock->sendNext = false;
 
@@ -943,7 +965,7 @@ int ReSendMessage(qsocket_t* sock)
 
     packetBuffer.length = BigLong(packetLen | (NETFLAG_DATA | eom));
     packetBuffer.sequence = BigLong(sock->sendSequence - 1);
-    Q_memcpy(packetBuffer.data, sock->sendMessage, dataLen);
+    Q_memcpy(packetBuffer.data, sock->sendMessage.data(), dataLen);
 
     sock->sendNext = false;
 
@@ -1101,7 +1123,7 @@ int Datagram_GetMessage(qsocket_t* sock)
 
             sock->sendMessageLength -= MAX_DATAGRAM;
             if (sock->sendMessageLength > 0) {
-                Q_memcpy(sock->sendMessage, sock->sendMessage + MAX_DATAGRAM,
+                Q_memcpy(sock->sendMessage.data(), sock->sendMessage.data() + MAX_DATAGRAM,
                     sock->sendMessageLength);
                 sock->sendNext = true;
             } else {
@@ -1129,7 +1151,7 @@ int Datagram_GetMessage(qsocket_t* sock)
 
             if (flags & NETFLAG_EOM) {
                 SZ_Clear(&net_message);
-                SZ_Write(&net_message, sock->receiveMessage,
+                SZ_Write(&net_message, sock->receiveMessage.data(),
                     sock->receiveMessageLength);
                 SZ_Write(&net_message, packetBuffer.data, length);
                 sock->receiveMessageLength = 0;
@@ -1138,7 +1160,7 @@ int Datagram_GetMessage(qsocket_t* sock)
                 break;
             }
 
-            Q_memcpy(sock->receiveMessage + sock->receiveMessageLength,
+            Q_memcpy(sock->receiveMessage.data() + sock->receiveMessageLength,
                 packetBuffer.data, length);
             sock->receiveMessageLength += length;
             continue;
@@ -1297,7 +1319,7 @@ static void Test_f(void)
 
     for (net_landriverlevel = 0; net_landriverlevel < net_numlandrivers;
         net_landriverlevel++) {
-        if (!net_landrivers[net_landriverlevel].initialized) {
+        if (!net_landrivers[net_landriverlevel]->IsInitialized()) {
             continue;
         }
 
@@ -1434,7 +1456,7 @@ static void Test2_f(void)
 
     for (net_landriverlevel = 0; net_landriverlevel < net_numlandrivers;
         net_landriverlevel++) {
-        if (!net_landrivers[net_landriverlevel].initialized) {
+        if (!net_landrivers[net_landriverlevel]->IsInitialized()) {
             continue;
         }
 
@@ -1480,13 +1502,13 @@ int Datagram_Init(void)
     }
 
     for (i = 0; i < net_numlandrivers; i++) {
-        csock = net_landrivers[i].Init();
+        csock = net_landrivers[i]->Init();
         if (csock == -1) {
             continue;
         }
 
-        net_landrivers[i].initialized = true;
-        net_landrivers[i].controlSock = csock;
+        net_landrivers[i]->SetInitialized(true);
+        net_landrivers[i]->SetControlSocket(csock);
     }
 
     Cmd::AddCommand("test", Test_f);
@@ -1503,9 +1525,9 @@ void Datagram_Shutdown(void)
     // shutdown the lan drivers
     //
     for (i = 0; i < net_numlandrivers; i++) {
-        if (net_landrivers[i].initialized) {
-            net_landrivers[i].Shutdown();
-            net_landrivers[i].initialized = false;
+        if (net_landrivers[i]->IsInitialized()) {
+            net_landrivers[i]->Shutdown();
+            net_landrivers[i]->SetInitialized(false);
         }
     }
 }
@@ -1520,8 +1542,8 @@ void Datagram_Listen(qboolean state)
     int i;
 
     for (i = 0; i < net_numlandrivers; i++) {
-        if (net_landrivers[i].initialized) {
-            net_landrivers[i].Listen(state);
+        if (net_landrivers[i]->IsInitialized()) {
+            net_landrivers[i]->Listen(state);
         }
     }
 }
@@ -1790,7 +1812,7 @@ qsocket_t* Datagram_CheckNewConnections(void)
 
     for (net_landriverlevel = 0; net_landriverlevel < net_numlandrivers;
         net_landriverlevel++) {
-        if (net_landrivers[net_landriverlevel].initialized) {
+        if (net_landrivers[net_landriverlevel]->IsInitialized()) {
             if ((ret = _Datagram_CheckNewConnections()) != NULL) {
                 break;
             }
@@ -1809,7 +1831,7 @@ static void _Datagram_SearchForHosts(qboolean xmit)
     struct qsockaddr myaddr;
     int control;
 
-    dfunc.GetSocketAddr(dfunc.controlSock, &myaddr);
+    dfunc.GetSocketAddr(dfunc.GetControlSocket(), &myaddr);
     if (xmit) {
         SZ_Clear(&net_message);
         // save space for the header, filled in later
@@ -1818,11 +1840,11 @@ static void _Datagram_SearchForHosts(qboolean xmit)
         MSG_WriteString(&net_message, "QUAKE");
         MSG_WriteByte(&net_message, NET_PROTOCOL_VERSION);
         *((int*)net_message.data) = BigLong(NETFLAG_CTL | (net_message.cursize & NETFLAG_LENGTH_MASK));
-        dfunc.Broadcast(dfunc.controlSock, net_message.data, net_message.cursize);
+        dfunc.Broadcast(dfunc.GetControlSocket(), net_message.data, net_message.cursize);
         SZ_Clear(&net_message);
     }
 
-    while ((ret = dfunc.Read(dfunc.controlSock, net_message.data,
+    while ((ret = dfunc.Read(dfunc.GetControlSocket(), net_message.data,
                 net_message.maxsize, &readaddr))
         > 0) {
         if (ret < static_cast<int>(sizeof(int))) {
@@ -1920,7 +1942,7 @@ void Datagram_SearchForHosts(qboolean xmit)
             break;
         }
 
-        if (net_landrivers[net_landriverlevel].initialized) {
+        if (net_landrivers[net_landriverlevel]->IsInitialized()) {
             _Datagram_SearchForHosts(xmit);
         }
     }
@@ -2095,7 +2117,7 @@ qsocket_t* Datagram_Connect(const char* host)
 
     for (net_landriverlevel = 0; net_landriverlevel < net_numlandrivers;
         net_landriverlevel++) {
-        if (net_landrivers[net_landriverlevel].initialized) {
+        if (net_landrivers[net_landriverlevel]->IsInitialized()) {
             if ((ret = _Datagram_Connect(host)) != NULL) {
                 break;
             }
@@ -2109,6 +2131,30 @@ qsocket_t* Datagram_Connect(const char* host)
 #undef sfunc
 #undef dfunc
 
+class DatagramDriver : public NetDriver {
+    qboolean initialized = false;
+    int controlSock = 0;
+public:
+    const char* GetName() const override { return "Datagram"; }
+    qboolean IsInitialized() const override { return initialized; }
+    void SetInitialized(qboolean state) override { initialized = state; }
+    int GetControlSocket() const override { return controlSock; }
+    void SetControlSocket(int sock) override { controlSock = sock; }
+
+    int Init() override { return Datagram_Init(); }
+    void Listen(qboolean state) override { Datagram_Listen(state); }
+    void SearchForHosts(qboolean xmit) override { Datagram_SearchForHosts(xmit); }
+    qsocket_t* Connect(const char* host) override { return Datagram_Connect(host); }
+    qsocket_t* CheckNewConnections() override { return Datagram_CheckNewConnections(); }
+    int GetMessage(qsocket_t* sock) override { return Datagram_GetMessage(sock); }
+    int SendMessage(qsocket_t* sock, sizebuf_t* data) override { return Datagram_SendMessage(sock, data); }
+    int SendUnreliableMessage(qsocket_t* sock, sizebuf_t* data) override { return Datagram_SendUnreliableMessage(sock, data); }
+    qboolean CanSendMessage(qsocket_t* sock) override { return Datagram_CanSendMessage(sock); }
+    qboolean CanSendUnreliableMessage() override { return Datagram_CanSendUnreliableMessage(); }
+    void Close(qsocket_t* sock) override { Datagram_Close(sock); }
+    void Shutdown() override { Datagram_Shutdown(); }
+};
+
 // ============================================================================
 // net_vcr.cpp -- VCR demo recording and playback
 // ============================================================================
@@ -2121,17 +2167,6 @@ static struct {
 
 int VCR_Init(void)
 {
-    net_drivers[0].Init = VCR_Init;
-
-    net_drivers[0].SearchForHosts = VCR_SearchForHosts;
-    net_drivers[0].Connect = VCR_Connect;
-    net_drivers[0].CheckNewConnections = VCR_CheckNewConnections;
-    net_drivers[0].QGetMessage = VCR_GetMessage;
-    net_drivers[0].QSendMessage = VCR_SendMessage;
-    net_drivers[0].CanSendMessage = VCR_CanSendMessage;
-    net_drivers[0].Close = VCR_Close;
-    net_drivers[0].Shutdown = VCR_Shutdown;
-
     Sys_FileRead(vcrFile, &next, sizeof(next));
 
     return 0;
@@ -2242,14 +2277,38 @@ qsocket_t* VCR_CheckNewConnections(void)
     return sock;
 }
 
+class VCRDriver : public NetDriver {
+    qboolean initialized = false;
+    int controlSock = 0;
+public:
+    const char* GetName() const override { return "VCR"; }
+    qboolean IsInitialized() const override { return initialized; }
+    void SetInitialized(qboolean state) override { initialized = state; }
+    int GetControlSocket() const override { return controlSock; }
+    void SetControlSocket(int sock) override { controlSock = sock; }
+
+    int Init() override { return VCR_Init(); }
+    void Listen(qboolean /*state*/) override {}
+    void SearchForHosts(qboolean xmit) override { VCR_SearchForHosts(xmit); }
+    qsocket_t* Connect(const char* host) override { return VCR_Connect(host); }
+    qsocket_t* CheckNewConnections() override { return VCR_CheckNewConnections(); }
+    int GetMessage(qsocket_t* sock) override { return VCR_GetMessage(sock); }
+    int SendMessage(qsocket_t* sock, sizebuf_t* data) override { return VCR_SendMessage(sock, data); }
+    int SendUnreliableMessage(qsocket_t* /*sock*/, sizebuf_t* /*data*/) override { return 0; }
+    qboolean CanSendMessage(qsocket_t* sock) override { return VCR_CanSendMessage(sock); }
+    qboolean CanSendUnreliableMessage() override { return true; }
+    void Close(qsocket_t* sock) override { VCR_Close(sock); }
+    void Shutdown() override { VCR_Shutdown(); }
+};
+
 // ============================================================================
 // net_main.cpp -- network initialization and socket management
 // ============================================================================
 
 // These two macros are to make the code more readable for the main network code.
 // They refer to net_drivers[] (not net_landrivers[]).
-#define sfunc net_drivers[sock->driver]
-#define dfunc net_drivers[net_driverlevel]
+#define sfunc (*net_drivers[sock->driver])
+#define dfunc (*net_drivers[net_driverlevel])
 
 qsocket_t* net_activeSockets = NULL;
 qsocket_t* net_freeSockets = NULL;
@@ -2296,8 +2355,8 @@ static int slistLastShown;
 
 static void Slist_Send(void);
 static void Slist_Poll(void);
-PollProcedure slistSendProcedure = { NULL, 0.0, Slist_Send, {} };
-PollProcedure slistPollProcedure = { NULL, 0.0, Slist_Poll, {} };
+PollProcedure slistSendProcedure = { nullptr, 0.0, Slist_Send };
+PollProcedure slistPollProcedure = { nullptr, 0.0, Slist_Poll };
 
 sizebuf_t net_message;
 int net_activeconnections = 0;
@@ -2409,7 +2468,7 @@ static void NET_Listen_f(void)
 
     for (net_driverlevel = 0; net_driverlevel < net_numdrivers;
         net_driverlevel++) {
-        if (net_drivers[net_driverlevel].initialized == false) {
+        if (!net_drivers[net_driverlevel]->IsInitialized()) {
             continue;
         }
 
@@ -2545,7 +2604,7 @@ static void Slist_Send(void)
             continue;
         }
 
-        if (net_drivers[net_driverlevel].initialized == false) {
+        if (!net_drivers[net_driverlevel]->IsInitialized()) {
             continue;
         }
 
@@ -2565,7 +2624,7 @@ static void Slist_Poll(void)
             continue;
         }
 
-        if (net_drivers[net_driverlevel].initialized == false) {
+        if (!net_drivers[net_driverlevel]->IsInitialized()) {
             continue;
         }
 
@@ -2592,7 +2651,7 @@ static void Slist_Poll(void)
 }
 
 int hostCacheCount = 0;
-hostcache_t hostcache[HOSTCACHESIZE];
+eastl::array<hostcache_t, HOSTCACHESIZE> hostcache;
 
 qsocket_t* NET_Connect(const char* host)
 {
@@ -2652,7 +2711,7 @@ qsocket_t* NET_Connect(const char* host)
 
 JustDoIt:
     for (net_driverlevel = 0; net_driverlevel < numdrivers; net_driverlevel++) {
-        if (net_drivers[net_driverlevel].initialized == false) {
+        if (!net_drivers[net_driverlevel]->IsInitialized()) {
             continue;
         }
 
@@ -2686,7 +2745,7 @@ qsocket_t* NET_CheckNewConnections(void)
 
     for (net_driverlevel = 0; net_driverlevel < net_numdrivers;
         net_driverlevel++) {
-        if (net_drivers[net_driverlevel].initialized == false) {
+        if (!net_drivers[net_driverlevel]->IsInitialized()) {
             continue;
         }
 
@@ -2762,7 +2821,7 @@ int NET_GetMessage(qsocket_t* sock)
 
     SetNetTime();
 
-    ret = sfunc.QGetMessage(sock);
+    ret = sfunc.GetMessage(sock);
 
     // see if this connection has timed out
     if (ret == 0 && sock->driver) {
@@ -2827,7 +2886,7 @@ int NET_SendMessage(qsocket_t* sock, sizebuf_t* data)
     }
 
     SetNetTime();
-    r = sfunc.QSendMessage(sock, data);
+    r = sfunc.SendMessage(sock, data);
     if (r == 1 && sock->driver) {
         messagesSent++;
     }
@@ -2970,16 +3029,27 @@ int NET_SendToAll(sizebuf_t* data, int blocktime)
 
 //=============================================================================
 
+static eastl::vector<eastl::unique_ptr<qsocket_t>> socket_pool;
+
 void NET_Init(void)
 {
     int i;
     int controlSocket;
     qsocket_t* s;
 
+    net_drivers.clear();
     if (COM_CheckParm("-playback")) {
+        net_drivers.push_back(eastl::make_unique<VCRDriver>());
         net_numdrivers = 1;
-        net_drivers[0].Init = VCR_Init;
+    } else {
+        net_drivers.push_back(eastl::make_unique<LoopbackDriver>());
+        net_drivers.push_back(eastl::make_unique<DatagramDriver>());
+        net_numdrivers = 2;
     }
+
+    net_landrivers.clear();
+    net_landrivers.push_back(eastl::make_unique<UDPDriver>());
+    net_numlandrivers = 1;
 
     if (COM_CheckParm("-record")) {
         recording = true;
@@ -3015,8 +3085,14 @@ void NET_Init(void)
 
     SetNetTime();
 
+    socket_pool.clear();
+    socket_pool.reserve(net_numsockets);
+    net_freeSockets = nullptr;
+    net_activeSockets = nullptr;
+
     for (i = 0; i < net_numsockets; i++) {
-        s = (qsocket_t*)Hunk_Alloc(sizeof(qsocket_t), "qsocket");
+        socket_pool.push_back(eastl::make_unique<qsocket_t>());
+        s = socket_pool.back().get();
         s->next = net_freeSockets;
         net_freeSockets = s;
         s->disconnected = true;
@@ -3044,15 +3120,15 @@ void NET_Init(void)
     // initialize all the drivers
     for (net_driverlevel = 0; net_driverlevel < net_numdrivers;
         net_driverlevel++) {
-        controlSocket = net_drivers[net_driverlevel].Init();
+        controlSocket = net_drivers[net_driverlevel]->Init();
         if (controlSocket == -1) {
             continue;
         }
 
-        net_drivers[net_driverlevel].initialized = true;
-        net_drivers[net_driverlevel].controlSock = controlSocket;
+        net_drivers[net_driverlevel]->SetInitialized(true);
+        net_drivers[net_driverlevel]->SetControlSocket(controlSocket);
         if (listening) {
-            net_drivers[net_driverlevel].Listen(true);
+            net_drivers[net_driverlevel]->Listen(true);
         }
     }
 
@@ -3080,9 +3156,9 @@ void NET_Shutdown(void)
     //
     for (net_driverlevel = 0; net_driverlevel < net_numdrivers;
         net_driverlevel++) {
-        if (net_drivers[net_driverlevel].initialized == true) {
-            net_drivers[net_driverlevel].Shutdown();
-            net_drivers[net_driverlevel].initialized = false;
+        if (net_drivers[net_driverlevel]->IsInitialized()) {
+            net_drivers[net_driverlevel]->Shutdown();
+            net_drivers[net_driverlevel]->SetInitialized(false);
         }
     }
 
@@ -3124,7 +3200,7 @@ void NET_Poll(void)
         }
 
         pollProcedureList = pp->next;
-        ((void (*)(void*))pp->procedure)(pp->arg);
+        pp->procedure();
     }
 }
 
