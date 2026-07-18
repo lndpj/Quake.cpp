@@ -2347,8 +2347,8 @@ qboolean r_leftclipped, r_rightclipped;
 static qboolean makeleftedge, makerightedge;
 qboolean r_nearzionly;
 
-int sintable[SIN_BUFFER_SIZE];
-int intsintable[SIN_BUFFER_SIZE];
+eastl::array<int, SIN_BUFFER_SIZE> sintable;
+eastl::array<int, SIN_BUFFER_SIZE> intsintable;
 
 mvertex_t r_leftenter, r_leftexit;
 mvertex_t r_rightenter, r_rightexit;
@@ -5916,7 +5916,7 @@ int modcount;
 
 texture_t* r_notexture_mip;
 
-int d_lightstylevalue[256]; // 8.8 fraction of base light value
+eastl::array<int, 256> d_lightstylevalue; // 8.8 fraction of base light value
 
 void R_MarkLeaves(void);
 

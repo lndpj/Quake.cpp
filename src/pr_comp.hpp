@@ -1,10 +1,12 @@
-// pr_comp.h -- shared definitions for QuakeC compiler and engine
+// pr_comp.hpp -- shared definitions for QuakeC compiler and engine
 #pragma once
+#include <EASTL/array.h>
+#include <cstdint>
 
-typedef int func_t;
-typedef int string_t;
+using func_t = int;
+using string_t = int;
 
-typedef enum {
+enum etype_t : int {
     ev_void,
     ev_string,
     ev_float,
@@ -13,21 +15,21 @@ typedef enum {
     ev_field,
     ev_function,
     ev_pointer
-} etype_t;
+};
 
-#define OFS_NULL 0
-#define OFS_RETURN 1
-#define OFS_PARM0 4 // leave 3 ofs for each parm to hold vectors
-#define OFS_PARM1 7
-#define OFS_PARM2 10
-#define OFS_PARM3 13
-#define OFS_PARM4 16
-#define OFS_PARM5 19
-#define OFS_PARM6 22
-#define OFS_PARM7 25
-#define RESERVED_OFS 28
+constexpr int OFS_NULL = 0;
+constexpr int OFS_RETURN = 1;
+constexpr int OFS_PARM0 = 4; // leave 3 ofs for each parm to hold vectors
+constexpr int OFS_PARM1 = 7;
+constexpr int OFS_PARM2 = 10;
+constexpr int OFS_PARM3 = 13;
+constexpr int OFS_PARM4 = 16;
+constexpr int OFS_PARM5 = 19;
+constexpr int OFS_PARM6 = 22;
+constexpr int OFS_PARM7 = 25;
+constexpr int RESERVED_OFS = 28;
 
-enum {
+enum OpCode : int {
     OP_DONE,
     OP_MUL_F,
     OP_MUL_V,
@@ -105,59 +107,59 @@ enum {
     OP_BITOR
 };
 
-typedef struct statement_s {
-    unsigned short op;
-    short a, b, c;
-} dstatement_t;
+struct dstatement_t {
+    unsigned short op = 0;
+    short a = 0, b = 0, c = 0;
+};
 
-typedef struct {
-    unsigned short type; // if DEF_SAVEGLOBGAL bit is set
+struct ddef_t {
+    unsigned short type = 0; // if DEF_SAVEGLOBAL bit is set
     // the variable needs to be saved in savegames
-    unsigned short ofs;
-    int s_name;
-} ddef_t;
+    unsigned short ofs = 0;
+    int s_name = 0;
+};
 
-#define DEF_SAVEGLOBAL (1 << 15)
+constexpr int DEF_SAVEGLOBAL = (1 << 15);
 
-#define MAX_PARMS 8
+constexpr int MAX_PARMS = 8;
 
-typedef struct {
-    int first_statement; // negative numbers are builtins
-    int parm_start;
-    int locals; // total ints of parms + locals
+struct dfunction_t {
+    int first_statement = 0; // negative numbers are builtins
+    int parm_start = 0;
+    int locals = 0; // total ints of parms + locals
 
-    int profile; // runtime
+    int profile = 0; // runtime
 
-    int s_name;
-    int s_file; // source file defined in
+    int s_name = 0;
+    int s_file = 0; // source file defined in
 
-    int numparms;
-    byte parm_size[MAX_PARMS];
-} dfunction_t;
+    int numparms = 0;
+    eastl::array<uint8_t, MAX_PARMS> parm_size{};
+};
 
-#define PROG_VERSION 6
+constexpr int PROG_VERSION = 6;
 
-typedef struct {
-    int version;
-    int crc; // check of header file
+struct dprograms_t {
+    int version = 0;
+    int crc = 0; // check of header file
 
-    int ofs_statements;
-    int numstatements; // statement 0 is an error
+    int ofs_statements = 0;
+    int numstatements = 0; // statement 0 is an error
 
-    int ofs_globaldefs;
-    int numglobaldefs;
+    int ofs_globaldefs = 0;
+    int numglobaldefs = 0;
 
-    int ofs_fielddefs;
-    int numfielddefs;
+    int ofs_fielddefs = 0;
+    int numfielddefs = 0;
 
-    int ofs_functions;
-    int numfunctions; // function 0 is an empty
+    int ofs_functions = 0;
+    int numfunctions = 0; // function 0 is an empty
 
-    int ofs_strings;
-    int numstrings; // first string is a null string
+    int ofs_strings = 0;
+    int numstrings = 0; // first string is a null string
 
-    int ofs_globals;
-    int numglobals;
+    int ofs_globals = 0;
+    int numglobals = 0;
 
-    int entityfields;
-} dprograms_t;
+    int entityfields = 0;
+};

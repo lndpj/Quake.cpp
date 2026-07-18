@@ -113,7 +113,7 @@ void VID_Init(unsigned char* palette)
     }
 
     // Create window
-    window = SDL_CreateWindow("sdlquake",
+    window = SDL_CreateWindow("Quake.cpp",
         SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
         vid.width, vid.height, flags);
 
