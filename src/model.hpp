@@ -6,6 +6,7 @@
 
 #include "modelgen.hpp"
 #include "spritegn.hpp"
+#include <EASTL/vector.h>
 
 /*
 
@@ -26,25 +27,26 @@ BRUSH MODELS
 // in memory representation
 //
 // !!! if this is changed, it must be changed in asm_draw.h too !!!
-typedef struct {
+struct mvertex_t {
     Vector3 position;
-} mvertex_t;
+};
 
-#define SIDE_FRONT 0
-#define SIDE_BACK 1
-#define SIDE_ON 2
+constexpr int SIDE_FRONT = 0;
+constexpr int SIDE_BACK = 1;
+constexpr int SIDE_ON = 2;
 
 // plane_t structure
 // !!! if this is changed, it must be changed in asm_i386.h too !!!
-typedef struct mplane_s {
+struct mplane_s {
     Vector3 normal;
     float dist;
     byte type;     // for texture axis selection and fast side tests
     byte signbits; // signx + signy<<1 + signz<<1
     byte pad[2];
-} mplane_t;
+};
+using mplane_t = mplane_s;
 
-typedef struct texture_s {
+struct texture_s {
     char name[16];
     unsigned width, height;
     int anim_total;                    // total tenths in sequence ( 0 = no)
@@ -52,29 +54,30 @@ typedef struct texture_s {
     struct texture_s* anim_next;       // in the animation sequence
     struct texture_s* alternate_anims; // bmodels in frmae 1 use these
     unsigned offsets[MIPLEVELS];       // four mip maps stored
-} texture_t;
+};
+using texture_t = texture_s;
 
-#define SURF_PLANEBACK 2
-#define SURF_DRAWSKY 4
-#define SURF_DRAWSPRITE 8
-#define SURF_DRAWTURB 0x10
-#define SURF_DRAWTILED 0x20
-#define SURF_DRAWBACKGROUND 0x40
+constexpr int SURF_PLANEBACK = 2;
+constexpr int SURF_DRAWSKY = 4;
+constexpr int SURF_DRAWSPRITE = 8;
+constexpr int SURF_DRAWTURB = 0x10;
+constexpr int SURF_DRAWTILED = 0x20;
+constexpr int SURF_DRAWBACKGROUND = 0x40;
 
 // !!! if this is changed, it must be changed in asm_draw.h too !!!
-typedef struct {
+struct medge_t {
     unsigned short v[2];
     unsigned int cachededgeoffset;
-} medge_t;
+};
 
-typedef struct {
+struct mtexinfo_t {
     float vecs[2][4];
     float mipadjust;
     texture_t* texture;
     int flags;
-} mtexinfo_t;
+};
 
-typedef struct msurface_s {
+struct msurface_s {
     int visframe; // should be drawn when node is crossed
 
     int dlightframe;
@@ -97,9 +100,10 @@ typedef struct msurface_s {
     // lighting info
     byte styles[MAXLIGHTMAPS];
     byte* samples; // [numstyles*surfsize]
-} msurface_t;
+};
+using msurface_t = msurface_s;
 
-typedef struct mnode_s {
+struct mnode_s {
     // common with leaf
     int contents; // 0, to differentiate from leafs
     int visframe; // node needs to be traversed if current
@@ -114,9 +118,10 @@ typedef struct mnode_s {
 
     unsigned short firstsurface;
     unsigned short numsurfaces;
-} mnode_t;
+};
+using mnode_t = mnode_s;
 
-typedef struct mleaf_s {
+struct mleaf_s {
     // common with node
     int contents; // wil be a negative contents number
     int visframe; // node needs to be traversed if current
@@ -133,17 +138,18 @@ typedef struct mleaf_s {
     int nummarksurfaces;
     int key; // BSP sequence number for leaf's contents
     byte ambient_sound_level[NUM_AMBIENTS];
-} mleaf_t;
+};
+using mleaf_t = mleaf_s;
 
 // !!! if this is changed, it must be changed in asm_i386.h too !!!
-typedef struct {
+struct hull_t {
     dclipnode_t* clipnodes;
     mplane_t* planes;
     int firstclipnode;
     int lastclipnode;
     Vector3 clip_mins;
     Vector3 clip_maxs;
-} hull_t;
+};
 
 /*
 ==============================================================================
@@ -154,26 +160,27 @@ SPRITE MODELS
 */
 
 // FIXME: shorten these?
-typedef struct mspriteframe_s {
+struct mspriteframe_s {
     int width;
     int height;
     void* pcachespot; // remove?
     float up, down, left, right;
     byte pixels[4];
-} mspriteframe_t;
+};
+using mspriteframe_t = mspriteframe_s;
 
-typedef struct {
+struct mspritegroup_t {
     int numframes;
     float* intervals;
     mspriteframe_t* frames[1];
-} mspritegroup_t;
+};
 
-typedef struct {
+struct mspriteframedesc_t {
     spriteframetype_t type;
     mspriteframe_t* frameptr;
-} mspriteframedesc_t;
+};
 
-typedef struct {
+struct msprite_t {
     int type;
     int maxwidth;
     int maxheight;
@@ -181,7 +188,7 @@ typedef struct {
     float beamlength; // remove?
     void* cachespot;  // remove?
     mspriteframedesc_t frames[1];
-} msprite_t;
+};
 
 /*
 ==============================================================================
@@ -192,51 +199,52 @@ Alias models are position independent, so the cache manager can move them.
 ==============================================================================
 */
 
-typedef struct {
+struct maliasframedesc_t {
     aliasframetype_t type;
     trivertx_t bboxmin;
     trivertx_t bboxmax;
     int frame;
     char name[16];
-} maliasframedesc_t;
+};
 
-typedef struct {
+struct maliasskindesc_t {
     aliasskintype_t type;
     void* pcachespot;
     int skin;
-} maliasskindesc_t;
+};
 
-typedef struct {
+struct maliasgroupframedesc_t {
     trivertx_t bboxmin;
     trivertx_t bboxmax;
     int frame;
-} maliasgroupframedesc_t;
+};
 
-typedef struct {
+struct maliasgroup_t {
     int numframes;
     int intervals;
     maliasgroupframedesc_t frames[1];
-} maliasgroup_t;
+};
 
-typedef struct {
+struct maliasskingroup_t {
     int numskins;
     int intervals;
     maliasskindesc_t skindescs[1];
-} maliasskingroup_t;
+};
 
 // !!! if this is changed, it must be changed in asm_draw.h too !!!
-typedef struct mtriangle_s {
+struct mtriangle_s {
     int facesfront;
     int vertindex[3];
-} mtriangle_t;
+};
+using mtriangle_t = mtriangle_s;
 
-typedef struct {
+struct aliashdr_t {
     int model;
     int stverts;
     int skindesc;
     int triangles;
     maliasframedesc_t frames[1];
-} aliashdr_t;
+};
 
 //===================================================================
 
@@ -244,20 +252,22 @@ typedef struct {
 // Whole model
 //
 
-typedef enum { mod_brush,
+enum modtype_t {
+    mod_brush,
     mod_sprite,
-    mod_alias } modtype_t;
+    mod_alias
+};
 
-#define EF_ROCKET 1    // leave a trail
-#define EF_GRENADE 2   // leave a trail
-#define EF_GIB 4       // leave a trail
-#define EF_ROTATE 8    // rotate (bonus items)
-#define EF_TRACER 16   // green split trail
-#define EF_ZOMGIB 32   // small blood trail
-#define EF_TRACER2 64  // orange split trail + rotate
-#define EF_TRACER3 128 // purple trail
+constexpr int EF_ROCKET = 1;    // leave a trail
+constexpr int EF_GRENADE = 2;   // leave a trail
+constexpr int EF_GIB = 4;       // leave a trail
+constexpr int EF_ROTATE = 8;    // rotate (bonus items)
+constexpr int EF_TRACER = 16;   // green split trail
+constexpr int EF_ZOMGIB = 32;   // small blood trail
+constexpr int EF_TRACER2 = 64;  // orange split trail + rotate
+constexpr int EF_TRACER3 = 128; // purple trail
 
-typedef struct model_s {
+struct model_s {
     char name[MAX_QPATH];
     int needload; // bmodels and sprites don't cache normally
 
@@ -325,7 +335,30 @@ typedef struct model_s {
     //
     cache_user_t cache; // only access through Mod_Extradata
 
-} model_t;
+    // Modern C++ / EASTL Container ownership
+    eastl::vector<dmodel_t> submodels_owner;
+    eastl::vector<mplane_t> planes_owner;
+    eastl::vector<mleaf_t> leafs_owner;
+    eastl::vector<mvertex_t> vertexes_owner;
+    eastl::vector<medge_t> edges_owner;
+    eastl::vector<mnode_t> nodes_owner;
+    eastl::vector<mtexinfo_t> texinfo_owner;
+    eastl::vector<msurface_t> surfaces_owner;
+    eastl::vector<int> surfedges_owner;
+    eastl::vector<dclipnode_t> clipnodes_owner;
+    eastl::vector<dclipnode_t> hull0_clipnodes_owner;
+    eastl::vector<msurface_t*> marksurfaces_owner;
+    eastl::vector<texture_t*> textures_owner;
+
+    eastl::vector<byte> visdata_owner;
+    eastl::vector<byte> lightdata_owner;
+    eastl::vector<char> entities_owner;
+
+    // Variable sized dynamic allocations (e.g. textures, sprites)
+    eastl::vector<eastl::vector<byte>> texture_allocations;
+    eastl::vector<eastl::vector<byte>> sprite_allocations;
+};
+using model_t = model_s;
 
 //============================================================================
 
@@ -342,6 +375,5 @@ mleaf_t* Mod_PointInLeaf(const Vector3& p, model_t* model);
 byte* Mod_LeafPVS(mleaf_t* leaf, model_t* model);
 
 } // namespace Model
-
 
 #endif // __MODEL__
