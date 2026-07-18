@@ -2,9 +2,9 @@
 // vid buffer
 
 #include "quakedef.hpp"
-#include <vector>
+#include <EASTL/vector.h>
 #include <memory>
-#include <string>
+#include <EASTL/string.h>
 #include <algorithm>
 #include <cstring>
 
@@ -52,11 +52,11 @@ qpic_t* draw_backtile;
 /* Support Routines */
 
 struct CachePic {
-    std::string name;
+    eastl::string name;
     cache_user_t cache{};
 };
 
-static std::vector<std::unique_ptr<CachePic>> menu_cachepics;
+static eastl::vector<std::unique_ptr<CachePic>> menu_cachepics;
 
 /*
 ================
@@ -66,7 +66,7 @@ Draw_CachePic
 qpic_t* Draw_CachePic(std::string_view path)
 {
     for (const auto& pic : menu_cachepics) {
-        if (pic->name == path) {
+        if (std::string_view(pic->name.data(), pic->name.length()) == path) {
             if (auto* dat = static_cast<qpic_t*>(Cache_Check(&pic->cache))) {
                 return dat;
             }
@@ -82,7 +82,7 @@ qpic_t* Draw_CachePic(std::string_view path)
     }
 
     auto new_pic = std::make_unique<CachePic>();
-    new_pic->name = path;
+    new_pic->name.assign(path.data(), path.length());
     
     auto* pic_ptr = new_pic.get();
     menu_cachepics.push_back(std::move(new_pic));

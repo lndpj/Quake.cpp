@@ -2,9 +2,9 @@
 #pragma once
 #include <string_view>
 #include <functional>
-#include <map>
-#include <string>
-#include <vector>
+#include <EASTL/map.h>
+#include <EASTL/string.h>
+#include <EASTL/vector.h>
 
 namespace Cmd {
 
@@ -21,10 +21,13 @@ struct State {
 
 struct CaseInsensitiveLess {
     using is_transparent = void;
-    bool operator()(std::string_view lhs, std::string_view rhs) const {
+    template <typename T, typename U>
+    bool operator()(const T& lhs, const U& rhs) const {
+        std::string_view sv_lhs(lhs.data(), lhs.size());
+        std::string_view sv_rhs(rhs.data(), rhs.size());
         return std::lexicographical_compare(
-            lhs.begin(), lhs.end(),
-            rhs.begin(), rhs.end(),
+            sv_lhs.begin(), sv_lhs.end(),
+            sv_rhs.begin(), sv_rhs.end(),
             [](char a, char b) {
                 return std::tolower(static_cast<unsigned char>(a)) <
                        std::tolower(static_cast<unsigned char>(b));
@@ -52,21 +55,21 @@ public:
     State& GetState() { return state_; }
     const State& GetState() const { return state_; }
 
-    const std::map<std::string, std::string, CaseInsensitiveLess>& GetAliases() const { return aliases_; }
-    std::map<std::string, std::string, CaseInsensitiveLess>& GetAliases() { return aliases_; }
+    const eastl::map<eastl::string, eastl::string, CaseInsensitiveLess>& GetAliases() const { return aliases_; }
+    eastl::map<eastl::string, eastl::string, CaseInsensitiveLess>& GetAliases() { return aliases_; }
     bool& GetCmdWait() { return cmd_wait_; }
 
     void AddAlias(std::string_view name, std::string_view value) {
-        aliases_[std::string(name)] = std::string(value);
+        aliases_[eastl::string(name.data(), name.length())] = eastl::string(value.data(), value.length());
     }
 
 private:
     State state_;
-    std::string cmd_text_;
+    eastl::string cmd_text_;
     bool cmd_wait_ = false;
-    std::map<std::string, std::string, CaseInsensitiveLess> aliases_;
-    std::map<std::string, xcommand_t, CaseInsensitiveLess> commands_;
-    std::vector<std::string> cmd_argv_;
+    eastl::map<eastl::string, eastl::string, CaseInsensitiveLess> aliases_;
+    eastl::map<eastl::string, xcommand_t, CaseInsensitiveLess> commands_;
+    eastl::vector<eastl::string> cmd_argv_;
     std::string_view cmd_args_;
 };
 

@@ -21,7 +21,26 @@ set(SDL_SHARED OFF CACHE BOOL "" FORCE)
 set(SDL_STATIC ON CACHE BOOL "" FORCE)
 set(SDL_PIPEWIRE OFF CACHE BOOL "" FORCE)
 
-FetchContent_MakeAvailable(SDL2)
+# Fetch EABase (required dependency for EASTL)
+FetchContent_Declare(
+    EABase
+    GIT_REPOSITORY https://github.com/electronicarts/EABase.git
+    GIT_TAG        master
+    GIT_SUBMODULES ""
+)
+
+# Fetch EASTL
+FetchContent_Declare(
+    EASTL
+    GIT_REPOSITORY https://github.com/electronicarts/EASTL.git
+    GIT_TAG        master
+    GIT_SUBMODULES ""
+)
+# Disable unnecessary EASTL features for faster build
+set(EASTL_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+set(EASTL_BUILD_BENCHMARK OFF CACHE BOOL "" FORCE)
+
+FetchContent_MakeAvailable(SDL2 EABase EASTL)
 
 # Gather source files
 set(CORE_SRCS
@@ -53,17 +72,18 @@ set(CORE_SRCS
     src/wad.cpp
     src/world.cpp
     src/zone.cpp
+    src/eastl_defaults.cpp
 )
 
 add_executable(Quake.cpp ${CORE_SRCS})
 
 target_include_directories(Quake.cpp PRIVATE src)
 
-# Link SDL2 and Windows libraries
+# Link SDL2, EASTL, and Windows libraries
 if(WIN32)
-    target_link_libraries(Quake.cpp PRIVATE SDL2main SDL2-static ws2_32 winmm)
+    target_link_libraries(Quake.cpp PRIVATE SDL2main SDL2-static EASTL ws2_32 winmm)
 else()
-    target_link_libraries(Quake.cpp PRIVATE SDL2main SDL2-static)
+    target_link_libraries(Quake.cpp PRIVATE SDL2main SDL2-static EASTL)
 endif()
 
 # Suppress some old C warnings for cleaner output

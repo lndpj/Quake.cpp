@@ -40,7 +40,7 @@ FindVar
 */
 cvar_t* CvarRegistry::FindVar(std::string_view var_name)
 {
-    auto it = vars_map_.find(var_name);
+    auto it = vars_map_.find(eastl::string_view(var_name.data(), var_name.length()));
     if (it != vars_map_.end()) {
         return it->second;
     }
@@ -72,7 +72,7 @@ std::string_view CvarRegistry::VariableString(std::string_view var_name)
     if (!var) {
         return "";
     }
-    return var->string;
+    return std::string_view(var->string.data(), var->string.length());
 }
 
 /*
@@ -87,8 +87,9 @@ std::string_view CvarRegistry::CompleteVariable(std::string_view partial)
     }
 
     for (cvar_t* var = state_.vars; var; var = var->next) {
-        if (std::string_view(var->name).starts_with(partial)) {
-            return var->name;
+        std::string_view var_name(var->name.data(), var->name.length());
+        if (var_name.starts_with(partial)) {
+            return std::string_view(var->name.data(), var->name.length());
         }
     }
     return "";
@@ -107,9 +108,9 @@ void CvarRegistry::Set(std::string_view var_name, std::string_view value)
         return;
     }
 
-    bool changed = (value != var->string);
+    bool changed = (value != std::string_view(var->string.data(), var->string.length()));
 
-    var->string = value;
+    var->string = eastl::string(value.data(), value.length());
     var->value = Q_atof(var->string.c_str());
 
     if (var->server && changed) {
@@ -143,13 +144,13 @@ void CvarRegistry::Register(cvar_t* variable)
     }
 
     // check to see if it has allready been defined
-    if (FindVar(variable->name)) {
+    if (FindVar(std::string_view(variable->name.data(), variable->name.length()))) {
         Con_Printf("Can't register variable %s, allready defined\n", variable->name.c_str());
         return;
     }
 
     // check for overlap with a command
-    if (Cmd::Exists(variable->name)) {
+    if (Cmd::Exists(std::string_view(variable->name.data(), variable->name.length()))) {
         Con_Printf("Cvar::Register: %s is a command\n", variable->name.c_str());
         return;
     }
@@ -161,7 +162,7 @@ void CvarRegistry::Register(cvar_t* variable)
     state_.vars = variable;
 
     // Add to registry map
-    vars_map_[variable->name] = variable;
+    vars_map_[eastl::string_view(variable->name.data(), variable->name.length())] = variable;
 }
 
 /*
@@ -182,7 +183,7 @@ bool CvarRegistry::Command()
         return true;
     }
 
-    Set(v->name, Cmd::Argv(1));
+    Set(std::string_view(v->name.data(), v->name.length()), Cmd::Argv(1));
     return true;
 }
 
@@ -195,7 +196,7 @@ void CvarRegistry::WriteVariables(std::ostream& f)
 {
     for (cvar_t* var = state_.vars; var; var = var->next) {
         if (var->archive) {
-            f << var->name << " \"" << var->string << "\"\n";
+            f << var->name.c_str() << " \"" << var->string.c_str() << "\"\n";
         }
     }
 }

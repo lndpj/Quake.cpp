@@ -5,8 +5,8 @@
 #include <cstring>
 #include <cctype>
 #include <algorithm>
-#include <vector>
-#include <string>
+#include <EASTL/vector.h>
+#include <EASTL/string.h>
 #include <string_view>
 
 using namespace Client;
@@ -1052,11 +1052,11 @@ char com_cachedir[MAX_OSPATH];
 char com_gamedir[MAX_OSPATH];
 
 struct SearchPath {
-    std::string filename;
+    eastl::string filename;
     pack_t* pack = nullptr;
 };
 
-static std::vector<SearchPath> com_searchpaths;
+static eastl::vector<SearchPath> com_searchpaths;
 
 /*
 ============

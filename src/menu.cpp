@@ -3,6 +3,7 @@
 #include <cstring>
 #include <fstream>
 #include <string>
+#include <EASTL/string.h>
 #include <string_view>
 #include <array>
 #include <algorithm>
@@ -729,8 +730,8 @@ void M_MultiPlayer_Key(int key)
 int setup_cursor = 4;
 const std::array<int, 5> setup_cursor_table = { 40, 56, 80, 104, 140 };
 
-std::string setup_hostname;
-std::string setup_myname;
+eastl::string setup_hostname;
+eastl::string setup_myname;
 int setup_oldtop;
 int setup_oldbottom;
 int setup_top;
@@ -759,11 +760,11 @@ void M_Setup_Draw()
 
     M_Print(64, 40, "Hostname");
     M_DrawTextBox(160, 32, 16, 1);
-    M_Print(168, 40, setup_hostname);
+    M_Print(168, 40, setup_hostname.c_str());
 
     M_Print(64, 56, "Your name");
     M_DrawTextBox(160, 48, 16, 1);
-    M_Print(168, 56, setup_myname);
+    M_Print(168, 56, setup_myname.c_str());
 
     M_Print(64, 80, "Shirt color");
     M_Print(64, 104, "Pants color");

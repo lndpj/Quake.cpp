@@ -1,14 +1,15 @@
 // cvar.hpp -- console variable (cvar) declarations
 #pragma once
-#include <string>
-#include <string_view>
+#include <EASTL/string.h>
+#include <EASTL/string_view.h>
 #include <cstdio>
 #include <ostream>
-#include <unordered_map>
+#include <EASTL/unordered_map.h>
+#include <string_view>
 
 struct cvar_s {
-    std::string name;
-    std::string string;
+    eastl::string name;
+    eastl::string string;
     bool archive = false; // set to true to cause it to be saved to vars.rc
     bool server = false;  // notifies players when changed
     float value = 0.0f;
@@ -39,7 +40,7 @@ public:
 
 private:
     State state_;
-    std::unordered_map<std::string_view, cvar_t*> vars_map_;
+    eastl::unordered_map<eastl::string_view, cvar_t*> vars_map_;
 };
 
 CvarRegistry& GetCvarRegistry();

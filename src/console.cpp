@@ -155,7 +155,7 @@ void ConsoleSystem::CheckResize()
             numchars = linewidth_;
         }
 
-        std::vector<char> tbuf = text_;
+        eastl::vector<char> tbuf = text_;
         std::fill(text_.begin(), text_.end(), ' ');
 
         for (int i = 0; i < numlines; i++) {

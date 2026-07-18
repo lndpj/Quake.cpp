@@ -781,7 +781,7 @@ void Host_Say(qboolean teamonly)
     // construct prefix
     std::string text_str;
     if (Cmd::state.source == Cmd::Source::Command && cls.state == ca_dedicated) {
-        text_str = std::string(1, '\x01') + "<" + hostname.string + "> ";
+        text_str = std::string(1, '\x01') + "<" + hostname.string.c_str() + "> ";
     } else {
         text_str = std::string(1, '\x01') + save->name + ": ";
     }

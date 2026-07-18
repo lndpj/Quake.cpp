@@ -1,7 +1,7 @@
 // console.hpp -- console display and input declarations
 #pragma once
 
-#include <vector>
+#include <EASTL/vector.h>
 #include <string_view>
 
 namespace Console {
@@ -48,8 +48,8 @@ private:
     float cursorspeed_ = 4.0f;
     int current_ = 0;
     int x_ = 0;
-    std::vector<char> text_;
-    std::vector<float> times_; // size NUM_CON_TIMES (4)
+    eastl::vector<char> text_;
+    eastl::vector<float> times_; // size NUM_CON_TIMES (4)
     int vislines_ = 0;
     bool debuglog_ = false;
 

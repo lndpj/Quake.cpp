@@ -68,7 +68,7 @@ void CommandRegistry::BufferAddText(std::string_view text)
         Con_Printf("Cmd::BufferAddText: overflow\n");
         return;
     }
-    cmd_text_ += text;
+    cmd_text_.append(text.data(), text.length());
 }
 
 void CommandRegistry::BufferInsertText(std::string_view text)
@@ -77,7 +77,7 @@ void CommandRegistry::BufferInsertText(std::string_view text)
         Con_Printf("Cmd::BufferAddText: overflow\n");
         return;
     }
-    cmd_text_.insert(0, text);
+    cmd_text_.insert(0, text.data(), text.length());
 }
 
 void CommandRegistry::BufferExecute(void)
@@ -97,7 +97,7 @@ void CommandRegistry::BufferExecute(void)
             }
         }
 
-        std::string line = cmd_text_.substr(0, i);
+        eastl::string line = cmd_text_.substr(0, i);
 
         if (i == cmd_text_.length()) {
             cmd_text_.clear();
@@ -105,7 +105,7 @@ void CommandRegistry::BufferExecute(void)
             cmd_text_.erase(0, i + 1);
         }
 
-        ExecuteString(line, Source::Command);
+        ExecuteString(std::string_view(line.data(), line.length()), Source::Command);
 
         if (cmd_wait_) {
             cmd_wait_ = false;
@@ -125,7 +125,7 @@ static void StuffCmds_f(void)
         return;
     }
 
-    std::string text;
+    eastl::string text;
     for (int i = 1; i < com_argc; i++) {
         if (!com_argv[i]) {
             continue;
@@ -140,7 +140,7 @@ static void StuffCmds_f(void)
         return;
     }
 
-    std::string build;
+    eastl::string build;
     size_t i = 0;
     while (i < text.length()) {
         if (text[i] == '+') {
@@ -158,7 +158,7 @@ static void StuffCmds_f(void)
     }
 
     if (!build.empty()) {
-        Cmd::BufferInsertText(build);
+        Cmd::BufferInsertText(std::string_view(build.data(), build.length()));
     }
 }
 
@@ -171,7 +171,7 @@ static void Exec_f(void)
 
     int mark = Hunk_LowMark();
     std::string_view filename = Cmd::Argv(1);
-    std::string filename_str(filename);
+    eastl::string filename_str(filename.data(), filename.length());
     char* f = (char*)COM_LoadHunkFile(filename_str.c_str());
     if (!f) {
         Con_Printf("couldn't exec %s\n", filename_str.c_str());
@@ -210,15 +210,16 @@ static void Alias_f(void)
         return;
     }
 
-    std::string cmd;
+    eastl::string cmd;
     int c = Cmd::Argc();
     for (int i = 2; i < c; ++i) {
-        cmd += Cmd::Argv(i);
+        std::string_view arg = Cmd::Argv(i);
+        cmd.append(arg.data(), arg.length());
         cmd += " ";
     }
     cmd += "\n";
 
-    registry.AddAlias(alias_name, cmd);
+    registry.AddAlias(alias_name, std::string_view(cmd.data(), cmd.length()));
 }
 
 //=============================================================================
@@ -251,7 +252,7 @@ void CommandRegistry::AddCommand(std::string_view cmd_name, xcommand_t function)
         return;
     }
 
-    commands_.emplace(cmd_name, std::move(function));
+    commands_.emplace(eastl::string(cmd_name.data(), cmd_name.length()), std::move(function));
 }
 
 bool CommandRegistry::Exists(std::string_view cmd_name)
@@ -267,11 +268,11 @@ std::string_view CommandRegistry::CompleteCommand(std::string_view partial)
 
     auto it = commands_.lower_bound(partial);
     if (it != commands_.end()) {
-        std::string_view cmd_name = it->first;
+        std::string_view cmd_name(it->first.data(), it->first.length());
         if (cmd_name.length() >= partial.length()) {
             std::string_view prefix = cmd_name.substr(0, partial.length());
-            if (Q_strcasecmp(std::string(prefix).c_str(), std::string(partial).c_str()) == 0) {
-                return it->first;
+            if (Q_strcasecmp(eastl::string(prefix.data(), prefix.length()).c_str(), eastl::string(partial.data(), partial.length()).c_str()) == 0) {
+                return std::string_view(it->first.data(), it->first.length());
             }
         }
     }
@@ -288,7 +289,7 @@ std::string_view CommandRegistry::Argv(int arg)
     if (arg < 0 || static_cast<size_t>(arg) >= cmd_argv_.size()) {
         return "";
     }
-    return cmd_argv_[arg];
+    return std::string_view(cmd_argv_[arg].data(), cmd_argv_[arg].length());
 }
 
 std::string_view CommandRegistry::Args(void)
@@ -361,7 +362,7 @@ void CommandRegistry::ExecuteString(std::string_view text, Source src)
 
     auto alias_it = aliases_.find(cmd_name);
     if (alias_it != aliases_.end()) {
-        BufferInsertText(alias_it->second);
+        BufferInsertText(std::string_view(alias_it->second.data(), alias_it->second.length()));
         return;
     }
 
@@ -384,14 +385,14 @@ void ForwardToServer(void)
 
     MSG_WriteByte(&cls.message, clc_stringcmd);
     
-    std::string argv0(Argv(0));
+    eastl::string argv0(Argv(0).data(), Argv(0).length());
     if (Q_strcasecmp(argv0.c_str(), "cmd") != 0) {
         SZ_Print(&cls.message, argv0.c_str());
         SZ_Print(&cls.message, " ");
     }
 
     if (Argc() > 1) {
-        std::string args_str(Args());
+        eastl::string args_str(Args().data(), Args().length());
         SZ_Print(&cls.message, args_str.c_str());
     } else {
         SZ_Print(&cls.message, "\n");
