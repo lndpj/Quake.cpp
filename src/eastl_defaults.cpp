@@ -1,6 +1,7 @@
 #include <new>
 #include <cstdlib>
 #include <cstddef>
+#include <cassert>
 
 #if defined(_MSC_VER) || defined(__MINGW32__)
 #include <malloc.h>
@@ -10,9 +11,7 @@
 // Used by EASTL for regular allocations.
 void* operator new[](size_t size, const char* /*pName*/, int /*flags*/, unsigned /*debugFlags*/, const char* /*file*/, int /*line*/) {
     void* ptr = std::malloc(size);
-    if (!ptr) {
-        throw std::bad_alloc();
-    }
+    assert(ptr != nullptr && "Out of memory");
     return ptr;
 }
 
@@ -32,8 +31,6 @@ void* operator new[](size_t size, size_t alignment, size_t /*alignmentOffset*/, 
     }
 #endif
 
-    if (!ptr) {
-        throw std::bad_alloc();
-    }
+    assert(ptr != nullptr && "Out of memory");
     return ptr;
 }

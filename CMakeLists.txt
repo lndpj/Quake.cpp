@@ -107,6 +107,7 @@ else()
         -Wall -Wextra 
         -Wunreachable-code # Warn about unreachable code paths
         -Wno-write-strings
+        -fno-exceptions
         -ffunction-sections # Put each function in its own section
         -fdata-sections     # Put each variable in its own section
     )

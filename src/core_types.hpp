@@ -1,7 +1,7 @@
 #pragma once
 #include <variant>
 #include <utility>
-#include <stdexcept>
+#include <cassert>
 
 template <typename T, typename E>
 class Expected {
@@ -20,22 +20,22 @@ public:
     }
 
     [[nodiscard]] constexpr const T& value() const& {
-        if (!has_value()) throw std::runtime_error("bad expected access");
+        assert(has_value() && "bad expected access");
         return std::get<T>(data_);
     }
 
     [[nodiscard]] constexpr T& value() & {
-        if (!has_value()) throw std::runtime_error("bad expected access");
+        assert(has_value() && "bad expected access");
         return std::get<T>(data_);
     }
 
     [[nodiscard]] constexpr const E& error() const& {
-        if (has_value()) throw std::runtime_error("bad expected access");
+        assert(!has_value() && "bad expected access");
         return std::get<E>(data_);
     }
 
     [[nodiscard]] constexpr E& error() & {
-        if (has_value()) throw std::runtime_error("bad expected access");
+        assert(!has_value() && "bad expected access");
         return std::get<E>(data_);
     }
 
@@ -70,7 +70,7 @@ public:
     [[nodiscard]] explicit constexpr operator bool() const noexcept { return has_value_; }
 
     [[nodiscard]] constexpr const E& error() const {
-        if (has_value_) throw std::runtime_error("bad expected access");
+        assert(!has_value_ && "bad expected access");
         return error_;
     }
 

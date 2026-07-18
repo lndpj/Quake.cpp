@@ -98,7 +98,7 @@ Host_EndGame
         CL_Disconnect();
     }
 
-    throw Host::HostEndGameException(string);
+    Sys_Error("Host_EndGame: %s\n", string);
 }
 
 /*
@@ -140,7 +140,7 @@ This shuts down both the client and server
 
     inerror = false;
 
-    throw Host::HostErrorException(string);
+    Sys_Error("Host_Error: %s\n", string);
 }
 
 /*
@@ -631,96 +631,92 @@ void _Host_Frame(float time)
     static double time2 = 0;
     static double time3 = 0;
 
-    try {
-        // keep the random time dependent
-        rand();
+    // keep the random time dependent
+    rand();
 
-        // decide the simulation time
-        if (!Host_FilterTime(time)) {
-            return; // don't run too fast, or packets will flood out
-        }
-
-        // get new key events
-        Sys_SendKeyEvents();
-
-        // allow mice or other external controllers to add commands
-        IN_Commands();
-
-        // process console commands
-        Cmd::BufferExecute();
-
-        NET_Poll();
-
-        // if running the server locally, make intentions now
-        if (sv.active) {
-            CL_SendCmd();
-        }
-
-        //-------------------
-        //
-        // server operations
-        //
-        //-------------------
-
-        // check for commands typed to the host
-        Host_GetConsoleCommands();
-
-        if (sv.active) {
-            Host_ServerFrame();
-        }
-
-        //-------------------
-        //
-        // client operations
-        //
-        //-------------------
-
-        // if running the server remotely, send intentions now after
-        // the incoming messages have been read
-        if (!sv.active) {
-            CL_SendCmd();
-        }
-
-        host_time += host_frametime;
-
-        // fetch results from server
-        if (cls.state == ca_connected) {
-            CL_ReadFromServer();
-        }
-
-        // update video
-        if (host_speeds.value) {
-            time1 = Sys_FloatTime();
-        }
-
-        SCR_UpdateScreen();
-
-        if (host_speeds.value) {
-            time2 = Sys_FloatTime();
-        }
-
-        // update audio
-        if (cls.signon == SIGNONS) {
-            S_Update(r_origin, vpn, vright, vup);
-            CL_DecayLights();
-        } else {
-            S_Update(vec3_origin, vec3_origin, vec3_origin, vec3_origin);
-        }
-
-
-        if (host_speeds.value) {
-            int pass1 = static_cast<int>((time1 - time3) * 1000);
-            time3 = Sys_FloatTime();
-            int pass2 = static_cast<int>((time2 - time1) * 1000);
-            int pass3 = static_cast<int>((time3 - time2) * 1000);
-            Con_Printf("%3i tot %3i server %3i gfx %3i snd\n", pass1 + pass2 + pass3,
-                pass1, pass2, pass3);
-        }
-
-        host_framecount++;
-    } catch (const Host::HostException&) {
-        return; // something bad happened, or the server disconnected
+    // decide the simulation time
+    if (!Host_FilterTime(time)) {
+        return; // don't run too fast, or packets will flood out
     }
+
+    // get new key events
+    Sys_SendKeyEvents();
+
+    // allow mice or other external controllers to add commands
+    IN_Commands();
+
+    // process console commands
+    Cmd::BufferExecute();
+
+    NET_Poll();
+
+    // if running the server locally, make intentions now
+    if (sv.active) {
+        CL_SendCmd();
+    }
+
+    //-------------------
+    //
+    // server operations
+    //
+    //-------------------
+
+    // check for commands typed to the host
+    Host_GetConsoleCommands();
+
+    if (sv.active) {
+        Host_ServerFrame();
+    }
+
+    //-------------------
+    //
+    // client operations
+    //
+    //-------------------
+
+    // if running the server remotely, send intentions now after
+    // the incoming messages have been read
+    if (!sv.active) {
+        CL_SendCmd();
+    }
+
+    host_time += host_frametime;
+
+    // fetch results from server
+    if (cls.state == ca_connected) {
+        CL_ReadFromServer();
+    }
+
+    // update video
+    if (host_speeds.value) {
+        time1 = Sys_FloatTime();
+    }
+
+    SCR_UpdateScreen();
+
+    if (host_speeds.value) {
+        time2 = Sys_FloatTime();
+    }
+
+    // update audio
+    if (cls.signon == SIGNONS) {
+        S_Update(r_origin, vpn, vright, vup);
+        CL_DecayLights();
+    } else {
+        S_Update(vec3_origin, vec3_origin, vec3_origin, vec3_origin);
+    }
+
+
+    if (host_speeds.value) {
+        int pass1 = static_cast<int>((time1 - time3) * 1000);
+        time3 = Sys_FloatTime();
+        int pass2 = static_cast<int>((time2 - time1) * 1000);
+        int pass3 = static_cast<int>((time3 - time2) * 1000);
+        Con_Printf("%3i tot %3i server %3i gfx %3i snd\n", pass1 + pass2 + pass3,
+            pass1, pass2, pass3);
+    }
+
+    host_framecount++;
 }
 
 void Host_Frame(float time)

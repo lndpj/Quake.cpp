@@ -33,20 +33,6 @@ void Host_ServerFrame();
 void Host_InitCommands();
 void Host_Init(quakeparms_t* parms);
 void Host_Shutdown();
-class HostException : public std::runtime_error {
-public:
-    explicit HostException(const std::string& msg) : std::runtime_error(msg) {}
-};
-
-class HostEndGameException : public HostException {
-public:
-    using HostException::HostException;
-};
-
-class HostErrorException : public HostException {
-public:
-    using HostException::HostException;
-};
 
 [[noreturn]] void Host_Error(const char* error, ...);
 [[noreturn]] void Host_EndGame(const char* message, ...);

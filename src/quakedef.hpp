@@ -18,8 +18,8 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <exception>
-#include <stdexcept>
+#include <string>
+#include <string_view>
 #include "core_types.hpp"
 
 #if !defined(_WIN32)
