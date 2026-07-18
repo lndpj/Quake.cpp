@@ -1,18 +1,26 @@
-// net_vcr.h -- VCR network driver declarations
+// net_vcr.hpp -- VCR network driver declarations
 #pragma once
 
-#define VCR_OP_CONNECT 1
-#define VCR_OP_GETMESSAGE 2
-#define VCR_OP_SENDMESSAGE 3
-#define VCR_OP_CANSENDMESSAGE 4
-#define VCR_MAX_MESSAGE 4
+struct qsocket_s;
+typedef struct qsocket_s qsocket_t;
+struct sizebuf_t;
 
-int VCR_Init(void);
-void VCR_SearchForHosts(qboolean xmit);
-qsocket_t* VCR_Connect(char* host);
-qsocket_t* VCR_CheckNewConnections(void);
+namespace Net {
+
+constexpr int VCR_OP_CONNECT = 1;
+constexpr int VCR_OP_GETMESSAGE = 2;
+constexpr int VCR_OP_SENDMESSAGE = 3;
+constexpr int VCR_OP_CANSENDMESSAGE = 4;
+constexpr int VCR_MAX_MESSAGE = 4;
+
+int VCR_Init();
+void VCR_SearchForHosts(bool xmit);
+qsocket_t* VCR_Connect(const char* host);
+qsocket_t* VCR_CheckNewConnections();
 int VCR_GetMessage(qsocket_t* sock);
 int VCR_SendMessage(qsocket_t* sock, sizebuf_t* data);
-qboolean VCR_CanSendMessage(qsocket_t* sock);
+bool VCR_CanSendMessage(qsocket_t* sock);
 void VCR_Close(qsocket_t* sock);
-void VCR_Shutdown(void);
+void VCR_Shutdown();
+
+} // namespace Net

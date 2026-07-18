@@ -1476,7 +1476,7 @@ void Mod_LoadAliasModel(model_t* mod, void* buffer)
 
     pmodel->numframes = LittleLong(pinmodel->numframes);
     pmodel->size = static_cast<float>(LittleFloat(pinmodel->size) * ALIAS_BASE_SIZE_RATIO);
-    mod->synctype = static_cast<synctype_t>(LittleLong(pinmodel->synctype));
+    mod->synctype = static_cast<synctype_t>(LittleLong(static_cast<int>(pinmodel->synctype)));
     mod->numframes = pmodel->numframes;
 
     for (int i = 0; i < 3; i++) {
@@ -1510,10 +1510,10 @@ void Mod_LoadAliasModel(model_t* mod, void* buffer)
     pheader->skindesc = static_cast<int>(reinterpret_cast<byte*>(pskindesc) - reinterpret_cast<byte*>(pheader));
 
     for (int i = 0; i < numskins; i++) {
-        aliasskintype_t skintype = static_cast<aliasskintype_t>(LittleLong(pskintype->type));
+        aliasskintype_t skintype = static_cast<aliasskintype_t>(LittleLong(static_cast<int>(pskintype->type)));
         pskindesc[i].type = skintype;
 
-        if (skintype == ALIAS_SKIN_SINGLE) {
+        if (skintype == aliasskintype_t::ALIAS_SKIN_SINGLE) {
             pskintype = reinterpret_cast<daliasskintype_t*>(Mod_LoadAliasSkin(
                 pskintype + 1, &pskindesc[i].skin, skinsize, pheader));
         } else {
@@ -1563,10 +1563,10 @@ void Mod_LoadAliasModel(model_t* mod, void* buffer)
     daliasframetype_t* pframetype = reinterpret_cast<daliasframetype_t*>(&pintriangles[pmodel->numtris]);
 
     for (int i = 0; i < numframes; i++) {
-        aliasframetype_t frametype = static_cast<aliasframetype_t>(LittleLong(pframetype->type));
+        aliasframetype_t frametype = static_cast<aliasframetype_t>(LittleLong(static_cast<int>(pframetype->type)));
         pheader->frames[i].type = frametype;
 
-        if (frametype == ALIAS_SINGLE) {
+        if (frametype == aliasframetype_t::ALIAS_SINGLE) {
             pframetype = reinterpret_cast<daliasframetype_t*>(Mod_LoadAliasFrame(
                 pframetype + 1, &pheader->frames[i].frame, pmodel->numverts,
                 &pheader->frames[i].bboxmin, &pheader->frames[i].bboxmax, pheader,
@@ -1739,7 +1739,7 @@ void Mod_LoadSpriteModel(model_t* mod, void* buffer)
     psprite->maxwidth = LittleLong(pin->width);
     psprite->maxheight = LittleLong(pin->height);
     psprite->beamlength = LittleFloat(pin->beamlength);
-    mod->synctype = static_cast<synctype_t>(LittleLong(pin->synctype));
+    mod->synctype = static_cast<synctype_t>(LittleLong(static_cast<int>(pin->synctype)));
     psprite->numframes = numframes;
 
     mod->mins[0] = mod->mins[1] = static_cast<float>(-psprite->maxwidth) / 2.0f;
@@ -1760,10 +1760,10 @@ void Mod_LoadSpriteModel(model_t* mod, void* buffer)
     dspriteframetype_t* pframetype = reinterpret_cast<dspriteframetype_t*>(pin + 1);
 
     for (int i = 0; i < numframes; i++) {
-        spriteframetype_t frametype = static_cast<spriteframetype_t>(LittleLong(pframetype->type));
+        spriteframetype_t frametype = static_cast<spriteframetype_t>(LittleLong(static_cast<int>(pframetype->type)));
         psprite->frames[i].type = frametype;
 
-        if (frametype == SPR_SINGLE) {
+        if (frametype == spriteframetype_t::SPR_SINGLE) {
             pframetype = reinterpret_cast<dspriteframetype_t*>(Mod_LoadSpriteFrame(
                 pframetype + 1, &psprite->frames[i].frameptr));
         } else {

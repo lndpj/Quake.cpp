@@ -1,15 +1,23 @@
-// net_dgrm.h -- datagram network driver declarations
+// net_dgrm.hpp -- datagram network driver declarations
 #pragma once
 
-int Datagram_Init(void);
-void Datagram_Listen(qboolean state);
-void Datagram_SearchForHosts(qboolean xmit);
+struct qsocket_s;
+typedef struct qsocket_s qsocket_t;
+struct sizebuf_t;
+
+namespace Net {
+
+int Datagram_Init();
+void Datagram_Listen(bool state);
+void Datagram_SearchForHosts(bool xmit);
 qsocket_t* Datagram_Connect(const char* host);
-qsocket_t* Datagram_CheckNewConnections(void);
+qsocket_t* Datagram_CheckNewConnections();
 int Datagram_GetMessage(qsocket_t* sock);
 int Datagram_SendMessage(qsocket_t* sock, sizebuf_t* data);
 int Datagram_SendUnreliableMessage(qsocket_t* sock, sizebuf_t* data);
-qboolean Datagram_CanSendMessage(qsocket_t* sock);
-qboolean Datagram_CanSendUnreliableMessage(void);
+bool Datagram_CanSendMessage(qsocket_t* sock);
+bool Datagram_CanSendUnreliableMessage();
 void Datagram_Close(qsocket_t* sock);
-void Datagram_Shutdown(void);
+void Datagram_Shutdown();
+
+} // namespace Net

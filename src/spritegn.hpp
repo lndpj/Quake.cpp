@@ -1,55 +1,31 @@
-// spritegn.h -- sprite file format structures
+// spritegn.hpp -- sprite file format structures
 #pragma once
 
-// **********************************************************
-// * This file must be identical in the spritegen directory *
-// * and in the Quake directory, because it's used to       *
-// * pass data from one to the other via .spr files.        *
-// **********************************************************
+#include <cstdint>
 
-//-------------------------------------------------------
-// This program generates .spr sprite package files.
-// The format of the files is as follows:
-//
-// dsprite_t file header structure
-// <repeat dsprite_t.numframes times>
-//   <if spritegroup, repeat dspritegroup_t.numframes times>
-//     dspriteframe_t frame header structure
-//     sprite bitmap
-//   <else (single sprite frame)>
-//     dspriteframe_t frame header structure
-//     sprite bitmap
-// <endrepeat>
-//-------------------------------------------------------
+constexpr int SPRITE_VERSION = 1;
 
-#ifdef INCLUDELIBS
-
-#include <stdlib.hpp>
-#include <stdio.hpp>
-#include <math.hpp>
-#include <string.hpp>
-
-#include "cmdlib.hpp"
-#include "scriplib.hpp"
-#include "dictlib.hpp"
-#include "trilib.hpp"
-#include "lbmlib.hpp"
-#include "mathlib.hpp"
-
-#endif
-
-#define SPRITE_VERSION 1
-
-// must match definition in modelgen.h
+// must match definition in modelgen.hpp
 #ifndef SYNCTYPE_T
 #define SYNCTYPE_T
-
-typedef enum { ST_SYNC = 0,
-    ST_RAND } synctype_t;
+enum class synctype_t : int {
+    ST_SYNC = 0,
+    ST_RAND
+};
 #endif
 
-// TODO: shorten these?
-typedef struct {
+constexpr int SPR_VP_PARALLEL_UPRIGHT = 0;
+constexpr int SPR_FACING_UPRIGHT = 1;
+constexpr int SPR_VP_PARALLEL = 2;
+constexpr int SPR_ORIENTED = 3;
+constexpr int SPR_VP_PARALLEL_ORIENTED = 4;
+
+enum class spriteframetype_t : int {
+    SPR_SINGLE = 0,
+    SPR_GROUP
+};
+
+struct dsprite_t {
     int ident;
     int version;
     int type;
@@ -59,34 +35,25 @@ typedef struct {
     int numframes;
     float beamlength;
     synctype_t synctype;
-} dsprite_t;
+};
 
-#define SPR_VP_PARALLEL_UPRIGHT 0
-#define SPR_FACING_UPRIGHT 1
-#define SPR_VP_PARALLEL 2
-#define SPR_ORIENTED 3
-#define SPR_VP_PARALLEL_ORIENTED 4
-
-typedef struct {
+struct dspriteframe_t {
     int origin[2];
     int width;
     int height;
-} dspriteframe_t;
+};
 
-typedef struct {
+struct dspritegroup_t {
     int numframes;
-} dspritegroup_t;
+};
 
-typedef struct {
+struct dspriteinterval_t {
     float interval;
-} dspriteinterval_t;
+};
 
-typedef enum { SPR_SINGLE = 0,
-    SPR_GROUP } spriteframetype_t;
-
-typedef struct {
+struct dspriteframetype_t {
     spriteframetype_t type;
-} dspriteframetype_t;
+};
 
-#define IDSPRITEHEADER (('P' << 24) + ('S' << 16) + ('D' << 8) + 'I')
+constexpr std::uint32_t IDSPRITEHEADER = (('P' << 24) + ('S' << 16) + ('D' << 8) + 'I');
 // little-endian "IDSP"

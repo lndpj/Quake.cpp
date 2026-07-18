@@ -4628,7 +4628,7 @@ mspriteframe_t* R_GetSpriteframe(msprite_t* psprite)
         frame = 0;
     }
 
-    if (psprite->frames[frame].type == SPR_SINGLE) {
+    if (psprite->frames[frame].type == spriteframetype_t::SPR_SINGLE) {
         pspriteframe = psprite->frames[frame].frameptr;
     } else {
         pspritegroup = (mspritegroup_t*)psprite->frames[frame].frameptr;
@@ -5374,7 +5374,7 @@ void R_AliasSetupSkin(void)
     pskindesc = ((maliasskindesc_t*)((byte*)paliashdr + paliashdr->skindesc)) + skinnum;
     a_skinwidth = pmdl->skinwidth;
 
-    if (pskindesc->type == ALIAS_SKIN_GROUP) {
+    if (pskindesc->type == aliasskintype_t::ALIAS_SKIN_GROUP) {
         paliasskingroup = (maliasskingroup_t*)((byte*)paliashdr + pskindesc->skin);
         pskinintervals = (float*)((byte*)paliashdr + paliasskingroup->intervals);
         numskins = paliasskingroup->numskins;
@@ -5457,7 +5457,7 @@ void R_AliasSetupFrame(void)
         frame = 0;
     }
 
-    if (paliashdr->frames[frame].type == ALIAS_SINGLE) {
+    if (paliashdr->frames[frame].type == aliasframetype_t::ALIAS_SINGLE) {
         r_apverts = (trivertx_t*)((byte*)paliashdr + paliashdr->frames[frame].frame);
 
         return;

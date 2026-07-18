@@ -1623,7 +1623,7 @@ void CL_ParseUpdate(int bits)
         ent->model = model;
         // automatic animation (torches, etc) can be either all together or randomized
         if (model) {
-            if (model->synctype == ST_RAND) {
+            if (model->synctype == synctype_t::ST_RAND) {
                 ent->syncbase = static_cast<float>(rand() & 0x7fff) / 0x7fff;
             } else {
                 ent->syncbase = 0.0f;

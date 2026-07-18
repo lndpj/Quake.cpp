@@ -1,46 +1,34 @@
-// modelgen.h -- alias model file format structures
+// modelgen.hpp -- alias model file format structures
 #pragma once
 
-// *********************************************************
-// * This file must be identical in the modelgen directory *
-// * and in the Quake directory, because it's used to      *
-// * pass data from one to the other via model files.      *
-// *********************************************************
-
-#ifdef INCLUDELIBS
-
-#include <stdlib.hpp>
-#include <stdio.hpp>
-#include <math.hpp>
-#include <string.hpp>
-
-#include "cmdlib.hpp"
-#include "scriplib.hpp"
-#include "trilib.hpp"
-#include "lbmlib.hpp"
+#include <cstdint>
 #include "mathlib.hpp"
 
-#endif
+constexpr int ALIAS_VERSION = 6;
+constexpr int ALIAS_ONSEAM = 0x0020;
+constexpr int DT_FACES_FRONT = 0x0010;
+constexpr std::uint32_t IDPOLYHEADER = (('O' << 24) + ('P' << 16) + ('D' << 8) + 'I');
 
-#define ALIAS_VERSION 6
-
-#define ALIAS_ONSEAM 0x0020
-
-// must match definition in spritegn.h
+// must match definition in spritegn.hpp
 #ifndef SYNCTYPE_T
 #define SYNCTYPE_T
-
-typedef enum { ST_SYNC = 0,
-    ST_RAND } synctype_t;
+enum class synctype_t : int {
+    ST_SYNC = 0,
+    ST_RAND
+};
 #endif
 
-typedef enum { ALIAS_SINGLE = 0,
-    ALIAS_GROUP } aliasframetype_t;
+enum class aliasframetype_t : int {
+    ALIAS_SINGLE = 0,
+    ALIAS_GROUP
+};
 
-typedef enum { ALIAS_SKIN_SINGLE = 0,
-    ALIAS_SKIN_GROUP } aliasskintype_t;
+enum class aliasskintype_t : int {
+    ALIAS_SKIN_SINGLE = 0,
+    ALIAS_SKIN_GROUP
+};
 
-typedef struct {
+struct mdl_t {
     int ident;
     int version;
     Vector3 scale;
@@ -56,62 +44,52 @@ typedef struct {
     synctype_t synctype;
     int flags;
     float size;
-} mdl_t;
+};
 
-// TODO: could be shorts
-
-typedef struct {
+struct stvert_t {
     int onseam;
     int s;
     int t;
-} stvert_t;
+};
 
-typedef struct dtriangle_s {
+struct dtriangle_t {
     int facesfront;
     int vertindex[3];
-} dtriangle_t;
+};
 
-#define DT_FACES_FRONT 0x0010
+struct trivertx_t {
+    std::uint8_t v[3];
+    std::uint8_t lightnormalindex;
+};
 
-// This mirrors trivert_t in trilib.h, is present so Quake knows how to
-// load this data
+struct daliasframe_t {
+    trivertx_t bboxmin;
+    trivertx_t bboxmax;
+    char name[16];
+};
 
-typedef struct {
-    byte v[3];
-    byte lightnormalindex;
-} trivertx_t;
-
-typedef struct {
-    trivertx_t bboxmin; // lightnormal isn't used
-    trivertx_t bboxmax; // lightnormal isn't used
-    char name[16];      // frame name from grabbing
-} daliasframe_t;
-
-typedef struct {
+struct daliasgroup_t {
     int numframes;
-    trivertx_t bboxmin; // lightnormal isn't used
-    trivertx_t bboxmax; // lightnormal isn't used
-} daliasgroup_t;
+    trivertx_t bboxmin;
+    trivertx_t bboxmax;
+};
 
-typedef struct {
+struct daliasskingroup_t {
     int numskins;
-} daliasskingroup_t;
+};
 
-typedef struct {
+struct daliasinterval_t {
     float interval;
-} daliasinterval_t;
+};
 
-typedef struct {
+struct daliasskininterval_t {
     float interval;
-} daliasskininterval_t;
+};
 
-typedef struct {
+struct daliasframetype_t {
     aliasframetype_t type;
-} daliasframetype_t;
+};
 
-typedef struct {
+struct daliasskintype_t {
     aliasskintype_t type;
-} daliasskintype_t;
-
-#define IDPOLYHEADER (('O' << 24) + ('P' << 16) + ('D' << 8) + 'I')
-// little-endian "IDPO"
+};
