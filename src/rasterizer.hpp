@@ -1,98 +1,110 @@
 // rasterizer.hpp: interface header file for rasterization driver modules
 #pragma once
 
-#define WARP_WIDTH 320
-#define WARP_HEIGHT 200
+#include <EASTL/array.h>
 
-#define MAX_LBM_HEIGHT 480
+constexpr int WARP_WIDTH = 320;
+constexpr int WARP_HEIGHT = 200;
 
-typedef struct {
-    float u, v;
-    float s, t;
-    float zi;
-} emitpoint_t;
+constexpr int MAX_LBM_HEIGHT = 480;
 
-typedef enum {
-    pt_static,
-    pt_grav,
-    pt_slowgrav,
-    pt_fire,
-    pt_explode,
-    pt_explode2,
-    pt_blob,
-    pt_blob2
-} ptype_t;
+struct emitpoint_t {
+    float u = 0.0f;
+    float v = 0.0f;
+    float s = 0.0f;
+    float t = 0.0f;
+    float zi = 0.0f;
+};
+
+enum class ptype_t {
+    Static,
+    Grav,
+    SlowGrav,
+    Fire,
+    Explode,
+    Explode2,
+    Blob,
+    Blob2
+};
 
 // !!! if this is changed, it must be changed in d_ifacea.h too !!!
-typedef struct particle_s {
+struct particle_t {
     // driver-usable fields
-    Vector3 org;
-    float color;
+    Vector3 org{};
+    float color = 0.0f;
     // drivers never touch the following fields
-    struct particle_s* next;
-    Vector3 vel;
-    float ramp;
-    float die;
-    ptype_t type;
-} particle_t;
+    particle_t* next = nullptr;
+    Vector3 vel{};
+    float ramp = 0.0f;
+    float die = 0.0f;
+    ptype_t type = ptype_t::Static;
+};
 
-#define PARTICLE_Z_CLIP 8.0
+constexpr float PARTICLE_Z_CLIP = 8.0f;
 
-typedef struct polyvert_s {
-    float u, v, zi, s, t;
-} polyvert_t;
+struct polyvert_t {
+    float u = 0.0f;
+    float v = 0.0f;
+    float zi = 0.0f;
+    float s = 0.0f;
+    float t = 0.0f;
+};
 
-typedef struct polydesc_s {
-    int numverts;
-    float nearzi;
-    msurface_t* pcurrentface;
-    polyvert_t* pverts;
-} polydesc_t;
-
-// !!! if this is changed, it must be changed in d_ifacea.h too !!!
-typedef struct finalvert_s {
-    int v[6]; // u, v, s, t, l, 1/z
-    int flags;
-    float reserved;
-} finalvert_t;
+struct polydesc_t {
+    int numverts = 0;
+    float nearzi = 0.0f;
+    msurface_t* pcurrentface = nullptr;
+    polyvert_t* pverts = nullptr;
+};
 
 // !!! if this is changed, it must be changed in d_ifacea.h too !!!
-typedef struct {
-    void* pskin;
-    maliasskindesc_t* pskindesc;
-    int skinwidth;
-    int skinheight;
-    mtriangle_t* ptriangles;
-    finalvert_t* pfinalverts;
-    int numtriangles;
-    int drawtype;
-    int seamfixupX16;
-} affinetridesc_t;
+struct finalvert_t {
+    eastl::array<int, 6> v{}; // u, v, s, t, l, 1/z
+    int flags = 0;
+    float reserved = 0.0f;
+};
 
 // !!! if this is changed, it must be changed in d_ifacea.h too !!!
-typedef struct {
-    float u, v, zi, color;
-} screenpart_t;
+struct affinetridesc_t {
+    void* pskin = nullptr;
+    maliasskindesc_t* pskindesc = nullptr;
+    int skinwidth = 0;
+    int skinheight = 0;
+    mtriangle_t* ptriangles = nullptr;
+    finalvert_t* pfinalverts = nullptr;
+    int numtriangles = 0;
+    int drawtype = 0;
+    int seamfixupX16 = 0;
+};
 
-typedef struct {
-    int nump;
-    emitpoint_t* pverts; // there's room for an extra element at [nump],
+// !!! if this is changed, it must be changed in d_ifacea.h too !!!
+struct screenpart_t {
+    float u = 0.0f;
+    float v = 0.0f;
+    float zi = 0.0f;
+    float color = 0.0f;
+};
+
+struct spritedesc_t {
+    int nump = 0;
+    emitpoint_t* pverts = nullptr; // there's room for an extra element at [nump],
     //  if the driver wants to duplicate element [0] at
     //  element [nump] to avoid dealing with wrapping
-    mspriteframe_t* pspriteframe;
-    Vector3 vup, vright, vpn; // in worldspace
-    float nearzi;
-} spritedesc_t;
+    mspriteframe_t* pspriteframe = nullptr;
+    Vector3 vup{}, vright{}, vpn{}; // in worldspace
+    float nearzi = 0.0f;
+};
 
-typedef struct {
-    int u, v;
-    float zi;
-    int color;
-} zpointdesc_t;
+struct zpointdesc_t {
+    int u = 0;
+    int v = 0;
+    float zi = 0.0f;
+    int color = 0;
+};
 
-#define SKYSHIFT 7
-#define SKYSIZE (1 << SKYSHIFT)
-#define SKYMASK (SKYSIZE - 1)
+constexpr int SKYSHIFT = 7;
+constexpr int SKYSIZE = 1 << SKYSHIFT;
+constexpr int SKYMASK = SKYSIZE - 1;
 
 namespace Render {
 
@@ -117,42 +129,42 @@ extern int d_con_indirect;
 extern Vector3 r_pright, r_pup, r_ppn;
 
 void D_Aff8Patch(void* pcolormap);
-inline void D_EnableBackBufferAccess(void)
+inline void D_EnableBackBufferAccess()
 {
     VID_LockBuffer();
 }
 
-inline void D_DisableBackBufferAccess(void)
+inline void D_DisableBackBufferAccess()
 {
     VID_UnlockBuffer();
 }
 
-void D_PolysetDraw(void);
+void D_PolysetDraw();
 void D_PolysetDrawFinalVerts(finalvert_t* fv, int numverts);
 void D_DrawParticle(particle_t* pparticle);
-void D_DrawPoly(void);
-void D_DrawSprite(void);
-void D_DrawSurfaces(void);
-void D_EndParticles(void);
-void D_Init(void);
-void D_ViewChanged(void);
-void D_SetupFrame(void);
-void D_StartParticles(void);
-void D_TurnZOn(void);
-void D_WarpScreen(void);
+void D_DrawPoly();
+void D_DrawSprite();
+void D_DrawSurfaces();
+void D_EndParticles();
+void D_Init();
+void D_ViewChanged();
+void D_SetupFrame();
+void D_StartParticles();
+void D_TurnZOn();
+void D_WarpScreen();
 
-void D_DrawRect(void);
+void D_DrawRect();
 void D_UpdateRects(vrect_t* prect);
 
-void D_PolysetUpdateTables(void);
+void D_PolysetUpdateTables();
 
 extern int r_skydirect;
 extern byte* r_skysource;
 
 // transparency types for D_DrawRect ()
-#define DR_SOLID 0
-#define DR_TRANSPARENT 1
-#define TRANSPARENT_COLOR 0xFF
+constexpr int DR_SOLID = 0;
+constexpr int DR_TRANSPARENT = 1;
+constexpr int TRANSPARENT_COLOR = 0xFF;
 
 extern void* acolormap; // FIXME: should go away
 
@@ -160,21 +172,21 @@ extern void* acolormap; // FIXME: should go away
 
 // callbacks to Quake
 
-typedef struct {
-    pixel_t* surfdat; // destination for generated surface
-    int rowbytes;     // destination logical width in bytes
-    msurface_t* surf; // description for surface to generate
-    fixed8_t lightadj[MAXLIGHTMAPS];
+struct drawsurf_t {
+    pixel_t* surfdat = nullptr; // destination for generated surface
+    int rowbytes = 0;     // destination logical width in bytes
+    msurface_t* surf = nullptr; // description for surface to generate
+    eastl::array<fixed8_t, MAXLIGHTMAPS> lightadj{};
     // adjust for lightmap levels for dynamic lighting
-    texture_t* texture; // corrected for animating textures
-    int surfmip;        // mipmapped ratio of surface texels / world pixels
-    int surfwidth;      // in mipmapped texels
-    int surfheight;     // in mipmapped texels
-} drawsurf_t;
+    texture_t* texture = nullptr; // corrected for animating textures
+    int surfmip = 0;        // mipmapped ratio of surface texels / world pixels
+    int surfwidth = 0;      // in mipmapped texels
+    int surfheight = 0;     // in mipmapped texels
+};
 
 extern drawsurf_t r_drawsurf;
 
-void R_DrawSurface(void);
+void R_DrawSurface();
 
 extern float skyspeed, skyspeed2;
 extern float skytime;

@@ -698,7 +698,7 @@ void R_EntityParticles(entity_t* ent)
 
         p->die = static_cast<float>(cl.time + 0.01);
         p->color = static_cast<float>(0x6f);
-        p->type = pt_explode;
+        p->type = ptype_t::Explode;
 
         p->org = ent->origin + Vector3(r_avertexnormals[i][0], r_avertexnormals[i][1], r_avertexnormals[i][2]) * dist + forward * beamlength;
     }
@@ -762,7 +762,7 @@ void R_ReadPointFile_f(void)
 
         p->die = 99999.0f;
         p->color = static_cast<float>((-c) & 15);
-        p->type = pt_static;
+        p->type = ptype_t::Static;
         p->vel = vec3_origin;
         p->org = org;
     }
@@ -828,9 +828,9 @@ void R_ParticleExplosion(const Vector3& org)
         p->color = static_cast<float>(ramp1[0]);
         p->ramp = static_cast<float>(rand() & 3);
         if (i & 1) {
-            p->type = pt_explode;
+            p->type = ptype_t::Explode;
         } else {
-            p->type = pt_explode2;
+            p->type = ptype_t::Explode2;
         }
         p->org = org + Vector3(static_cast<float>((rand() % 32) - 16), static_cast<float>((rand() % 32) - 16), static_cast<float>((rand() % 32) - 16));
         p->vel = Vector3(static_cast<float>((rand() % 512) - 256), static_cast<float>((rand() % 512) - 256), static_cast<float>((rand() % 512) - 256));
@@ -863,7 +863,7 @@ void R_ParticleExplosion2(const Vector3& org, int colorStart, int colorLength)
         p->color = static_cast<float>(colorStart + (colorMod % colorLength));
         colorMod++;
 
-        p->type = pt_blob;
+        p->type = ptype_t::Blob;
         p->org = org + Vector3(static_cast<float>((rand() % 32) - 16), static_cast<float>((rand() % 32) - 16), static_cast<float>((rand() % 32) - 16));
         p->vel = Vector3(static_cast<float>((rand() % 512) - 256), static_cast<float>((rand() % 512) - 256), static_cast<float>((rand() % 512) - 256));
     }
@@ -893,10 +893,10 @@ void R_BlobExplosion(const Vector3& org)
         p->die = static_cast<float>(cl.time + 1 + (rand() & 8) * 0.05);
 
         if (i & 1) {
-            p->type = pt_blob;
+            p->type = ptype_t::Blob;
             p->color = static_cast<float>(66 + rand() % 6);
         } else {
-            p->type = pt_blob2;
+            p->type = ptype_t::Blob2;
             p->color = static_cast<float>(150 + rand() % 6);
         }
         p->org = org + Vector3(static_cast<float>((rand() % 32) - 16), static_cast<float>((rand() % 32) - 16), static_cast<float>((rand() % 32) - 16));
@@ -930,16 +930,16 @@ void R_RunParticleEffect(const Vector3& org, const Vector3& dir, int color, int 
             p->color = static_cast<float>(ramp1[0]);
             p->ramp = static_cast<float>(rand() & 3);
             if (i & 1) {
-                p->type = pt_explode;
+                p->type = ptype_t::Explode;
             } else {
-                p->type = pt_explode2;
+                p->type = ptype_t::Explode2;
             }
             p->org = org + Vector3(static_cast<float>((rand() % 32) - 16), static_cast<float>((rand() % 32) - 16), static_cast<float>((rand() % 32) - 16));
             p->vel = Vector3(static_cast<float>((rand() % 512) - 256), static_cast<float>((rand() % 512) - 256), static_cast<float>((rand() % 512) - 256));
         } else {
             p->die = static_cast<float>(cl.time + 0.1 * (rand() % 5));
             p->color = static_cast<float>((color & ~7) + (rand() & 7));
-            p->type = pt_slowgrav;
+            p->type = ptype_t::SlowGrav;
             p->org = org + Vector3(static_cast<float>((rand() & 15) - 8), static_cast<float>((rand() & 15) - 8), static_cast<float>((rand() & 15) - 8));
             p->vel = dir * 15; // + (rand()%300)-150;
         }
@@ -973,7 +973,7 @@ void R_LavaSplash(const Vector3& org)
 
                 p->die = static_cast<float>(cl.time + 2 + (rand() & 31) * 0.02);
                 p->color = static_cast<float>(224 + (rand() & 7));
-                p->type = pt_slowgrav;
+                p->type = ptype_t::SlowGrav;
 
                 dir.x = static_cast<float>(j * 8 + (rand() & 7));
                 dir.y = static_cast<float>(i * 8 + (rand() & 7));
@@ -1016,7 +1016,7 @@ void R_TeleportSplash(const Vector3& org)
 
                 p->die = static_cast<float>(cl.time + 0.2 + (rand() & 7) * 0.02);
                 p->color = static_cast<float>(7 + (rand() & 7));
-                p->type = pt_slowgrav;
+                p->type = ptype_t::SlowGrav;
 
                 dir = Vector3(static_cast<float>(j * 8), static_cast<float>(i * 8), static_cast<float>(k * 8));
 
@@ -1066,19 +1066,19 @@ void R_RocketTrail(Vector3 start, const Vector3& end, int type)
         case 0: // rocket trail
             p->ramp = static_cast<float>(rand() & 3);
             p->color = static_cast<float>(ramp3[(int)p->ramp]);
-            p->type = pt_fire;
+            p->type = ptype_t::Fire;
             p->org = start + Vector3(static_cast<float>((rand() % 6) - 3), static_cast<float>((rand() % 6) - 3), static_cast<float>((rand() % 6) - 3));
             break;
 
         case 1: // smoke smoke
             p->ramp = static_cast<float>((rand() & 3) + 2);
             p->color = static_cast<float>(ramp3[(int)p->ramp]);
-            p->type = pt_fire;
+            p->type = ptype_t::Fire;
             p->org = start + Vector3(static_cast<float>((rand() % 6) - 3), static_cast<float>((rand() % 6) - 3), static_cast<float>((rand() % 6) - 3));
             break;
 
         case 2: // blood
-            p->type = pt_grav;
+            p->type = ptype_t::Grav;
             p->color = static_cast<float>(67 + (rand() & 3));
             p->org = start + Vector3(static_cast<float>((rand() % 6) - 3), static_cast<float>((rand() % 6) - 3), static_cast<float>((rand() % 6) - 3));
             break;
@@ -1086,7 +1086,7 @@ void R_RocketTrail(Vector3 start, const Vector3& end, int type)
         case 3:
         case 5: // tracer
             p->die = static_cast<float>(cl.time + 0.5);
-            p->type = pt_static;
+            p->type = ptype_t::Static;
             if (type == 3) {
                 p->color = static_cast<float>(52 + ((tracercount & 4) << 1));
             } else {
@@ -1109,7 +1109,7 @@ void R_RocketTrail(Vector3 start, const Vector3& end, int type)
             break;
 
         case 4: // slight blood
-            p->type = pt_grav;
+            p->type = ptype_t::Grav;
             p->color = static_cast<float>(67 + (rand() & 3));
             p->org = start + Vector3(static_cast<float>((rand() % 6) - 3), static_cast<float>((rand() % 6) - 3), static_cast<float>((rand() % 6) - 3));
             len -= 3;
@@ -1117,7 +1117,7 @@ void R_RocketTrail(Vector3 start, const Vector3& end, int type)
 
         case 6: // voor trail
             p->color = static_cast<float>(9 * 16 + 8 + (rand() & 3));
-            p->type = pt_static;
+            p->type = ptype_t::Static;
             p->die = static_cast<float>(cl.time + 0.3);
             p->org = start + Vector3(static_cast<float>((rand() & 15) - 8), static_cast<float>((rand() & 15) - 8), static_cast<float>((rand() & 15) - 8));
             break;
@@ -1185,9 +1185,9 @@ void R_DrawParticles(void)
         p->org[2] += p->vel[2] * frametime;
 
         switch (p->type) {
-        case pt_static:
+        case ptype_t::Static:
             break;
-        case pt_fire:
+        case ptype_t::Fire:
             p->ramp += time1;
             if (p->ramp >= 6) {
                 p->die = -1;
@@ -1198,7 +1198,7 @@ void R_DrawParticles(void)
             p->vel[2] += grav;
             break;
 
-        case pt_explode:
+        case ptype_t::Explode:
             p->ramp += time2;
             if (p->ramp >= 8) {
                 p->die = -1;
@@ -1212,7 +1212,7 @@ void R_DrawParticles(void)
             p->vel[2] -= grav;
             break;
 
-        case pt_explode2:
+        case ptype_t::Explode2:
             p->ramp += time3;
             if (p->ramp >= 8) {
                 p->die = -1;
@@ -1226,22 +1226,22 @@ void R_DrawParticles(void)
             p->vel[2] -= grav;
             break;
 
-        case pt_blob:
+        case ptype_t::Blob:
             for (i = 0; i < 3; i++) {
                 p->vel[i] += p->vel[i] * dvel;
             }
             p->vel[2] -= grav;
             break;
 
-        case pt_blob2:
+        case ptype_t::Blob2:
             for (i = 0; i < 2; i++) {
                 p->vel[i] -= p->vel[i] * dvel;
             }
             p->vel[2] -= grav;
             break;
 
-        case pt_grav:
-        case pt_slowgrav:
+        case ptype_t::Grav:
+        case ptype_t::SlowGrav:
             p->vel[2] -= grav;
             break;
         }

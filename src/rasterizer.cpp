@@ -42,156 +42,154 @@ namespace Render {
 namespace {
 
 // d_vars.cpp
-float d_sdivzstepu, d_tdivzstepu, d_zistepu;
-float d_sdivzstepv, d_tdivzstepv, d_zistepv;
-float d_sdivzorigin, d_tdivzorigin, d_ziorigin;
+float d_sdivzstepu = 0.0f, d_tdivzstepu = 0.0f, d_zistepu = 0.0f;
+float d_sdivzstepv = 0.0f, d_tdivzstepv = 0.0f, d_zistepv = 0.0f;
+float d_sdivzorigin = 0.0f, d_tdivzorigin = 0.0f, d_ziorigin = 0.0f;
 
-fixed16_t sadjust, tadjust, bbextents, bbextentt;
+fixed16_t sadjust = 0, tadjust = 0, bbextents = 0, bbextentt = 0;
 
-
-pixel_t* cacheblock;
-int cachewidth;
-pixel_t* d_viewbuffer;
+pixel_t* cacheblock = nullptr;
+int cachewidth = 0;
+pixel_t* d_viewbuffer = nullptr;
 
 // d_init.cpp
-#define NUM_MIPS 4
+constexpr int NUM_MIPS = 4;
 
-cvar_t d_subdiv16 = { "d_subdiv16", "1", {}, {}, {}, {} };
-cvar_t d_mipcap = { "d_mipcap", "0", {}, {}, {}, {} };
-cvar_t d_mipscale = { "d_mipscale", "1", {}, {}, {}, {} };
+cvar_t d_subdiv16 = { "d_subdiv16", "1", false, false, 0.0f, nullptr };
+cvar_t d_mipcap = { "d_mipcap", "0", false, false, 0.0f, nullptr };
+cvar_t d_mipscale = { "d_mipscale", "1", false, false, 0.0f, nullptr };
 
-surfcache_t* d_initial_rover;
-qboolean d_roverwrapped;
-int d_minmip;
-float d_scalemip[NUM_MIPS - 1];
+surfcache_t* d_initial_rover = nullptr;
+qboolean d_roverwrapped = false;
+int d_minmip = 0;
+eastl::array<float, NUM_MIPS - 1> d_scalemip{};
 
-static float basemip[NUM_MIPS - 1] = { 1.0f, 0.5f * 0.8f, 0.25f * 0.8f };
+constexpr eastl::array<float, NUM_MIPS - 1> basemip = { 1.0f, 0.5f * 0.8f, 0.25f * 0.8f };
 
-void (*d_drawspans)(espan_t* pspan);
+void (*d_drawspans)(espan_t* pspan) = nullptr;
 
 // d_modech.cpp
-int d_vrectx, d_vrecty, d_vrectright_particle, d_vrectbottom_particle;
+int d_vrectx = 0, d_vrecty = 0, d_vrectright_particle = 0, d_vrectbottom_particle = 0;
 
-int d_y_aspect_shift, d_pix_min, d_pix_max, d_pix_shift;
+int d_y_aspect_shift = 0, d_pix_min = 0, d_pix_max = 0, d_pix_shift = 0;
 
-int d_scantable[MAXHEIGHT];
-short* zspantable[MAXHEIGHT];
+eastl::array<int, MAXHEIGHT> d_scantable{};
+eastl::array<short*, MAXHEIGHT> zspantable{};
 
 // d_edge.cpp
-static int miplevel;
+int miplevel = 0;
 
-float scale_for_mip;
-int ubasestep, errorterm, erroradjustup, erroradjustdown;
+float scale_for_mip = 0.0f;
+int ubasestep = 0, errorterm = 0, erroradjustup = 0, erroradjustdown = 0;
 
-Vector3 transformed_modelorg;
+Vector3 transformed_modelorg{};
 
 // d_surf.cpp
-float surfscale;
+float surfscale = 0.0f;
 
-int sc_size;
-surfcache_t *sc_rover, *sc_base;
+int sc_size = 0;
+surfcache_t* sc_rover = nullptr;
+surfcache_t* sc_base = nullptr;
 
 // d_scan.cpp
-unsigned char *r_turb_pbase, *r_turb_pdest;
-fixed16_t r_turb_s, r_turb_t, r_turb_sstep, r_turb_tstep;
-int* r_turb_turb;
-int r_turb_spancount;
+unsigned char* r_turb_pbase = nullptr;
+unsigned char* r_turb_pdest = nullptr;
+fixed16_t r_turb_s = 0, r_turb_t = 0, r_turb_sstep = 0, r_turb_tstep = 0;
+int* r_turb_turb = nullptr;
+int r_turb_spancount = 0;
+
+struct edgetable {
+    int isflattop = 0;
+    int numleftedges = 0;
+    const eastl::array<int, 6>* pleftedgevert0 = nullptr;
+    const eastl::array<int, 6>* pleftedgevert1 = nullptr;
+    const eastl::array<int, 6>* pleftedgevert2 = nullptr;
+    int numrightedges = 0;
+    const eastl::array<int, 6>* prightedgevert0 = nullptr;
+    const eastl::array<int, 6>* prightedgevert1 = nullptr;
+    const eastl::array<int, 6>* prightedgevert2 = nullptr;
+};
+
+struct spanpackage_t {
+    void* pdest = nullptr;
+    short* pz = nullptr;
+    int count = 0;
+    byte* ptex = nullptr;
+    int sfrac = 0, tfrac = 0, light = 0, zi = 0;
+};
+
+eastl::array<int, 6> r_p0{}, r_p1{}, r_p2{};
+
+byte* d_pcolormap = nullptr;
+int d_aflatcolor = 0;
+int d_xdenom = 0;
+
+const edgetable* pedgetable = nullptr;
+
+// edgetables references r_p0, r_p1, r_p2 so must come after them
+const edgetable edgetables[12] = {
+    { 0, 1, &r_p0, &r_p2, nullptr, 2, &r_p0, &r_p1, &r_p2 },
+    { 0, 2, &r_p1, &r_p0, &r_p2, 1, &r_p1, &r_p2, nullptr },
+    { 1, 1, &r_p0, &r_p2, nullptr, 1, &r_p1, &r_p2, nullptr },
+    { 0, 1, &r_p1, &r_p0, nullptr, 2, &r_p1, &r_p2, &r_p0 },
+    { 0, 2, &r_p0, &r_p2, &r_p1, 1, &r_p0, &r_p1, nullptr },
+    { 0, 1, &r_p2, &r_p1, nullptr, 1, &r_p2, &r_p0, nullptr },
+    { 0, 1, &r_p2, &r_p1, nullptr, 2, &r_p2, &r_p0, &r_p1 },
+    { 0, 2, &r_p2, &r_p1, &r_p0, 1, &r_p2, &r_p0, nullptr },
+    { 0, 1, &r_p1, &r_p0, nullptr, 1, &r_p1, &r_p2, nullptr },
+    { 1, 1, &r_p2, &r_p1, nullptr, 1, &r_p0, &r_p1, nullptr },
+    { 1, 1, &r_p1, &r_p0, nullptr, 1, &r_p2, &r_p0, nullptr },
+    { 0, 1, &r_p0, &r_p2, nullptr, 1, &r_p0, &r_p1, nullptr },
+};
+
+int a_sstepxfrac = 0, a_tstepxfrac = 0, r_lstepx = 0, a_ststepxwhole = 0;
+int r_sstepx = 0, r_tstepx = 0, r_lstepy = 0, r_sstepy = 0, r_tstepy = 0;
+int r_zistepx = 0, r_zistepy = 0;
+int d_aspancount = 0, d_countextrastep = 0;
+
+spanpackage_t* a_spans = nullptr;
+spanpackage_t* d_pedgespanpackage = nullptr;
+int ystart = 0;
+byte* d_pdest = nullptr;
+byte* d_ptex = nullptr;
+short* d_pz = nullptr;
+int d_sfrac = 0, d_tfrac = 0, d_light = 0, d_zi = 0;
+int d_ptexextrastep = 0, d_sfracextrastep = 0;
+int d_tfracextrastep = 0, d_lightextrastep = 0, d_pdestextrastep = 0;
+int d_lightbasestep = 0, d_pdestbasestep = 0, d_ptexbasestep = 0;
+int d_sfracbasestep = 0, d_tfracbasestep = 0;
+int d_ziextrastep = 0, d_zibasestep = 0;
+int d_pzextrastep = 0, d_pzbasestep = 0;
+
+eastl::array<byte*, MAX_LBM_HEIGHT> skintable{};
+int skinwidth = 0;
+byte* skinstart = nullptr;
+
+// d_sprite.cpp
+int sprite_height = 0;
+int minindex = 0, maxindex = 0;
+sspan_t* sprite_spans = nullptr;
 
 } // namespace
 
 // Shared global variables (visible to other TUs)
-short* d_pzbuffer;
-unsigned int d_zrowbytes;
-unsigned int d_zwidth;
-qboolean r_cache_thrash;
-
-// d_polyse.cpp
-
-typedef struct {
-    int isflattop;
-    int numleftedges;
-    int* pleftedgevert0;
-    int* pleftedgevert1;
-    int* pleftedgevert2;
-    int numrightedges;
-    int* prightedgevert0;
-    int* prightedgevert1;
-    int* prightedgevert2;
-} edgetable;
-
-
-
-typedef struct {
-    void* pdest;
-    short* pz;
-    int count;
-    byte* ptex;
-    int sfrac, tfrac, light, zi;
-} spanpackage_t;
-
-int r_p0[6], r_p1[6], r_p2[6];
-
-byte* d_pcolormap;
-int d_aflatcolor;
-int d_xdenom;
-
-edgetable* pedgetable;
-
-// edgetables references r_p0[], r_p1[], r_p2[] so must come after them
-edgetable edgetables[12] = {
-    { 0, 1, r_p0, r_p2, NULL, 2, r_p0, r_p1, r_p2 },
-    { 0, 2, r_p1, r_p0, r_p2, 1, r_p1, r_p2, NULL },
-    { 1, 1, r_p0, r_p2, NULL, 1, r_p1, r_p2, NULL },
-    { 0, 1, r_p1, r_p0, NULL, 2, r_p1, r_p2, r_p0 },
-    { 0, 2, r_p0, r_p2, r_p1, 1, r_p0, r_p1, NULL },
-    { 0, 1, r_p2, r_p1, NULL, 1, r_p2, r_p0, NULL },
-    { 0, 1, r_p2, r_p1, NULL, 2, r_p2, r_p0, r_p1 },
-    { 0, 2, r_p2, r_p1, r_p0, 1, r_p2, r_p0, NULL },
-    { 0, 1, r_p1, r_p0, NULL, 1, r_p1, r_p2, NULL },
-    { 1, 1, r_p2, r_p1, NULL, 1, r_p0, r_p1, NULL },
-    { 1, 1, r_p1, r_p0, NULL, 1, r_p2, r_p0, NULL },
-    { 0, 1, r_p0, r_p2, NULL, 1, r_p0, r_p1, NULL },
-};
-
-int a_sstepxfrac, a_tstepxfrac, r_lstepx, a_ststepxwhole;
-int r_sstepx, r_tstepx, r_lstepy, r_sstepy, r_tstepy;
-int r_zistepx, r_zistepy;
-int d_aspancount, d_countextrastep;
-
-spanpackage_t* a_spans;
-spanpackage_t* d_pedgespanpackage;
-static int ystart;
-byte *d_pdest, *d_ptex;
-short* d_pz;
-int d_sfrac, d_tfrac, d_light, d_zi;
-int d_ptexextrastep, d_sfracextrastep;
-int d_tfracextrastep, d_lightextrastep, d_pdestextrastep;
-int d_lightbasestep, d_pdestbasestep, d_ptexbasestep;
-int d_sfracbasestep, d_tfracbasestep;
-int d_ziextrastep, d_zibasestep;
-int d_pzextrastep, d_pzbasestep;
-
-byte* skintable[MAX_LBM_HEIGHT];
-int skinwidth;
-byte* skinstart;
-
-// d_sprite.cpp
-static int sprite_height;
-static int minindex, maxindex;
-static sspan_t* sprite_spans;
+short* d_pzbuffer = nullptr;
+unsigned int d_zrowbytes = 0;
+unsigned int d_zwidth = 0;
+qboolean r_cache_thrash = false;
 
 // ==============================================================
 // Forward declarations for internal functions
 // ==============================================================
 
-void D_DrawTurbulent8Span(void);
+void D_DrawTurbulent8Span();
 void D_PolysetDrawSpans8(spanpackage_t* pspanpackage);
 void D_PolysetCalcGradients(int skinwidth);
-void D_DrawSubdiv(void);
-void D_DrawNonSubdiv(void);
-void D_PolysetRecursiveTriangle(int* p1, int* p2, int* p3);
-void D_PolysetSetEdgeTable(void);
-void D_RasterizeAliasPolySmooth(void);
+void D_DrawSubdiv();
+void D_DrawNonSubdiv();
+void D_PolysetRecursiveTriangle(const eastl::array<int, 6>* p1, const eastl::array<int, 6>* p2, const eastl::array<int, 6>* p3);
+void D_PolysetSetEdgeTable();
+void D_RasterizeAliasPolySmooth();
 void D_PolysetScanLeftEdge(int height);
 
 // ==============================================================
@@ -213,18 +211,16 @@ void D_Init(void)
     r_aliasuvscale = 1.0;
 }
 
-void D_TurnZOn(void)
+void D_TurnZOn()
 {
 }
 
-void D_SetupFrame(void)
+void D_SetupFrame()
 {
-    int i;
-
     if (r_dowarp) {
         d_viewbuffer = r_warpbuffer;
     } else {
-        d_viewbuffer = (pixel_t*)(void*)(byte*)vid.buffer;
+        d_viewbuffer = vid.buffer;
     }
 
     if (r_dowarp) {
@@ -243,7 +239,7 @@ void D_SetupFrame(void)
         d_minmip = 0;
     }
 
-    for (i = 0; i < (NUM_MIPS - 1); i++) {
+    for (size_t i = 0; i < (NUM_MIPS - 1); ++i) {
         d_scalemip[i] = basemip[i] * d_mipscale.value;
     }
 
@@ -260,7 +256,7 @@ void D_UpdateRects(vrect_t* prect)
 // d_modech.cpp -- called when mode has just changed
 // ==============================================================
 
-void D_ViewChanged(void)
+void D_ViewChanged()
 {
     int rowbytes;
 
@@ -283,8 +279,8 @@ void D_ViewChanged(void)
         d_pix_min = 1;
     }
 
-    d_pix_max = (int)((float)r_refdef.vrect.width / (320.0 / 4.0) + 0.5);
-    d_pix_shift = 8 - (int)((float)r_refdef.vrect.width / 320.0 + 0.5);
+    d_pix_max = static_cast<int>(static_cast<float>(r_refdef.vrect.width) / (320.0f / 4.0f) + 0.5f);
+    d_pix_shift = 8 - static_cast<int>(static_cast<float>(r_refdef.vrect.width) / 320.0f + 0.5f);
     if (d_pix_max < 1) {
         d_pix_max = 1;
     }
@@ -301,9 +297,7 @@ void D_ViewChanged(void)
     d_vrectbottom_particle = r_refdef.vrectbottom - (d_pix_max << d_y_aspect_shift);
 
     {
-        unsigned i;
-
-        for (i = 0; i < vid.height; i++) {
+        for (unsigned i = 0; i < vid.height; ++i) {
             d_scantable[i] = i * rowbytes;
             zspantable[i] = d_pzbuffer + i * d_zwidth;
         }
@@ -314,7 +308,7 @@ void D_ViewChanged(void)
 // d_edge.cpp -- software edge rendering (mipmapping and texture stepping)
 // ==============================================================
 
-void D_DrawPoly(void)
+void D_DrawPoly()
 {
 }
 
@@ -347,27 +341,27 @@ void D_DrawSolidSurface(surf_t* surf, int color)
 
     pix = (color << 24) | (color << 16) | (color << 8) | color;
     for (span = surf->spans; span; span = span->pnext) {
-        pdest = (byte*)d_viewbuffer + screenwidth * span->v;
+        pdest = reinterpret_cast<byte*>(d_viewbuffer) + screenwidth * span->v;
         u = span->u;
         u2 = span->u + span->count - 1;
-        ((byte*)pdest)[u] = static_cast<byte>(pix);
+        pdest[u] = static_cast<byte>(pix);
 
         if (u2 - u < 8) {
             for (u++; u <= u2; u++) {
-                ((byte*)pdest)[u] = static_cast<byte>(pix);
+                pdest[u] = static_cast<byte>(pix);
             }
         } else {
             for (u++; u & 3; u++) {
-                ((byte*)pdest)[u] = static_cast<byte>(pix);
+                pdest[u] = static_cast<byte>(pix);
             }
 
             u2 -= 4;
             for (; u <= u2; u += 4) {
-                *(int*)((byte*)pdest + u) = pix;
+                *reinterpret_cast<int*>(pdest + u) = pix;
             }
             u2 += 4;
             for (; u <= u2; u++) {
-                ((byte*)pdest)[u] = static_cast<byte>(pix);
+                pdest[u] = static_cast<byte>(pix);
             }
         }
     }
@@ -406,7 +400,7 @@ void D_CalcGradients(msurface_t* pface)
     bbextentt = ((pface->extents[1] << 16) >> miplevel) - 1;
 }
 
-void D_DrawSurfaces(void)
+void D_DrawSurfaces()
 {
     surf_t* s;
     msurface_t* pface;
@@ -428,7 +422,7 @@ void D_DrawSurfaces(void)
             d_zistepv = s->d_zistepv;
             d_ziorigin = s->d_ziorigin;
 
-            D_DrawSolidSurface(s, (int)((uintptr_t)s->data & 0xFF));
+            D_DrawSolidSurface(s, static_cast<int>(reinterpret_cast<uintptr_t>(s->data) & 0xFF));
             D_DrawZSpans(s->spans);
         }
     } else {
@@ -455,12 +449,12 @@ void D_DrawSurfaces(void)
                 d_zistepv = 0;
                 d_ziorigin = -0.9f;
 
-                D_DrawSolidSurface(s, (int)r_clearcolor.value & 0xFF);
+                D_DrawSolidSurface(s, static_cast<int>(r_clearcolor.value) & 0xFF);
                 D_DrawZSpans(s->spans);
             } else if (s->flags & SURF_DRAWTURB) {
-                pface = (msurface_t*)s->data;
+                pface = reinterpret_cast<msurface_t*>(s->data);
                 miplevel = 0;
-                cacheblock = (pixel_t*)((byte*)pface->texinfo->texture + pface->texinfo->texture->offsets[0]);
+                cacheblock = reinterpret_cast<pixel_t*>(reinterpret_cast<byte*>(pface->texinfo->texture) + pface->texinfo->texture->offsets[0]);
                 cachewidth = 64;
 
                 if (s->insubmodel) {
@@ -493,12 +487,12 @@ void D_DrawSurfaces(void)
                     R_RotateBmodel();
                 }
 
-                pface = (msurface_t*)s->data;
+                pface = reinterpret_cast<msurface_t*>(s->data);
                 miplevel = D_MipLevelForScale(s->nearzi * scale_for_mip * pface->texinfo->mipadjust);
 
                 pcurrentcache = D_CacheSurface(pface, miplevel);
 
-                cacheblock = (pixel_t*)pcurrentcache->data;
+                cacheblock = reinterpret_cast<pixel_t*>(pcurrentcache->data);
                 cachewidth = pcurrentcache->width;
 
                 D_CalcGradients(pface);
@@ -525,7 +519,7 @@ void D_DrawSurfaces(void)
 // d_scan.cpp -- portable C scan-level rasterization code
 // ==============================================================
 
-void D_DrawTurbulent8Span(void)
+void D_DrawTurbulent8Span()
 {
     int sturb, tturb;
 
@@ -538,7 +532,7 @@ void D_DrawTurbulent8Span(void)
     } while (--r_turb_spancount > 0);
 }
 
-void D_WarpScreen(void)
+void D_WarpScreen()
 {
     int w, h;
     int u, v;
@@ -546,26 +540,26 @@ void D_WarpScreen(void)
     int* turb;
     int* col;
     byte** row;
-    byte* rowptr[MAXHEIGHT + (AMP2 * 2)];
-    int column[MAXWIDTH + (AMP2 * 2)];
+    eastl::array<byte*, MAXHEIGHT + (AMP2 * 2)> rowptr{};
+    eastl::array<int, MAXWIDTH + (AMP2 * 2)> column{};
     float wratio, hratio;
 
     w = r_refdef.vrect.width;
     h = r_refdef.vrect.height;
 
-    wratio = w / (float)scr_vrect.width;
-    hratio = h / (float)scr_vrect.height;
+    wratio = static_cast<float>(w) / static_cast<float>(scr_vrect.width);
+    hratio = static_cast<float>(h) / static_cast<float>(scr_vrect.height);
 
     for (v = 0; v < scr_vrect.height + AMP2 * 2; v++) {
-        rowptr[v] = d_viewbuffer + (r_refdef.vrect.y * screenwidth) + (screenwidth * (int)((float)v * hratio * h / (h + AMP2 * 2)));
+        rowptr[v] = reinterpret_cast<byte*>(d_viewbuffer) + (r_refdef.vrect.y * screenwidth) + (screenwidth * static_cast<int>(static_cast<float>(v) * hratio * static_cast<float>(h) / static_cast<float>(h + AMP2 * 2)));
     }
 
     for (u = 0; u < scr_vrect.width + AMP2 * 2; u++) {
-        column[u] = r_refdef.vrect.x + (int)((float)u * wratio * w / (w + AMP2 * 2));
+        column[u] = r_refdef.vrect.x + static_cast<int>(static_cast<float>(u) * wratio * static_cast<float>(w) / static_cast<float>(w + AMP2 * 2));
     }
 
-    turb = intsintable.data() + ((int)(cl.time * SPEED) & (CYCLE - 1));
-    dest = vid.buffer + scr_vrect.y * vid.rowbytes + scr_vrect.x;
+    turb = intsintable.data() + (static_cast<int>(cl.time * SPEED) & (CYCLE - 1));
+    dest = reinterpret_cast<byte*>(vid.buffer) + scr_vrect.y * vid.rowbytes + scr_vrect.x;
 
     for (v = 0; v < scr_vrect.height; v++, dest += vid.rowbytes) {
         col = &column[turb[v]];
@@ -587,38 +581,38 @@ void Turbulent8(espan_t* pspan)
     float sdivz, tdivz, zi, z, du, dv, spancountminus1;
     float sdivz16stepu, tdivz16stepu, zi16stepu;
 
-    r_turb_turb = sintable.data() + ((int)(cl.time * SPEED) & (CYCLE - 1));
+    r_turb_turb = sintable.data() + (static_cast<int>(cl.time * SPEED) & (CYCLE - 1));
 
     r_turb_sstep = 0;
     r_turb_tstep = 0;
 
-    r_turb_pbase = (unsigned char*)cacheblock;
+    r_turb_pbase = reinterpret_cast<unsigned char*>(cacheblock);
 
     sdivz16stepu = d_sdivzstepu * 16;
     tdivz16stepu = d_tdivzstepu * 16;
     zi16stepu = d_zistepu * 16;
 
     do {
-        r_turb_pdest = (unsigned char*)((byte*)d_viewbuffer + (screenwidth * pspan->v) + pspan->u);
+        r_turb_pdest = reinterpret_cast<unsigned char*>(reinterpret_cast<byte*>(d_viewbuffer) + (screenwidth * pspan->v) + pspan->u);
 
         count = pspan->count;
 
-        du = (float)pspan->u;
-        dv = (float)pspan->v;
+        du = static_cast<float>(pspan->u);
+        dv = static_cast<float>(pspan->v);
 
         sdivz = d_sdivzorigin + dv * d_sdivzstepv + du * d_sdivzstepu;
         tdivz = d_tdivzorigin + dv * d_tdivzstepv + du * d_tdivzstepu;
         zi = d_ziorigin + dv * d_zistepv + du * d_zistepu;
-        z = (float)0x10000 / zi;
+        z = 0x10000 / zi;
 
-        r_turb_s = (int)(sdivz * z) + sadjust;
+        r_turb_s = static_cast<int>(sdivz * z) + sadjust;
         if (r_turb_s > bbextents) {
             r_turb_s = bbextents;
         } else if (r_turb_s < 0) {
             r_turb_s = 0;
         }
 
-        r_turb_t = (int)(tdivz * z) + tadjust;
+        r_turb_t = static_cast<int>(tdivz * z) + tadjust;
         if (r_turb_t > bbextentt) {
             r_turb_t = bbextentt;
         } else if (r_turb_t < 0) {
@@ -638,16 +632,16 @@ void Turbulent8(espan_t* pspan)
                 sdivz += sdivz16stepu;
                 tdivz += tdivz16stepu;
                 zi += zi16stepu;
-                z = (float)0x10000 / zi;
+                z = 0x10000 / zi;
 
-                snext = (int)(sdivz * z) + sadjust;
+                snext = static_cast<int>(sdivz * z) + sadjust;
                 if (snext > bbextents) {
                     snext = bbextents;
                 } else if (snext < 16) {
                     snext = 16;
                 }
 
-                tnext = (int)(tdivz * z) + tadjust;
+                tnext = static_cast<int>(tdivz * z) + tadjust;
                 if (tnext > bbextentt) {
                     tnext = bbextentt;
                 } else if (tnext < 16) {
@@ -657,19 +651,19 @@ void Turbulent8(espan_t* pspan)
                 r_turb_sstep = (snext - r_turb_s) >> 4;
                 r_turb_tstep = (tnext - r_turb_t) >> 4;
             } else {
-                spancountminus1 = (float)(r_turb_spancount - 1);
+                spancountminus1 = static_cast<float>(r_turb_spancount - 1);
                 sdivz += d_sdivzstepu * spancountminus1;
                 tdivz += d_tdivzstepu * spancountminus1;
                 zi += d_zistepu * spancountminus1;
-                z = (float)0x10000 / zi;
-                snext = (int)(sdivz * z) + sadjust;
+                z = 0x10000 / zi;
+                snext = static_cast<int>(sdivz * z) + sadjust;
                 if (snext > bbextents) {
                     snext = bbextents;
                 } else if (snext < 16) {
                     snext = 16;
                 }
 
-                tnext = (int)(tdivz * z) + tadjust;
+                tnext = static_cast<int>(tdivz * z) + tadjust;
                 if (tnext > bbextentt) {
                     tnext = bbextentt;
                 } else if (tnext < 16) {
@@ -692,7 +686,7 @@ void Turbulent8(espan_t* pspan)
 
         } while (count > 0);
 
-    } while ((pspan = pspan->pnext) != NULL);
+    } while ((pspan = pspan->pnext) != nullptr);
 }
 
 void D_DrawSpans8(espan_t* pspan)
@@ -706,33 +700,33 @@ void D_DrawSpans8(espan_t* pspan)
     sstep = 0;
     tstep = 0;
 
-    pbase = (unsigned char*)cacheblock;
+    pbase = reinterpret_cast<unsigned char*>(cacheblock);
 
     sdivz8stepu = d_sdivzstepu * 8;
     tdivz8stepu = d_tdivzstepu * 8;
     zi8stepu = d_zistepu * 8;
 
     do {
-        pdest = (unsigned char*)((byte*)d_viewbuffer + (screenwidth * pspan->v) + pspan->u);
+        pdest = reinterpret_cast<unsigned char*>(reinterpret_cast<byte*>(d_viewbuffer) + (screenwidth * pspan->v) + pspan->u);
 
         count = pspan->count;
 
-        du = (float)pspan->u;
-        dv = (float)pspan->v;
+        du = static_cast<float>(pspan->u);
+        dv = static_cast<float>(pspan->v);
 
         sdivz = d_sdivzorigin + dv * d_sdivzstepv + du * d_sdivzstepu;
         tdivz = d_tdivzorigin + dv * d_tdivzstepv + du * d_tdivzstepu;
         zi = d_ziorigin + dv * d_zistepv + du * d_zistepu;
-        z = (float)0x10000 / zi;
+        z = 0x10000 / zi;
 
-        s = (int)(sdivz * z) + sadjust;
+        s = static_cast<int>(sdivz * z) + sadjust;
         if (s > bbextents) {
             s = bbextents;
         } else if (s < 0) {
             s = 0;
         }
 
-        t = (int)(tdivz * z) + tadjust;
+        t = static_cast<int>(tdivz * z) + tadjust;
         if (t > bbextentt) {
             t = bbextentt;
         } else if (t < 0) {
@@ -752,16 +746,16 @@ void D_DrawSpans8(espan_t* pspan)
                 sdivz += sdivz8stepu;
                 tdivz += tdivz8stepu;
                 zi += zi8stepu;
-                z = (float)0x10000 / zi;
+                z = 0x10000 / zi;
 
-                snext = (int)(sdivz * z) + sadjust;
+                snext = static_cast<int>(sdivz * z) + sadjust;
                 if (snext > bbextents) {
                     snext = bbextents;
                 } else if (snext < 8) {
                     snext = 8;
                 }
 
-                tnext = (int)(tdivz * z) + tadjust;
+                tnext = static_cast<int>(tdivz * z) + tadjust;
                 if (tnext > bbextentt) {
                     tnext = bbextentt;
                 } else if (tnext < 8) {
@@ -775,15 +769,15 @@ void D_DrawSpans8(espan_t* pspan)
                 sdivz += d_sdivzstepu * spancountminus1;
                 tdivz += d_tdivzstepu * spancountminus1;
                 zi += d_zistepu * spancountminus1;
-                z = (float)0x10000 / zi;
-                snext = (int)(sdivz * z) + sadjust;
+                z = 0x10000 / zi;
+                snext = static_cast<int>(sdivz * z) + sadjust;
                 if (snext > bbextents) {
                     snext = bbextents;
                 } else if (snext < 8) {
                     snext = 8;
                 }
 
-                tnext = (int)(tdivz * z) + tadjust;
+                tnext = static_cast<int>(tdivz * z) + tadjust;
                 if (tnext > bbextentt) {
                     tnext = bbextentt;
                 } else if (tnext < 8) {
@@ -807,7 +801,7 @@ void D_DrawSpans8(espan_t* pspan)
 
         } while (count > 0);
 
-    } while ((pspan = pspan->pnext) != NULL);
+    } while ((pspan = pspan->pnext) != nullptr);
 }
 
 void D_DrawZSpans(espan_t* pspan)
@@ -819,21 +813,21 @@ void D_DrawZSpans(espan_t* pspan)
     double zi;
     float du, dv;
 
-    izistep = (int)(d_zistepu * 0x8000 * 0x10000);
+    izistep = static_cast<int>(d_zistepu * 0x8000 * 0x10000);
 
     do {
         pdest = d_pzbuffer + (d_zwidth * pspan->v) + pspan->u;
 
         count = pspan->count;
 
-        du = (float)pspan->u;
-        dv = (float)pspan->v;
+        du = static_cast<float>(pspan->u);
+        dv = static_cast<float>(pspan->v);
 
         zi = d_ziorigin + dv * d_zistepv + du * d_zistepu;
-        izi = (int)(zi * 0x8000 * 0x10000);
+        izi = static_cast<int>(zi * 0x8000 * 0x10000);
 
-        if ((size_t)pdest & 0x02) {
-            *pdest++ = (short)(izi >> 16);
+        if (reinterpret_cast<uintptr_t>(pdest) & 0x02) {
+            *pdest++ = static_cast<short>(izi >> 16);
             izi += izistep;
             count--;
         }
@@ -844,24 +838,24 @@ void D_DrawZSpans(espan_t* pspan)
                 izi += izistep;
                 ltemp |= izi & 0xFFFF0000;
                 izi += izistep;
-                *(int*)pdest = ltemp;
+                *reinterpret_cast<int*>(pdest) = ltemp;
                 pdest += 2;
             } while (--doublecount > 0);
         }
 
         if (count & 1) {
-            *pdest = (short)(izi >> 16);
+            *pdest = static_cast<short>(izi >> 16);
         }
 
-    } while ((pspan = pspan->pnext) != NULL);
+    } while ((pspan = pspan->pnext) != nullptr);
 }
 
 // ==============================================================
 // d_sky.cpp -- software sky texture coordinate calculation
 // ==============================================================
 
-#define SKY_SPAN_SHIFT 5
-#define SKY_SPAN_MAX (1 << SKY_SPAN_SHIFT)
+constexpr int SKY_SPAN_SHIFT = 5;
+constexpr int SKY_SPAN_MAX = 1 << SKY_SPAN_SHIFT;
 
 void D_Sky_uv_To_st(int u, int v, fixed16_t* s, fixed16_t* t)
 {
@@ -869,9 +863,9 @@ void D_Sky_uv_To_st(int u, int v, fixed16_t* s, fixed16_t* t)
     Vector3 end;
 
     if (r_refdef.vrect.width >= r_refdef.vrect.height) {
-        temp = (float)r_refdef.vrect.width;
+        temp = static_cast<float>(r_refdef.vrect.width);
     } else {
-        temp = (float)r_refdef.vrect.height;
+        temp = static_cast<float>(r_refdef.vrect.height);
     }
 
     wu = 8192.0f * static_cast<float>(u - (static_cast<int>(vid.width) >> 1)) / temp;
@@ -882,8 +876,8 @@ void D_Sky_uv_To_st(int u, int v, fixed16_t* s, fixed16_t* t)
     end.normalize();
 
     temp = skytime * skyspeed;
-    *s = (int)((temp + 6 * (SKYSIZE / 2 - 1) * end.x) * 0x10000);
-    *t = (int)((temp + 6 * (SKYSIZE / 2 - 1) * end.y) * 0x10000);
+    *s = static_cast<int>((temp + 6.0f * (static_cast<float>(SKYSIZE) / 2.0f - 1.0f) * end.x) * 65536.0f);
+    *t = static_cast<int>((temp + 6.0f * (static_cast<float>(SKYSIZE) / 2.0f - 1.0f) * end.y) * 65536.0f);
 }
 
 void D_DrawSkyScans8(espan_t* pspan)
@@ -897,7 +891,7 @@ void D_DrawSkyScans8(espan_t* pspan)
     tstep = 0;
 
     do {
-        pdest = (unsigned char*)((byte*)d_viewbuffer + (screenwidth * pspan->v) + pspan->u);
+        pdest = reinterpret_cast<unsigned char*>(reinterpret_cast<byte*>(d_viewbuffer) + (screenwidth * pspan->v) + pspan->u);
 
         count = pspan->count;
 
@@ -944,14 +938,14 @@ void D_DrawSkyScans8(espan_t* pspan)
 
         } while (count > 0);
 
-    } while ((pspan = pspan->pnext) != NULL);
+    } while ((pspan = pspan->pnext) != nullptr);
 }
 
 // ==============================================================
 // d_surf.cpp -- rasterization driver surface heap manager
 // ==============================================================
 
-#define GUARDSIZE 4
+constexpr int GUARDSIZE = 4;
 
 int D_SurfaceCacheForRes(int width, int height)
 {
@@ -973,27 +967,27 @@ int D_SurfaceCacheForRes(int width, int height)
     return size;
 }
 
-void D_CheckCacheGuard(void)
+void D_CheckCacheGuard()
 {
     byte* s;
     int i;
 
-    s = (byte*)sc_base + sc_size;
+    s = reinterpret_cast<byte*>(sc_base) + sc_size;
     for (i = 0; i < GUARDSIZE; i++) {
-        if (s[i] != (byte)i) {
+        if (s[i] != static_cast<byte>(i)) {
             Sys_Error("D_CheckCacheGuard: failed");
         }
     }
 }
 
-void D_ClearCacheGuard(void)
+void D_ClearCacheGuard()
 {
     byte* s;
     int i;
 
-    s = (byte*)sc_base + sc_size;
+    s = reinterpret_cast<byte*>(sc_base) + sc_size;
     for (i = 0; i < GUARDSIZE; i++) {
-        s[i] = (byte)i;
+        s[i] = static_cast<byte>(i);
     }
 }
 
@@ -1004,17 +998,17 @@ void D_InitCaches(void* buffer, int size)
     }
 
     sc_size = size - GUARDSIZE;
-    sc_base = (surfcache_t*)buffer;
+    sc_base = reinterpret_cast<surfcache_t*>(buffer);
     sc_rover = sc_base;
 
-    sc_base->next = NULL;
-    sc_base->owner = NULL;
+    sc_base->next = nullptr;
+    sc_base->owner = nullptr;
     sc_base->size = sc_size;
 
     D_ClearCacheGuard();
 }
 
-void D_FlushCaches(void)
+void D_FlushCaches()
 {
     surfcache_t* c;
 
@@ -1024,13 +1018,13 @@ void D_FlushCaches(void)
 
     for (c = sc_base; c; c = c->next) {
         if (c->owner) {
-            *c->owner = NULL;
+            *c->owner = nullptr;
         }
     }
 
     sc_rover = sc_base;
-    sc_base->next = NULL;
-    sc_base->owner = NULL;
+    sc_base->next = nullptr;
+    sc_base->owner = nullptr;
     sc_base->size = sc_size;
 }
 
@@ -1047,7 +1041,7 @@ surfcache_t* D_SCAlloc(int width, int size)
         Sys_Error("D_SCAlloc: bad cache size %d\n", size);
     }
 
-    size = static_cast<int>(reinterpret_cast<intptr_t>(&((surfcache_t*)0)->data[size]));
+    size = static_cast<int>(offsetof(surfcache_t, data) + size);
     size = (size + 3) & ~3;
     if (size > sc_size) {
         Sys_Error("D_SCAlloc: %i > cache size", size);
@@ -1055,7 +1049,7 @@ surfcache_t* D_SCAlloc(int width, int size)
 
     wrapped_this_time = false;
 
-    if (!sc_rover || (byte*)sc_rover - (byte*)sc_base > sc_size - size) {
+    if (!sc_rover || reinterpret_cast<byte*>(sc_rover) - reinterpret_cast<byte*>(sc_base) > sc_size - size) {
         if (sc_rover) {
             wrapped_this_time = true;
         }
@@ -1065,7 +1059,7 @@ surfcache_t* D_SCAlloc(int width, int size)
 
     new_surf = sc_rover;
     if (sc_rover->owner) {
-        *sc_rover->owner = NULL;
+        *sc_rover->owner = nullptr;
     }
 
     while (new_surf->size < size) {
@@ -1075,7 +1069,7 @@ surfcache_t* D_SCAlloc(int width, int size)
         }
 
         if (sc_rover->owner) {
-            *sc_rover->owner = NULL;
+            *sc_rover->owner = nullptr;
         }
 
         new_surf->size += sc_rover->size;
@@ -1083,11 +1077,11 @@ surfcache_t* D_SCAlloc(int width, int size)
     }
 
     if (new_surf->size - size > 256) {
-        sc_rover = (surfcache_t*)((byte*)new_surf + size);
+        sc_rover = reinterpret_cast<surfcache_t*>(reinterpret_cast<byte*>(new_surf) + size);
         sc_rover->size = new_surf->size - size;
         sc_rover->next = new_surf->next;
         sc_rover->width = 0;
-        sc_rover->owner = NULL;
+        sc_rover->owner = nullptr;
         new_surf->next = sc_rover;
         new_surf->size = size;
     } else {
@@ -1099,7 +1093,7 @@ surfcache_t* D_SCAlloc(int width, int size)
         new_surf->height = (size - sizeof(*new_surf) + sizeof(new_surf->data)) / width;
     }
 
-    new_surf->owner = NULL;
+    new_surf->owner = nullptr;
 
     if (d_roverwrapped) {
         if (wrapped_this_time || (sc_rover >= d_initial_rover)) {
@@ -1150,7 +1144,7 @@ surfcache_t* D_CacheSurface(msurface_t* surface, int mip_level)
         cache->dlight = 0;
     }
 
-    r_drawsurf.surfdat = (pixel_t*)cache->data;
+    r_drawsurf.surfdat = reinterpret_cast<pixel_t*>(cache->data);
 
     cache->texture = r_drawsurf.texture;
     cache->lightadj[0] = r_drawsurf.lightadj[0];
@@ -1190,10 +1184,10 @@ void D_SpriteDrawSpans(sspan_t* pspan)
     tdivz8stepu = d_tdivzstepu * 8;
     zi8stepu = d_zistepu * 8;
 
-    izistep = (int)(d_zistepu * 0x8000 * 0x10000);
+    izistep = static_cast<int>(d_zistepu * 0x8000 * 0x10000);
 
     do {
-        pdest = (byte*)d_viewbuffer + (screenwidth * pspan->v) + pspan->u;
+        pdest = reinterpret_cast<byte*>(d_viewbuffer) + (screenwidth * pspan->v) + pspan->u;
         pz = d_pzbuffer + (d_zwidth * pspan->v) + pspan->u;
 
         count = pspan->count;
@@ -1202,23 +1196,23 @@ void D_SpriteDrawSpans(sspan_t* pspan)
             goto NextSpan;
         }
 
-        du = (float)pspan->u;
-        dv = (float)pspan->v;
+        du = static_cast<float>(pspan->u);
+        dv = static_cast<float>(pspan->v);
 
         sdivz = d_sdivzorigin + dv * d_sdivzstepv + du * d_sdivzstepu;
         tdivz = d_tdivzorigin + dv * d_tdivzstepv + du * d_tdivzstepu;
         zi = d_ziorigin + dv * d_zistepv + du * d_zistepu;
-        z = (float)0x10000 / zi;
-        izi = (int)(zi * 0x8000 * 0x10000);
+        z = 0x10000 / zi;
+        izi = static_cast<int>(zi * 0x8000 * 0x10000);
 
-        s = (int)(sdivz * z) + sadjust;
+        s = static_cast<int>(sdivz * z) + sadjust;
         if (s > bbextents) {
             s = bbextents;
         } else if (s < 0) {
             s = 0;
         }
 
-        t = (int)(tdivz * z) + tadjust;
+        t = static_cast<int>(tdivz * z) + tadjust;
         if (t > bbextentt) {
             t = bbextentt;
         } else if (t < 0) {
@@ -1238,16 +1232,16 @@ void D_SpriteDrawSpans(sspan_t* pspan)
                 sdivz += sdivz8stepu;
                 tdivz += tdivz8stepu;
                 zi += zi8stepu;
-                z = (float)0x10000 / zi;
+                z = 0x10000 / zi;
 
-                snext = (int)(sdivz * z) + sadjust;
+                snext = static_cast<int>(sdivz * z) + sadjust;
                 if (snext > bbextents) {
                     snext = bbextents;
                 } else if (snext < 8) {
                     snext = 8;
                 }
 
-                tnext = (int)(tdivz * z) + tadjust;
+                tnext = static_cast<int>(tdivz * z) + tadjust;
                 if (tnext > bbextentt) {
                     tnext = bbextentt;
                 } else if (tnext < 8) {
@@ -1261,15 +1255,15 @@ void D_SpriteDrawSpans(sspan_t* pspan)
                 sdivz += d_sdivzstepu * spancountminus1;
                 tdivz += d_tdivzstepu * spancountminus1;
                 zi += d_zistepu * spancountminus1;
-                z = (float)0x10000 / zi;
-                snext = (int)(sdivz * z) + sadjust;
+                z = 0x10000 / zi;
+                snext = static_cast<int>(sdivz * z) + sadjust;
                 if (snext > bbextents) {
                     snext = bbextents;
                 } else if (snext < 8) {
                     snext = 8;
                 }
 
-                tnext = (int)(tdivz * z) + tadjust;
+                tnext = static_cast<int>(tdivz * z) + tadjust;
                 if (tnext > bbextentt) {
                     tnext = bbextentt;
                 } else if (tnext < 8) {
@@ -1285,8 +1279,8 @@ void D_SpriteDrawSpans(sspan_t* pspan)
             do {
                 btemp = *(pbase + (s >> 16) + (t >> 16) * cachewidth);
                 if (btemp != 255) {
-                    if (*pz <= (izi >> 16)) {
-                        *pz = izi >> 16;
+                    if (*pz <= static_cast<short>(izi >> 16)) {
+                        *pz = static_cast<short>(izi >> 16);
                         *pdest = btemp;
                     }
                 }
@@ -1309,7 +1303,7 @@ void D_SpriteDrawSpans(sspan_t* pspan)
     } while (pspan->count != DS_SPAN_LIST_END);
 }
 
-void D_SpriteScanLeftEdge(void)
+void D_SpriteScanLeftEdge()
 {
     int i, v, itop, ibottom, lmaxindex;
     emitpoint_t *pvert, *pnext;
@@ -1340,10 +1334,10 @@ void D_SpriteScanLeftEdge(void)
             du = pnext->u - pvert->u;
             dv = pnext->v - pvert->v;
             slope = du / dv;
-            u_step = (int)(slope * 0x10000);
-            u = (int)((pvert->u + (slope * (vtop - pvert->v))) * 0x10000) + (0x10000 - 1);
-            itop = (int)vtop;
-            ibottom = (int)vbottom;
+            u_step = static_cast<fixed16_t>(slope * 65536.0f);
+            u = static_cast<fixed16_t>((pvert->u + (slope * (vtop - pvert->v))) * 65536.0f) + (65536 - 1);
+            itop = static_cast<int>(vtop);
+            ibottom = static_cast<int>(vbottom);
 
             for (v = itop; v < ibottom; v++) {
                 pspan->u = u >> 16;
@@ -1363,7 +1357,7 @@ void D_SpriteScanLeftEdge(void)
     } while (i != lmaxindex);
 }
 
-void D_SpriteScanRightEdge(void)
+void D_SpriteScanRightEdge()
 {
     int i, v, itop, ibottom;
     emitpoint_t *pvert, *pnext;
@@ -1422,10 +1416,10 @@ void D_SpriteScanRightEdge(void)
             du = unext - uvert;
             dv = vnext - vvert;
             slope = du / dv;
-            u_step = (int)(slope * 0x10000);
-            u = (int)((uvert + (slope * (vtop - vvert))) * 0x10000) + (0x10000 - 1);
-            itop = (int)vtop;
-            ibottom = (int)vbottom;
+            u_step = static_cast<fixed16_t>(slope * 65536.0f);
+            u = static_cast<fixed16_t>((uvert + (slope * (vtop - vvert))) * 65536.0f) + (65536 - 1);
+            itop = static_cast<int>(vtop);
+            ibottom = static_cast<int>(vbottom);
 
             for (v = itop; v < ibottom; v++) {
                 pspan->count = (u >> 16) - pspan->u;
@@ -1447,7 +1441,7 @@ void D_SpriteScanRightEdge(void)
     pspan->count = DS_SPAN_LIST_END;
 }
 
-void D_SpriteCalculateGradients(void)
+void D_SpriteCalculateGradients()
 {
     Vector3 p_normal, p_saxis, p_taxis, p_temp1;
     float distinv;
@@ -1474,21 +1468,21 @@ void D_SpriteCalculateGradients(void)
 
     TransformVector(modelorg, p_temp1);
 
-    sadjust = ((fixed16_t)(p_temp1.dot(p_saxis) * 0x10000 + 0.5)) - (-(cachewidth >> 1) << 16);
-    tadjust = ((fixed16_t)(p_temp1.dot(p_taxis) * 0x10000 + 0.5)) - (-(sprite_height >> 1) << 16);
+    sadjust = static_cast<fixed16_t>(p_temp1.dot(p_saxis) * 65536.0f + 0.5f) - (-(cachewidth >> 1) << 16);
+    tadjust = static_cast<fixed16_t>(p_temp1.dot(p_taxis) * 65536.0f + 0.5f) - (-(sprite_height >> 1) << 16);
 
     bbextents = (cachewidth << 16) - 1;
     bbextentt = (sprite_height << 16) - 1;
 }
 
-void D_DrawSprite(void)
+void D_DrawSprite()
 {
     int i, nump;
     float ymin, ymax;
     emitpoint_t* pverts;
-    sspan_t spans[MAXHEIGHT + 1];
+    eastl::array<sspan_t, MAXHEIGHT + 1> spans{};
 
-    sprite_spans = spans;
+    sprite_spans = spans.data();
 
     ymin = 999999.9f;
     ymax = -999999.9f;
@@ -1517,7 +1511,7 @@ void D_DrawSprite(void)
 
     cachewidth = r_spritedesc.pspriteframe->width;
     sprite_height = r_spritedesc.pspriteframe->height;
-    cacheblock = (byte*)&r_spritedesc.pspriteframe->pixels[0];
+    cacheblock = reinterpret_cast<byte*>(&r_spritedesc.pspriteframe->pixels[0]);
 
     nump = r_spritedesc.nump;
     pverts = r_spritedesc.pverts;
@@ -1534,14 +1528,13 @@ void D_DrawSprite(void)
 //                 texture (used for Alias models)
 // ==============================================================
 
-#define DPS_MAXSPANS MAXHEIGHT + 1
+constexpr int DPS_MAXSPANS = MAXHEIGHT + 1;
 
-void D_PolysetDraw(void)
+void D_PolysetDraw()
 {
-    spanpackage_t
-        spans[DPS_MAXSPANS + 1 + ((CACHE_SIZE - 1) / sizeof(spanpackage_t)) + 1];
+    alignas(CACHE_SIZE) spanpackage_t spans[DPS_MAXSPANS + 1];
 
-    a_spans = (spanpackage_t*)(((size_t)&spans[0] + CACHE_SIZE - 1) & ~(size_t)(CACHE_SIZE - 1));
+    a_spans = spans;
 
     if (r_affinetridesc.drawtype) {
         D_DrawSubdiv();
@@ -1564,14 +1557,14 @@ void D_PolysetDrawFinalVerts(finalvert_t* fv, int num_verts)
 
                 *zbuf = static_cast<short>(z);
                 pix = skintable[fv->v[3] >> 16][fv->v[2] >> 16];
-                pix = ((byte*)acolormap)[pix + (fv->v[4] & 0xFF00)];
+                pix = reinterpret_cast<byte*>(acolormap)[pix + (fv->v[4] & 0xFF00)];
                 d_viewbuffer[d_scantable[fv->v[1]] + fv->v[0]] = static_cast<pixel_t>(pix);
             }
         }
     }
 }
 
-void D_DrawSubdiv(void)
+void D_DrawSubdiv()
 {
     mtriangle_t* ptri;
     finalvert_t *pfv, *index0, *index1, *index2;
@@ -1591,10 +1584,10 @@ void D_DrawSubdiv(void)
             continue;
         }
 
-        d_pcolormap = &((byte*)acolormap)[index0->v[4] & 0xFF00];
+        d_pcolormap = &reinterpret_cast<byte*>(acolormap)[index0->v[4] & 0xFF00];
 
         if (ptri[i].facesfront) {
-            D_PolysetRecursiveTriangle(index0->v, index1->v, index2->v);
+            D_PolysetRecursiveTriangle(&index0->v, &index1->v, &index2->v);
         } else {
             int s0, s1, s2;
 
@@ -1614,7 +1607,7 @@ void D_DrawSubdiv(void)
                 index2->v[2] += r_affinetridesc.seamfixupX16;
             }
 
-            D_PolysetRecursiveTriangle(index0->v, index1->v, index2->v);
+            D_PolysetRecursiveTriangle(&index0->v, &index1->v, &index2->v);
 
             index0->v[2] = s0;
             index1->v[2] = s1;
@@ -1623,7 +1616,7 @@ void D_DrawSubdiv(void)
     }
 }
 
-void D_DrawNonSubdiv(void)
+void D_DrawNonSubdiv()
 {
     mtriangle_t* ptri;
     finalvert_t *pfv, *index0, *index1, *index2;
@@ -1645,26 +1638,9 @@ void D_DrawNonSubdiv(void)
             continue;
         }
 
-        r_p0[0] = index0->v[0];
-        r_p0[1] = index0->v[1];
-        r_p0[2] = index0->v[2];
-        r_p0[3] = index0->v[3];
-        r_p0[4] = index0->v[4];
-        r_p0[5] = index0->v[5];
-
-        r_p1[0] = index1->v[0];
-        r_p1[1] = index1->v[1];
-        r_p1[2] = index1->v[2];
-        r_p1[3] = index1->v[3];
-        r_p1[4] = index1->v[4];
-        r_p1[5] = index1->v[5];
-
-        r_p2[0] = index2->v[0];
-        r_p2[1] = index2->v[1];
-        r_p2[2] = index2->v[2];
-        r_p2[3] = index2->v[3];
-        r_p2[4] = index2->v[4];
-        r_p2[5] = index2->v[5];
+        r_p0 = index0->v;
+        r_p1 = index1->v;
+        r_p2 = index2->v;
 
         if (!ptri->facesfront) {
             if (index0->flags & ALIAS_ONSEAM) {
@@ -1685,40 +1661,40 @@ void D_DrawNonSubdiv(void)
     }
 }
 
-void D_PolysetRecursiveTriangle(int* lp1, int* lp2, int* lp3)
+void D_PolysetRecursiveTriangle(const eastl::array<int, 6>* lp1, const eastl::array<int, 6>* lp2, const eastl::array<int, 6>* lp3)
 {
-    int* temp;
+    const eastl::array<int, 6>* temp;
     int d;
-    int new_poly[6];
+    eastl::array<int, 6> new_poly{};
     int z;
     short* zbuf;
 
-    d = lp2[0] - lp1[0];
+    d = (*lp2)[0] - (*lp1)[0];
     if (d < -1 || d > 1) {
         goto split;
     }
 
-    d = lp2[1] - lp1[1];
+    d = (*lp2)[1] - (*lp1)[1];
     if (d < -1 || d > 1) {
         goto split;
     }
 
-    d = lp3[0] - lp2[0];
+    d = (*lp3)[0] - (*lp2)[0];
     if (d < -1 || d > 1) {
         goto split2;
     }
 
-    d = lp3[1] - lp2[1];
+    d = (*lp3)[1] - (*lp2)[1];
     if (d < -1 || d > 1) {
         goto split2;
     }
 
-    d = lp1[0] - lp3[0];
+    d = (*lp1)[0] - (*lp3)[0];
     if (d < -1 || d > 1) {
         goto split3;
     }
 
-    d = lp1[1] - lp3[1];
+    d = (*lp1)[1] - (*lp3)[1];
     if (d < -1 || d > 1) {
     split3:
         temp = lp1;
@@ -1738,17 +1714,17 @@ split2:
     lp3 = temp;
 
 split:
-    new_poly[0] = (lp1[0] + lp2[0]) >> 1;
-    new_poly[1] = (lp1[1] + lp2[1]) >> 1;
-    new_poly[2] = (lp1[2] + lp2[2]) >> 1;
-    new_poly[3] = (lp1[3] + lp2[3]) >> 1;
-    new_poly[5] = (lp1[5] + lp2[5]) >> 1;
+    new_poly[0] = ((*lp1)[0] + (*lp2)[0]) >> 1;
+    new_poly[1] = ((*lp1)[1] + (*lp2)[1]) >> 1;
+    new_poly[2] = ((*lp1)[2] + (*lp2)[2]) >> 1;
+    new_poly[3] = ((*lp1)[3] + (*lp2)[3]) >> 1;
+    new_poly[5] = ((*lp1)[5] + (*lp2)[5]) >> 1;
 
-    if (lp2[1] > lp1[1]) {
+    if ((*lp2)[1] > (*lp1)[1]) {
         goto nodraw;
     }
 
-    if ((lp2[1] == lp1[1]) && (lp2[0] < lp1[0])) {
+    if (((*lp2)[1] == (*lp1)[1]) && ((*lp2)[0] < (*lp1)[0])) {
         goto nodraw;
     }
 
@@ -1763,18 +1739,18 @@ split:
     }
 
 nodraw:
-    D_PolysetRecursiveTriangle(lp3, lp1, new_poly);
-    D_PolysetRecursiveTriangle(lp3, new_poly, lp2);
+    D_PolysetRecursiveTriangle(lp3, lp1, &new_poly);
+    D_PolysetRecursiveTriangle(lp3, &new_poly, lp2);
 }
 
-void D_PolysetUpdateTables(void)
+void D_PolysetUpdateTables()
 {
     int i;
     byte* s;
 
     if (r_affinetridesc.skinwidth != skinwidth || r_affinetridesc.pskin != skinstart) {
         skinwidth = r_affinetridesc.skinwidth;
-        skinstart = (byte*)r_affinetridesc.pskin;
+        skinstart = reinterpret_cast<byte*>(r_affinetridesc.pskin);
         s = skinstart;
         for (i = 0; i < MAX_LBM_HEIGHT; i++, s += skinwidth) {
             skintable[i] = s;
@@ -1850,8 +1826,8 @@ void D_PolysetSetUpForLineScan(fixed8_t startvertu,
     tm = endvertu - startvertu;
     tn = endvertv - startvertv;
 
-    dm = (double)tm;
-    dn = (double)tn;
+    dm = static_cast<double>(tm);
+    dn = static_cast<double>(tn);
 
     std::tie(ubasestep, erroradjustup) = FloorDivMod(dm, dn);
 
@@ -1874,8 +1850,8 @@ void D_PolysetCalcGradients(int s_width)
 
     t0 = static_cast<float>(r_p0[4] - r_p2[4]);
     t1 = static_cast<float>(r_p1[4] - r_p2[4]);
-    r_lstepx = (int)ceil((t1 * p01_minus_p21 - t0 * p11_minus_p21) * xstepdenominv);
-    r_lstepy = (int)ceil((t1 * p00_minus_p20 - t0 * p10_minus_p20) * ystepdenominv);
+    r_lstepx = static_cast<int>(ceil((t1 * p01_minus_p21 - t0 * p11_minus_p21) * xstepdenominv));
+    r_lstepy = static_cast<int>(ceil((t1 * p00_minus_p20 - t0 * p10_minus_p20) * ystepdenominv));
 
     t0 = static_cast<float>(r_p0[2] - r_p2[2]);
     t1 = static_cast<float>(r_p1[2] - r_p2[2]);
@@ -1919,7 +1895,7 @@ void D_PolysetDrawSpans8(spanpackage_t* pspanpackage)
         }
 
         if (lcount) {
-            lpdest = (byte*)pspanpackage->pdest;
+            lpdest = reinterpret_cast<byte*>(pspanpackage->pdest);
             lptex = pspanpackage->ptex;
             lpz = pspanpackage->pz;
             lsfrac = pspanpackage->sfrac;
@@ -1929,8 +1905,8 @@ void D_PolysetDrawSpans8(spanpackage_t* pspanpackage)
 
             do {
                 if ((lzi >> 16) >= *lpz) {
-                    *lpdest = ((byte*)acolormap)[*lptex + (llight & 0xFF00)];
-                    *lpz = lzi >> 16;
+                    *lpdest = reinterpret_cast<byte*>(acolormap)[*lptex + (llight & 0xFF00)];
+                    *lpz = static_cast<short>(lzi >> 16);
                 }
 
                 lpdest++;
@@ -1953,10 +1929,10 @@ void D_PolysetDrawSpans8(spanpackage_t* pspanpackage)
     } while (pspanpackage->count != -999999);
 }
 
-void D_RasterizeAliasPolySmooth(void)
+void D_RasterizeAliasPolySmooth()
 {
     int initialleftheight, initialrightheight;
-    int *plefttop, *prighttop, *pleftbottom, *prightbottom;
+    const eastl::array<int, 6> *plefttop, *prighttop, *pleftbottom, *prightbottom;
     int working_lstepx, originalcount;
 
     plefttop = pedgetable->pleftedgevert0;
@@ -1965,24 +1941,24 @@ void D_RasterizeAliasPolySmooth(void)
     pleftbottom = pedgetable->pleftedgevert1;
     prightbottom = pedgetable->prightedgevert1;
 
-    initialleftheight = pleftbottom[1] - plefttop[1];
-    initialrightheight = prightbottom[1] - prighttop[1];
+    initialleftheight = (*pleftbottom)[1] - (*plefttop)[1];
+    initialrightheight = (*prightbottom)[1] - (*prighttop)[1];
 
     D_PolysetCalcGradients(r_affinetridesc.skinwidth);
 
     d_pedgespanpackage = a_spans;
 
-    ystart = plefttop[1];
-    d_aspancount = plefttop[0] - prighttop[0];
+    ystart = (*plefttop)[1];
+    d_aspancount = (*plefttop)[0] - (*prighttop)[0];
 
-    d_ptex = (byte*)r_affinetridesc.pskin + (plefttop[2] >> 16) + (plefttop[3] >> 16) * r_affinetridesc.skinwidth;
-    d_sfrac = plefttop[2] & 0xFFFF;
-    d_tfrac = plefttop[3] & 0xFFFF;
-    d_light = plefttop[4];
-    d_zi = plefttop[5];
+    d_ptex = reinterpret_cast<byte*>(r_affinetridesc.pskin) + ((*plefttop)[2] >> 16) + ((*plefttop)[3] >> 16) * r_affinetridesc.skinwidth;
+    d_sfrac = (*plefttop)[2] & 0xFFFF;
+    d_tfrac = (*plefttop)[3] & 0xFFFF;
+    d_light = (*plefttop)[4];
+    d_zi = (*plefttop)[5];
 
-    d_pdest = (byte*)d_viewbuffer + ystart * screenwidth + plefttop[0];
-    d_pz = d_pzbuffer + ystart * d_zwidth + plefttop[0];
+    d_pdest = reinterpret_cast<byte*>(d_viewbuffer) + ystart * screenwidth + (*plefttop)[0];
+    d_pz = d_pzbuffer + ystart * d_zwidth + (*plefttop)[0];
 
     if (initialleftheight == 1) {
         d_pedgespanpackage->pdest = d_pdest;
@@ -1998,8 +1974,8 @@ void D_RasterizeAliasPolySmooth(void)
 
         d_pedgespanpackage++;
     } else {
-        D_PolysetSetUpForLineScan(plefttop[0], plefttop[1], pleftbottom[0],
-            pleftbottom[1]);
+        D_PolysetSetUpForLineScan((*plefttop)[0], (*plefttop)[1], (*pleftbottom)[0],
+            (*pleftbottom)[1]);
 
         d_pzbasestep = d_zwidth + ubasestep;
         d_pzextrastep = d_pzbasestep + 1;
@@ -2035,18 +2011,18 @@ void D_RasterizeAliasPolySmooth(void)
         plefttop = pleftbottom;
         pleftbottom = pedgetable->pleftedgevert2;
 
-        height = pleftbottom[1] - plefttop[1];
+        height = (*pleftbottom)[1] - (*plefttop)[1];
 
-        ystart = plefttop[1];
-        d_aspancount = plefttop[0] - prighttop[0];
-        d_ptex = (byte*)r_affinetridesc.pskin + (plefttop[2] >> 16) + (plefttop[3] >> 16) * r_affinetridesc.skinwidth;
+        ystart = (*plefttop)[1];
+        d_aspancount = (*plefttop)[0] - (*prighttop)[0];
+        d_ptex = reinterpret_cast<byte*>(r_affinetridesc.pskin) + ((*plefttop)[2] >> 16) + ((*plefttop)[3] >> 16) * r_affinetridesc.skinwidth;
         d_sfrac = 0;
         d_tfrac = 0;
-        d_light = plefttop[4];
-        d_zi = plefttop[5];
+        d_light = (*plefttop)[4];
+        d_zi = (*plefttop)[5];
 
-        d_pdest = (byte*)d_viewbuffer + ystart * screenwidth + plefttop[0];
-        d_pz = d_pzbuffer + ystart * d_zwidth + plefttop[0];
+        d_pdest = reinterpret_cast<byte*>(d_viewbuffer) + ystart * screenwidth + (*plefttop)[0];
+        d_pz = d_pzbuffer + ystart * d_zwidth + (*plefttop)[0];
 
         if (height == 1) {
             d_pedgespanpackage->pdest = d_pdest;
@@ -2062,8 +2038,8 @@ void D_RasterizeAliasPolySmooth(void)
 
             d_pedgespanpackage++;
         } else {
-            D_PolysetSetUpForLineScan(plefttop[0], plefttop[1], pleftbottom[0],
-                pleftbottom[1]);
+            D_PolysetSetUpForLineScan((*plefttop)[0], (*plefttop)[1], (*pleftbottom)[0],
+                (*pleftbottom)[1]);
 
             d_pdestbasestep = screenwidth + ubasestep;
             d_pdestextrastep = d_pdestbasestep + 1;
@@ -2095,8 +2071,8 @@ void D_RasterizeAliasPolySmooth(void)
 
     d_pedgespanpackage = a_spans;
 
-    D_PolysetSetUpForLineScan(prighttop[0], prighttop[1], prightbottom[0],
-        prightbottom[1]);
+    D_PolysetSetUpForLineScan((*prighttop)[0], (*prighttop)[1], (*prightbottom)[0],
+        (*prightbottom)[1]);
     d_aspancount = 0;
     d_countextrastep = ubasestep + 1;
     originalcount = a_spans[initialrightheight].count;
@@ -2110,15 +2086,15 @@ void D_RasterizeAliasPolySmooth(void)
         pstart = a_spans + initialrightheight;
         pstart->count = originalcount;
 
-        d_aspancount = prightbottom[0] - prighttop[0];
+        d_aspancount = (*prightbottom)[0] - (*prighttop)[0];
 
         prighttop = prightbottom;
         prightbottom = pedgetable->prightedgevert2;
 
-        height = prightbottom[1] - prighttop[1];
+        height = (*prightbottom)[1] - (*prighttop)[1];
 
-        D_PolysetSetUpForLineScan(prighttop[0], prighttop[1], prightbottom[0],
-            prightbottom[1]);
+        D_PolysetSetUpForLineScan((*prighttop)[0], (*prighttop)[1], (*prightbottom)[0],
+            (*prightbottom)[1]);
 
         d_countextrastep = ubasestep + 1;
         a_spans[initialrightheight + height].count = -999999;
@@ -2126,7 +2102,7 @@ void D_RasterizeAliasPolySmooth(void)
     }
 }
 
-void D_PolysetSetEdgeTable(void)
+void D_PolysetSetEdgeTable()
 {
     int edgetableindex;
 
@@ -2179,11 +2155,11 @@ void D_PolysetSetEdgeTable(void)
 // d_part.cpp -- software particle drawing
 // ==============================================================
 
-void D_EndParticles(void)
+void D_EndParticles()
 {
 }
 
-void D_StartParticles(void)
+void D_StartParticles()
 {
 }
 
@@ -2206,16 +2182,16 @@ void D_DrawParticle(particle_t* pparticle)
     }
 
     zi = 1.0f / transformed.z;
-    u = (int)(xcenter + zi * transformed.x + 0.5);
-    v = (int)(ycenter - zi * transformed.y + 0.5);
+    u = static_cast<int>(xcenter + zi * transformed.x + 0.5f);
+    v = static_cast<int>(ycenter - zi * transformed.y + 0.5f);
 
     if ((v > d_vrectbottom_particle) || (u > d_vrectright_particle) || (v < d_vrecty) || (u < d_vrectx)) {
         return;
     }
 
     pz = d_pzbuffer + (d_zwidth * v) + u;
-    pdest = d_viewbuffer + d_scantable[v] + u;
-    izi = (int)(zi * 0x8000);
+    pdest = reinterpret_cast<byte*>(d_viewbuffer) + d_scantable[v] + u;
+    izi = static_cast<int>(zi * 32768.0f);
 
     pix = izi >> d_pix_shift;
 
