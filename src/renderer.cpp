@@ -25,6 +25,8 @@ using namespace Wad;
 using namespace Cvar;
 using namespace Cmd;
 
+#include <EASTL/vector.h>
+#include <EASTL/array.h>
 #include "r_local.hpp"
 #include "d_local.hpp"
 
@@ -36,11 +38,11 @@ namespace {
     Vector3 r_emins, r_emaxs;
     int r_dlightframecount;
     int c_faceclip;
-    clipplane_t view_clipplanes[4];
+    eastl::array<clipplane_t, 4> view_clipplanes{};
     edge_t* auxedges;
     edge_t *r_edges, *edge_p, *edge_max;
-    edge_t* newedges[MAXHEIGHT];
-    edge_t* removeedges[MAXHEIGHT];
+    eastl::array<edge_t*, MAXHEIGHT> newedges{};
+    eastl::array<edge_t*, MAXHEIGHT> removeedges{};
     int r_currentkey;
     edge_t edge_head;
     edge_t edge_tail;
@@ -60,24 +62,24 @@ namespace {
     int r_numallocatededges;
     int r_outofsurfaces;
     int r_outofedges;
-    qboolean r_dowarpold, r_viewchanged;
+    bool r_dowarpold, r_viewchanged;
     int numbtofpolys;
     btofpoly_t* pbtofpolys;
     mvertex_t* r_pcurrentvertbase;
     int r_maxsurfsseen, r_maxedgesseen, r_cnumsurfs;
-    qboolean r_surfsonstack;
+    bool r_surfsonstack;
     int r_clipflags;
-    qboolean r_fov_greater_than_90;
+    bool r_fov_greater_than_90;
     float aliasxscale, aliasyscale, aliasxcenter, aliasycenter;
     float screenAspect;
     float verticalFieldOfView;
     float xOrigin, yOrigin;
-    mplane_t screenedge[4];
+    eastl::array<mplane_t, 4> screenedge{};
     int r_visframecount;
     int r_polycount;
     int r_wholepolycount;
-    int* pfrustum_indexes[4];
-    int r_frustum_indexes[4 * 6];
+    eastl::array<int*, 4> pfrustum_indexes{};
+    eastl::array<int, 4 * 6> r_frustum_indexes{};
     mleaf_t *r_viewleaf, *r_oldviewleaf;
     float r_aliastransition, r_resfudge;
     float dp_time1, dp_time2, db_time1, db_time2, rw_time1, rw_time2;
@@ -170,7 +172,7 @@ void R_RemoveEfrags(entity_t* ent)
         cl.free_efrags = old;
     }
 
-    ent->efrag = NULL;
+    ent->efrag = nullptr;
 }
 
 /*
@@ -213,7 +215,7 @@ void R_SplitEntityOnNode(mnode_t* node)
         // add the entity link
         *lastlink = ef;
         lastlink = &ef->entnext;
-        ef->entnext = NULL;
+        ef->entnext = nullptr;
 
         // set the leaf links
         ef->leaf = leaf;
@@ -308,7 +310,7 @@ void R_AddEfrags(entity_t* ent)
     r_addent = ent;
 
     lastlink = &ent->efrag;
-    r_pefragtopnode = NULL;
+    r_pefragtopnode = nullptr;
 
     entmodel = ent->model;
 
@@ -334,7 +336,7 @@ void R_StoreEfrags(efrag_t** ppefrag)
     model_t* clmodel;
     efrag_t* pefrag;
 
-    while ((pefrag = *ppefrag) != NULL) {
+    while ((pefrag = *ppefrag) != nullptr) {
         pent = pefrag->entity;
         clmodel = pent->model;
 
@@ -609,14 +611,15 @@ int R_LightPoint(const Vector3& p)
 #define ABSOLUTE_MIN_PARTICLES 512 // no fewer than this no matter what's
 //  on the command line
 
-int ramp1[8] = { 0x6f, 0x6d, 0x6b, 0x69, 0x67, 0x65, 0x63, 0x61 };
-int ramp2[8] = { 0x6f, 0x6e, 0x6d, 0x6c, 0x6b, 0x6a, 0x68, 0x66 };
-int ramp3[8] = { 0x6d, 0x6b, 6, 5, 4, 3 };
+constexpr eastl::array<int, 8> ramp1 = { 0x6f, 0x6d, 0x6b, 0x69, 0x67, 0x65, 0x63, 0x61 };
+constexpr eastl::array<int, 8> ramp2 = { 0x6f, 0x6e, 0x6d, 0x6c, 0x6b, 0x6a, 0x68, 0x66 };
+constexpr eastl::array<int, 8> ramp3 = { 0x6d, 0x6b, 6, 5, 4, 3, 0, 0 };
 
-particle_t *active_particles, *free_particles;
+particle_t* active_particles = nullptr;
+particle_t* free_particles = nullptr;
 
-particle_t* particles;
-int r_numparticles;
+eastl::vector<particle_t> particles;
+int r_numparticles = 0;
 
 Vector3 r_pright, r_pup, r_ppn;
 
@@ -640,8 +643,7 @@ void R_InitParticles(void)
         r_numparticles = MAX_PARTICLES;
     }
 
-    particles = (particle_t*)Hunk_Alloc(r_numparticles * sizeof(particle_t),
-        "particles");
+    particles.resize(r_numparticles);
 }
 
 
@@ -652,8 +654,8 @@ R_EntityParticles
 */
 
 #define NUMVERTEXNORMALS 162
-float r_avertexnormals[NUMVERTEXNORMALS][3];
-Vector3 avelocities[NUMVERTEXNORMALS];
+eastl::array<eastl::array<float, 3>, NUMVERTEXNORMALS> r_avertexnormals{};
+eastl::array<Vector3, NUMVERTEXNORMALS> avelocities{};
 float beamlength = 16;
 
 void R_EntityParticles(entity_t* ent)
@@ -713,13 +715,13 @@ void R_ClearParticles(void)
 {
     int i;
 
-    free_particles = &particles[0];
-    active_particles = NULL;
+    free_particles = particles.data();
+    active_particles = nullptr;
 
-    for (i = 0; i < r_numparticles; i++) {
+    for (i = 0; i < r_numparticles - 1; i++) {
         particles[i].next = &particles[i + 1];
     }
-    particles[r_numparticles - 1].next = NULL;
+    particles[r_numparticles - 1].next = nullptr;
 }
 
 void R_ReadPointFile_f(void)
@@ -1269,9 +1271,9 @@ int r_skydirect; // not used?
 
 // TODO: clean up these routines
 
-byte bottomsky[128 * 131];
-byte bottommask[128 * 131];
-byte newsky[128 * 256]; // newsky and topsky both pack in here, 128 bytes
+eastl::array<byte, 128 * 131> bottomsky{};
+eastl::array<byte, 128 * 131> bottommask{};
+alignas(unsigned) eastl::array<byte, 128 * 256> newsky{}; // newsky and topsky both pack in here, 128 bytes
 
 //  of newsky on the left of each scan, 128 bytes
 //  of topsky on the right, because the low-level
@@ -1289,7 +1291,7 @@ void R_InitSky(texture_t* mt)
     int i, j;
     byte* src;
 
-    src = (byte*)mt + mt->offsets[0];
+    src = reinterpret_cast<byte*>(mt) + mt->offsets[0];
 
     for (i = 0; i < 128; i++) {
         for (j = 0; j < 128; j++) {
@@ -1309,7 +1311,7 @@ void R_InitSky(texture_t* mt)
         }
     }
 
-    r_skysource = newsky;
+    r_skysource = newsky.data();
 }
 
 /*
@@ -1335,7 +1337,7 @@ void R_MakeSky(void)
     xlast = xshift;
     ylast = yshift;
 
-    pnewsky = (unsigned*)&newsky[0];
+    pnewsky = reinterpret_cast<unsigned*>(newsky.data());
 
     for (y = 0; y < SKYSIZE; y++) {
         baseofs = ((y + yshift) & SKYMASK) * 131;
@@ -1347,7 +1349,7 @@ void R_MakeSky(void)
 
             // PORT: unaligned dword access to bottommask and bottomsky
 
-            *pnewsky = (*(pnewsky + (128 / sizeof(unsigned))) & *(unsigned*)&bottommask[ofs]) | *(unsigned*)&bottomsky[ofs];
+            *pnewsky = (*(pnewsky + (128 / sizeof(unsigned))) & *reinterpret_cast<unsigned*>(&bottommask[ofs])) | *reinterpret_cast<unsigned*>(&bottomsky[ofs]);
             pnewsky++;
         }
 
@@ -1356,8 +1358,8 @@ void R_MakeSky(void)
         for (x = 0; x < SKYSIZE; x++) {
             ofs = baseofs + ((x + xshift) & SKYMASK);
 
-            *(byte*)pnewsky = (*((byte*)pnewsky + 128) & *(byte*)&bottommask[ofs]) | *(byte*)&bottomsky[ofs];
-            pnewsky = (unsigned*)((byte*)pnewsky + 1);
+            *reinterpret_cast<byte*>(pnewsky) = (*(reinterpret_cast<byte*>(pnewsky) + 128) & bottommask[ofs]) | bottomsky[ofs];
+            pnewsky = reinterpret_cast<unsigned*>(reinterpret_cast<byte*>(pnewsky) + 1);
         }
 
 #endif
@@ -1623,7 +1625,7 @@ void R_DrawSurface(void)
 
     mt = r_drawsurf.texture;
 
-    r_source = (byte*)mt + mt->offsets[r_drawsurf.surfmip];
+    r_source = reinterpret_cast<byte*>(mt) + mt->offsets[r_drawsurf.surfmip];
 
     // the fractional light values should range from 0 to (VID_GRADES - 1) << 16
     // from a source range of 0 - 255
@@ -1969,7 +1971,7 @@ void R_TimeRefresh_f(void)
         vr.y = r_refdef.vrect.y;
         vr.width = r_refdef.vrect.width;
         vr.height = r_refdef.vrect.height;
-        vr.pnext = NULL;
+        vr.pnext = nullptr;
         VID_Update(&vr);
     }
     stop = static_cast<float>(Sys_FloatTime());
@@ -2160,7 +2162,7 @@ void R_SetUpFrustumIndexes(void)
 {
     int i, j, *pindex;
 
-    pindex = r_frustum_indexes;
+    pindex = r_frustum_indexes.data();
 
     for (i = 0; i < 4; i++) {
         for (j = 0; j < 3; j++) {
@@ -2343,9 +2345,9 @@ clipplane_t* entity_clipplanes;
 
 medge_t* r_pedge;
 
-qboolean r_leftclipped, r_rightclipped;
-static qboolean makeleftedge, makerightedge;
-qboolean r_nearzionly;
+bool r_leftclipped, r_rightclipped;
+static bool makeleftedge, makerightedge;
+bool r_nearzionly;
 
 eastl::array<int, SIN_BUFFER_SIZE> sintable;
 eastl::array<int, SIN_BUFFER_SIZE> intsintable;
@@ -2363,7 +2365,7 @@ float r_nearzi;
 float r_u1, r_v1, r_lzi1;
 int r_ceilv1;
 
-qboolean r_lastvertvalid;
+bool r_lastvertvalid;
 
 /*
 ================
@@ -2630,7 +2632,7 @@ void R_ClipEdge(mvertex_t* pv0, mvertex_t* pv1, clipplane_t* clip)
 
                 return;
             }
-        } while ((clip = clip->next) != NULL);
+        } while ((clip = clip->next) != nullptr);
     }
 
     // add the edge
@@ -2694,7 +2696,7 @@ void R_RenderFace(msurface_t* fa, int clipflags)
     c_faceclip++;
 
     // set up clip planes
-    pclip = NULL;
+    pclip = nullptr;
 
     for (i = 3, mask = 0x08; i >= 0; i--, mask >>= 1) {
         if (clipflags & mask) {
@@ -2734,7 +2736,7 @@ void R_RenderFace(msurface_t* fa, int clipflags)
             }
 
             // assume it's cacheable
-            cacheoffset = static_cast<unsigned int>((byte*)edge_p - (byte*)r_edges);
+            cacheoffset = static_cast<unsigned int>(reinterpret_cast<byte*>(edge_p) - reinterpret_cast<byte*>(r_edges));
             r_leftclipped = r_rightclipped = false;
             R_ClipEdge(&r_pcurrentvertbase[r_pedge->v[0]],
                 &r_pcurrentvertbase[r_pedge->v[1]], pclip);
@@ -2771,7 +2773,7 @@ void R_RenderFace(msurface_t* fa, int clipflags)
             }
 
             // assume it's cacheable
-            cacheoffset = static_cast<unsigned int>((byte*)edge_p - (byte*)r_edges);
+            cacheoffset = static_cast<unsigned int>(reinterpret_cast<byte*>(edge_p) - reinterpret_cast<byte*>(r_edges));
             r_leftclipped = r_rightclipped = false;
             R_ClipEdge(&r_pcurrentvertbase[r_pedge->v[1]],
                 &r_pcurrentvertbase[r_pedge->v[0]], pclip);
@@ -2820,7 +2822,7 @@ void R_RenderFace(msurface_t* fa, int clipflags)
     surface_p->spanstate = 0;
     surface_p->entity = currententity;
     surface_p->key = r_currentkey++;
-    surface_p->spans = NULL;
+    surface_p->spans = nullptr;
 
     pplane = fa->plane;
     // FIXME: cache this?
@@ -2871,7 +2873,7 @@ void R_RenderBmodelFace(bedge_t* pedges, msurface_t* psurf)
     r_pedge = &tedge;
 
     // set up clip planes
-    pclip = NULL;
+    pclip = nullptr;
 
     for (i = 3, mask = 0x08; i >= 0; i--, mask >>= 1) {
         if (r_clipflags & mask) {
@@ -2931,7 +2933,7 @@ void R_RenderBmodelFace(bedge_t* pedges, msurface_t* psurf)
     surface_p->spanstate = 0;
     surface_p->entity = currententity;
     surface_p->key = r_currentbkey;
-    surface_p->spans = NULL;
+    surface_p->spans = nullptr;
 
     pplane = psurf->plane;
     // FIXME: cache this?
@@ -2964,7 +2966,7 @@ void R_RenderPoly(msurface_t* fa, int clipflags)
     mvertex_t verts[2][100]; //FIXME: do real number
     polyvert_t pverts[100];  //FIXME: do real number, safely
     int vertpage, newverts, newpage, lastvert;
-    qboolean visible;
+    bool visible;
 
     // FIXME: clean this up and make it faster
     // FIXME: guard against running out of vertices
@@ -2972,7 +2974,7 @@ void R_RenderPoly(msurface_t* fa, int clipflags)
     s_axis = t_axis = 0; // keep compiler happy
 
     // set up clip planes
-    pclip = NULL;
+    pclip = nullptr;
 
     for (i = 3, mask = 0x08; i >= 0; i--, mask >>= 1) {
         if (clipflags & mask) {
@@ -3233,7 +3235,7 @@ void R_BeginEdgeFrame(void)
 
     surface_p = &surfaces[2]; // background is surface 1,
     //  surface 0 is a dummy
-    surfaces[1].spans = NULL; // no background spans yet
+    surfaces[1].spans = nullptr; // no background spans yet
     surfaces[1].flags = SURF_DRAWBACKGROUND;
 
     // put the background behind everything in the world
@@ -3249,7 +3251,7 @@ void R_BeginEdgeFrame(void)
 
     // FIXME: set with memset
     for (v = r_refdef.vrect.y; v < r_refdef.vrectbottom; v++) {
-        newedges[v] = removeedges[v] = NULL;
+        newedges[v] = removeedges[v] = nullptr;
     }
 }
 
@@ -3298,7 +3300,7 @@ void R_InsertNewEdges(edge_t* edgestoadd, edge_t* edgelist)
         edgestoadd->prev = edgelist->prev;
         edgelist->prev->next = edgestoadd;
         edgelist->prev = edgestoadd;
-    } while ((edgestoadd = next_edge) != NULL);
+    } while ((edgestoadd = next_edge) != nullptr);
 }
 
 /*
@@ -3311,7 +3313,7 @@ void R_RemoveEdges(edge_t* pedge)
     do {
         pedge->next->prev = pedge->prev;
         pedge->prev->next = pedge->next;
-    } while ((pedge = pedge->nextremove) != NULL);
+    } while ((pedge = pedge->nextremove) != nullptr);
 }
 
 /*
@@ -3740,7 +3742,7 @@ void R_ScanEdges(void)
     edge_head.u = (int64_t)r_refdef.vrect.x << 20;
     edge_head_u_shift20 = edge_head.u >> 20;
     edge_head.u_step = 0;
-    edge_head.prev = NULL;
+    edge_head.prev = nullptr;
     edge_head.next = &edge_tail;
     edge_head.surfs[0] = 0;
     edge_head.surfs[1] = 1;
@@ -3795,7 +3797,7 @@ void R_ScanEdges(void)
 
             // clear the surface span pointers
             for (s = &surfaces[1]; s < surface_p; s++) {
-                s->spans = NULL;
+                s->spans = nullptr;
             }
 
             span_p = basespan_p;
@@ -3841,7 +3843,7 @@ void R_ScanEdges(void)
 //
 // current entity info
 //
-qboolean insubmodel;
+bool insubmodel;
 entity_t* currententity;
 Vector3 modelorg, base_modelorg;
 
@@ -3858,7 +3860,7 @@ static int numbverts, numbedges;
 
 static mvertex_t *pfrontenter, *pfrontexit;
 
-static qboolean makeclippededge;
+static bool makeclippededge;
 
 //===========================================================================
 
@@ -3968,7 +3970,7 @@ void R_RecursiveClipBPoly(bedge_t* pedges, mnode_t* pnode, msurface_t* psurf)
     mvertex_t *pvert, *plastvert, *ptvert;
     mnode_t* pn;
 
-    psideedges[0] = psideedges[1] = NULL;
+    psideedges[0] = psideedges[1] = nullptr;
 
     makeclippededge = false;
 
@@ -4163,7 +4165,7 @@ void R_DrawSolidClippedSubmodelPolygons(model_t* pmodel)
                     pbedge[j].pnext = &pbedge[j + 1];
                 }
 
-                pbedge[j - 1].pnext = NULL; // mark end of edges
+                pbedge[j - 1].pnext = nullptr; // mark end of edges
 
                 R_RecursiveClipBPoly(pbedge, currententity->topnode, psurf);
             } else {
@@ -4381,9 +4383,9 @@ void R_RenderWorld(void)
 {
     int i;
     model_t* clmodel;
-    btofpoly_t btofpolys[MAX_BTOFPOLYS];
+    eastl::array<btofpoly_t, MAX_BTOFPOLYS> btofpolys{};
 
-    pbtofpolys = btofpolys;
+    pbtofpolys = btofpolys.data();
 
     currententity = &cl_entities[0];
     VectorCopy(r_origin, modelorg);
@@ -4918,7 +4920,7 @@ void R_AliasProjectFinalVert(finalvert_t* fv, auxvert_t* av);
 R_AliasCheckBBox
 ================
 */
-qboolean R_AliasCheckBBox(void)
+bool R_AliasCheckBBox(void)
 {
     int i, flags, frame, numv;
     aliashdr_t* pahdr;
@@ -4926,7 +4928,7 @@ qboolean R_AliasCheckBBox(void)
     finalvert_t *pv0, *pv1, viewpts[16];
     auxvert_t *pa0, *pa1, viewaux[16];
     maliasframedesc_t* pframedesc;
-    qboolean zclipped, zfullyclipped;
+    bool zclipped, zfullyclipped;
     unsigned anyclip, allclip;
     int minz;
 
@@ -4935,7 +4937,7 @@ qboolean R_AliasCheckBBox(void)
     currententity->trivial_accept = 0;
     pmodel = currententity->model;
     pahdr = (aliashdr_t*)Mod_Extradata(pmodel);
-    pmdl = (mdl_t*)((byte*)pahdr + pahdr->model);
+    pmdl = reinterpret_cast<mdl_t*>(reinterpret_cast<byte*>(pahdr) + pahdr->model);
 
     R_AliasSetUpTransform(0);
 
@@ -5092,7 +5094,7 @@ void R_AliasPreparePoints(void)
     mtriangle_t* ptri;
     finalvert_t* paclip_fv[3];
 
-    pstverts = (stvert_t*)((byte*)paliashdr + paliashdr->stverts);
+    pstverts = reinterpret_cast<stvert_t*>(reinterpret_cast<byte*>(paliashdr) + paliashdr->stverts);
     r_anumverts = pmdl->numverts;
     fv = pfinalverts;
     av = pauxverts;
@@ -5127,7 +5129,7 @@ void R_AliasPreparePoints(void)
     //
     r_affinetridesc.numtriangles = 1;
 
-    ptri = (mtriangle_t*)((byte*)paliashdr + paliashdr->triangles);
+    ptri = reinterpret_cast<mtriangle_t*>(reinterpret_cast<byte*>(paliashdr) + paliashdr->triangles);
     for (i = 0; i < pmdl->numtris; i++, ptri++) {
         paclip_fv[0] = &pfinalverts[ptri->vertindex[0]];
         paclip_fv[1] = &pfinalverts[ptri->vertindex[1]];
@@ -5241,7 +5243,7 @@ void R_AliasTransformFinalVert(finalvert_t* fv,
     fv->flags = pstverts->onseam;
 
     // lighting
-    plightnormal = r_avertexnormals[pverts->lightnormalindex];
+    plightnormal = r_avertexnormals[pverts->lightnormalindex].data();
     lightcos = DotProduct(plightnormal, r_plightvec);
     temp = r_ambientlight;
 
@@ -5288,7 +5290,7 @@ void R_AliasTransformAndProjectFinalVerts(finalvert_t* fv, stvert_t* pstverts)
         fv->flags = pstverts->onseam;
 
         // lighting
-        plightnormal = r_avertexnormals[pverts->lightnormalindex];
+        plightnormal = r_avertexnormals[pverts->lightnormalindex].data();
         lightcos = DotProduct(plightnormal, r_plightvec);
         temp = r_ambientlight;
 
@@ -5334,7 +5336,7 @@ void R_AliasPrepareUnclippedPoints(void)
     stvert_t* pstverts;
     finalvert_t* fv;
 
-    pstverts = (stvert_t*)((byte*)paliashdr + paliashdr->stverts);
+    pstverts = reinterpret_cast<stvert_t*>(reinterpret_cast<byte*>(paliashdr) + paliashdr->stverts);
     r_anumverts = pmdl->numverts;
     // FIXME: just use pfinalverts directly?
     fv = pfinalverts;
@@ -5346,7 +5348,7 @@ void R_AliasPrepareUnclippedPoints(void)
     }
 
     r_affinetridesc.pfinalverts = pfinalverts;
-    r_affinetridesc.ptriangles = (mtriangle_t*)((byte*)paliashdr + paliashdr->triangles);
+    r_affinetridesc.ptriangles = reinterpret_cast<mtriangle_t*>(reinterpret_cast<byte*>(paliashdr) + paliashdr->triangles);
     r_affinetridesc.numtriangles = pmdl->numtris;
 
     D_PolysetDraw();
@@ -5371,12 +5373,12 @@ void R_AliasSetupSkin(void)
         skinnum = 0;
     }
 
-    pskindesc = ((maliasskindesc_t*)((byte*)paliashdr + paliashdr->skindesc)) + skinnum;
+    pskindesc = reinterpret_cast<maliasskindesc_t*>(reinterpret_cast<byte*>(paliashdr) + paliashdr->skindesc) + skinnum;
     a_skinwidth = pmdl->skinwidth;
 
     if (pskindesc->type == aliasskintype_t::ALIAS_SKIN_GROUP) {
-        paliasskingroup = (maliasskingroup_t*)((byte*)paliashdr + pskindesc->skin);
-        pskinintervals = (float*)((byte*)paliashdr + paliasskingroup->intervals);
+        paliasskingroup = reinterpret_cast<maliasskingroup_t*>(reinterpret_cast<byte*>(paliashdr) + pskindesc->skin);
+        pskinintervals = reinterpret_cast<float*>(reinterpret_cast<byte*>(paliashdr) + paliasskingroup->intervals);
         numskins = paliasskingroup->numskins;
         fullskininterval = pskinintervals[numskins - 1];
 
@@ -5396,7 +5398,7 @@ void R_AliasSetupSkin(void)
     }
 
     r_affinetridesc.pskindesc = pskindesc;
-    r_affinetridesc.pskin = (void*)((byte*)paliashdr + pskindesc->skin);
+    r_affinetridesc.pskin = reinterpret_cast<void*>(reinterpret_cast<byte*>(paliashdr) + pskindesc->skin);
     r_affinetridesc.skinwidth = a_skinwidth;
     r_affinetridesc.seamfixupX16 = (a_skinwidth >> 1) << 16;
     r_affinetridesc.skinheight = pmdl->skinheight;
@@ -5458,13 +5460,13 @@ void R_AliasSetupFrame(void)
     }
 
     if (paliashdr->frames[frame].type == aliasframetype_t::ALIAS_SINGLE) {
-        r_apverts = (trivertx_t*)((byte*)paliashdr + paliashdr->frames[frame].frame);
+        r_apverts = reinterpret_cast<trivertx_t*>(reinterpret_cast<byte*>(paliashdr) + paliashdr->frames[frame].frame);
 
         return;
     }
 
-    paliasgroup = (maliasgroup_t*)((byte*)paliashdr + paliashdr->frames[frame].frame);
-    pintervals = (float*)((byte*)paliashdr + paliasgroup->intervals);
+    paliasgroup = reinterpret_cast<maliasgroup_t*>(reinterpret_cast<byte*>(paliashdr) + paliashdr->frames[frame].frame);
+    pintervals = reinterpret_cast<float*>(reinterpret_cast<byte*>(paliashdr) + paliasgroup->intervals);
     numframes = paliasgroup->numframes;
     fullinterval = pintervals[numframes - 1];
 
@@ -5482,7 +5484,7 @@ void R_AliasSetupFrame(void)
         }
     }
 
-    r_apverts = (trivertx_t*)((byte*)paliashdr + paliasgroup->frames[i].frame);
+    r_apverts = reinterpret_cast<trivertx_t*>(reinterpret_cast<byte*>(paliashdr) + paliasgroup->frames[i].frame);
 }
 
 /*
@@ -5503,7 +5505,7 @@ void R_AliasDrawModel(alight_t* plighting)
     pauxverts = &auxverts[0];
 
     paliashdr = (aliashdr_t*)Mod_Extradata(currententity->model);
-    pmdl = (mdl_t*)((byte*)paliashdr + paliashdr->model);
+    pmdl = reinterpret_cast<mdl_t*>(reinterpret_cast<byte*>(paliashdr) + paliashdr->model);
 
     R_AliasSetupSkin();
     R_AliasSetUpTransform(currententity->trivial_accept);
@@ -5866,14 +5868,14 @@ void R_AliasClipTriangle(mtriangle_t* ptri)
 void* colormap;
 Vector3 viewlightvec;
 alight_t r_viewlighting = { 128, 192, viewlightvec };
-qboolean r_drawpolys;
-qboolean r_drawculledpolys;
-qboolean r_worldpolysbacktofront;
-qboolean r_recursiveaffinetriangles = true;
+bool r_drawpolys;
+bool r_drawculledpolys;
+bool r_worldpolysbacktofront;
+bool r_recursiveaffinetriangles = true;
 int r_pixbytes = 1;
 float r_aliasuvscale = 1.0;
 
-qboolean r_dowarp;
+bool r_dowarp;
 
 int c_surf;
 
@@ -5940,8 +5942,8 @@ void R_InitTextures(void)
     byte* dest;
 
     // create a simple checkerboard texture for the default
-    r_notexture_mip = (texture_t*) Hunk_Alloc(
-        sizeof(texture_t) + 16 * 16 + 8 * 8 + 4 * 4 + 2 * 2, "notexture");
+    r_notexture_mip = static_cast<texture_t*>(Hunk_Alloc(
+        sizeof(texture_t) + 16 * 16 + 8 * 8 + 4 * 4 + 2 * 2, "notexture"));
 
     r_notexture_mip->width = r_notexture_mip->height = 16;
     r_notexture_mip->offsets[0] = sizeof(texture_t);
@@ -6030,10 +6032,10 @@ void R_NewMap(void)
     // clear out efrags in case the level hasn't been reloaded
     // FIXME: is this one short?
     for (i = 0; i < cl.worldmodel->numleafs; i++) {
-        cl.worldmodel->leafs[i].efrags = NULL;
+        cl.worldmodel->leafs[i].efrags = nullptr;
     }
 
-    r_viewleaf = NULL;
+    r_viewleaf = nullptr;
     R_ClearParticles();
 
     r_cnumsurfs = static_cast<int>(r_maxsurfs.value);
@@ -6043,7 +6045,7 @@ void R_NewMap(void)
     }
 
     if (r_cnumsurfs > NUMSTACKSURFACES) {
-        surfaces = (surf_t *) Hunk_Alloc(r_cnumsurfs * sizeof(surf_t), "surfaces");
+        surfaces = static_cast<surf_t*>(Hunk_Alloc(r_cnumsurfs * sizeof(surf_t), "surfaces"));
         surface_p = surfaces;
         surf_max = &surfaces[r_cnumsurfs];
         r_surfsonstack = false;
@@ -6064,9 +6066,9 @@ void R_NewMap(void)
     }
 
     if (r_numallocatededges <= NUMSTACKEDGES) {
-        auxedges = NULL;
+        auxedges = nullptr;
     } else {
-        auxedges = (edge_t *) Hunk_Alloc(r_numallocatededges * sizeof(edge_t), "edges");
+        auxedges = static_cast<edge_t*>(Hunk_Alloc(r_numallocatededges * sizeof(edge_t), "edges"));
     }
 
     r_dowarpold = false;
@@ -6550,7 +6552,7 @@ void R_DrawBEntitiesOnList(void)
                 if (r_drawpolys | r_drawculledpolys) {
                     R_ZDrawSubmodelPolys(clmodel);
                 } else {
-                    r_pefragtopnode = NULL;
+                    r_pefragtopnode = nullptr;
 
                     r_emins = Vector3(minmaxs[0], minmaxs[1], minmaxs[2]);
                     r_emaxs = Vector3(minmaxs[3], minmaxs[4], minmaxs[5]);
@@ -6571,7 +6573,7 @@ void R_DrawBEntitiesOnList(void)
                             R_DrawSubmodelPolygons(clmodel, clipflags);
                         }
 
-                        currententity->topnode = NULL;
+                        currententity->topnode = nullptr;
                     }
                 }
 
@@ -6667,9 +6669,9 @@ r_refdef must be set before the first call
 */
 void R_RenderView_(void)
 {
-    byte warpbuffer[WARP_WIDTH * WARP_HEIGHT];
+    eastl::array<byte, WARP_WIDTH * WARP_HEIGHT> warpbuffer{};
 
-    r_warpbuffer = warpbuffer;
+    r_warpbuffer = warpbuffer.data();
 
     if (r_timegraph.value || r_speeds.value || r_dspeeds.value) {
         r_time1 = static_cast<float>(Sys_FloatTime());
@@ -6686,7 +6688,7 @@ void R_RenderView_(void)
     Sys_LowFPPrecision();
 
     if (!cl_entities[0].model || !cl.worldmodel) {
-        Sys_Error("R_RenderView: NULL worldmodel");
+        Sys_Error("R_RenderView: nullptr worldmodel");
     }
 
     if (!r_dspeeds.value) {
@@ -6767,7 +6769,7 @@ void R_RenderView(void)
     int dummy;
     int delta;
 
-    delta = static_cast<int>((byte*)&dummy - r_stack_start);
+    delta = static_cast<int>(reinterpret_cast<byte*>(&dummy) - r_stack_start);
     if (delta < -10000 || delta > 10000) {
         Sys_Error("R_RenderView: called without enough stack");
     }
@@ -6776,11 +6778,11 @@ void R_RenderView(void)
         Sys_Error("Hunk is missaligned");
     }
 
-    if ((size_t)(&dummy) & 3) {
+    if (reinterpret_cast<size_t>(&dummy) & 3) {
         Sys_Error("Stack is missaligned");
     }
 
-    if ((size_t)(&r_warpbuffer) & 3) {
+    if (reinterpret_cast<size_t>(&r_warpbuffer) & 3) {
         Sys_Error("Globals are missaligned");
     }
 

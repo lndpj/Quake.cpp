@@ -1,22 +1,23 @@
 // renderer.hpp -- public interface to refresh functions
 #pragma once
 
-#define MAXCLIPPLANES 11
+constexpr int MAXCLIPPLANES = 11;
 
-#define TOP_RANGE 16 // soldier uniform colors
-#define BOTTOM_RANGE 96
+constexpr int TOP_RANGE = 16; // soldier uniform colors
+constexpr int BOTTOM_RANGE = 96;
 
 //=============================================================================
 
-typedef struct efrag_s {
+struct efrag_s {
     struct mleaf_s* leaf;
-    struct efrag_s* leafnext;
-    struct entity_s* entity;
-    struct efrag_s* entnext;
-} efrag_t;
+    efrag_s* leafnext;
+    struct entity_t* entity;
+    efrag_s* entnext;
+};
+using efrag_t = efrag_s;
 
-typedef struct entity_s {
-    qboolean forcelink; // model changed
+struct entity_t {
+    bool forcelink; // model changed
 
     int update_type;
 
@@ -27,28 +28,26 @@ typedef struct entity_s {
     Vector3 origin;
     Vector3 msg_angles[2]; // last two updates (0 is newest)
     Vector3 angles;
-    struct model_s* model; // NULL = no model
-    struct efrag_s* efrag; // linked list of efrags
+    struct model_s* model; // nullptr = no model
+    efrag_s* efrag; // linked list of efrags
     int frame;
     float syncbase; // for client-side animations
     byte* colormap;
     int effects;  // light, particals, etc
     int skinnum;  // for Alias models
-    int visframe; // last frame this entity was
-    //  found in an active leaf
+    int visframe; // last frame this entity was found in an active leaf
 
     int dlightframe; // dynamic lighting
     int dlightbits;
 
     // FIXME: could turn these into a union
     int trivial_accept;
-    struct mnode_s* topnode; // for bmodels, first world node
-                             //  that splits bmodel, or NULL if
-                             //  not split
-} entity_t;
+    struct mnode_s* topnode; // for bmodels, first world node that splits bmodel, or nullptr if not split
+};
+using entity_s = entity_t;
 
 // !!! if this is changed, it must be changed in asm_draw.h too !!!
-typedef struct {
+struct refdef_t {
     vrect_t vrect; // subwindow in video for refresh
     // FIXME: not need vrect next field here?
     vrect_t aliasvrect;                    // scaled Alias version
@@ -75,7 +74,7 @@ typedef struct {
     float fov_x, fov_y;
 
     int ambientlight;
-} refdef_t;
+};
 
 struct texture_s;
 
@@ -88,21 +87,21 @@ namespace Render {
 extern refdef_t r_refdef;
 extern Vector3 r_origin, vpn, vright, vup;
 
-extern struct texture_s* r_notexture_mip;
+extern texture_s* r_notexture_mip;
 
-void R_Init(void);
-void R_InitTextures(void);
-void R_InitEfrags(void);
-void R_RenderView(void);
+void R_Init();
+void R_InitTextures();
+void R_InitEfrags();
+void R_RenderView();
 void R_ViewChanged(vrect_t* pvrect, int lineadj, float aspect);
-void R_InitSky(struct texture_s* mt);
+void R_InitSky(texture_s* mt);
 
 void R_AddEfrags(entity_t* ent);
 void R_RemoveEfrags(entity_t* ent);
 
-void R_NewMap(void);
+void R_NewMap();
 
-void R_ParseParticleEffect(void);
+void R_ParseParticleEffect();
 void R_RunParticleEffect(const Vector3& org, const Vector3& dir, int color, int count);
 void R_RocketTrail(Vector3 start, const Vector3& end, int type);
 
@@ -113,16 +112,16 @@ void R_ParticleExplosion2(const Vector3& org, int colorStart, int colorLength);
 void R_LavaSplash(const Vector3& org);
 void R_TeleportSplash(const Vector3& org);
 
-void R_PushDlights(void);
+void R_PushDlights();
 
 //
 // surface cache related
 //
-extern qboolean r_cache_thrash;
+extern bool r_cache_thrash;
 
 int D_SurfaceCacheForRes(int width, int height);
-void D_FlushCaches(void);
-void D_DeleteSurfaceCache(void);
+void D_FlushCaches();
+void D_DeleteSurfaceCache();
 void D_InitCaches(void* buffer, int size);
 void R_SetVrect(vrect_t* pvrect, vrect_t* pvrectin, int lineadj);
 
